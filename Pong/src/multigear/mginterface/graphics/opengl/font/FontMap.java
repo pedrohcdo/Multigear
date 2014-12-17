@@ -43,6 +43,7 @@ final public class FontMap extends CacheComponent {
 		final private float mDescent;
 		final private float mLeading;
 		final private float mTop;
+		private float Teste;
 
 		/**
 		 * Constructor
