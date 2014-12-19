@@ -13,7 +13,7 @@ public class FontAttributes {
 	
 	// Private Variables
 	private Ref2F mPadd = new Ref2F(0, 0);
-	private boolean mUseMetrics = false;
+	private boolean mUseMetrics = true;
 	private boolean mLinear = false;
 	
 	/**

@@ -43,7 +43,6 @@ final public class FontMap extends CacheComponent {
 		final private float mDescent;
 		final private float mLeading;
 		final private float mTop;
-		private float Teste;
 
 		/**
 		 * Constructor
@@ -294,7 +293,7 @@ final public class FontMap extends CacheComponent {
 	// Private Variables
 	protected Style mStyle = Style.Normal;
 	protected CharMap mCharMap;
-	protected FontAttributes mAttributes = new FontAttributes(new Ref2F(0, 0), false, false);
+	protected FontAttributes mAttributes = new FontAttributes(new Ref2F(0, 0), true, false);
 	
 	/**
 	 * Metrics
