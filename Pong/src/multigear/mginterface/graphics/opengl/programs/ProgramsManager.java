@@ -19,6 +19,7 @@ final public class ProgramsManager {
 	final public static int STRETCH_TEXTURE_RENDERER_PROGRAM = 0;
 	final public static int REPEAT_TEXTURE_RENDERER_PROGRAM = 1;
 	final public static int TRANSITION_TEXTURE_RENDERER_PROGRAM = 2;
+	final public static int PARTICLE_RENDERER_PROGRAM = 3;
 	
 	// Final Private Variables
 	final private List<BaseProgram> mInstalledPrograms = new ArrayList<BaseProgram>();
@@ -69,6 +70,7 @@ final public class ProgramsManager {
 		installProgram(StretchTextureRenderer.class, screenSize);
 		installProgram(RepeatTextureRenderer.class, screenSize);
 		installProgram(TransitionTextureRenderer.class, screenSize);
+		installProgram(ParticlesTextureRenderer.class, screenSize);
 	}
 	
 	/**

@@ -46,7 +46,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 */
 	final public void setTexture(final multigear.mginterface.graphics.opengl.texture.Texture texture) {
 		mTexture = texture;
-		mSize = texture.getSize();
+		mSize = texture.getSize().clone();
 	}
 	
 	/**
@@ -66,7 +66,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 *            Float Scale
 	 */
 	final public void setScale(final Ref2F scale) {
-		mScale = scale;
+		mScale = scale.clone();
 	}
 	
 	/**
@@ -76,7 +76,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 *            {@link multigear.general.utils.Ref2F} Position
 	 */
 	final public void setPosition(final multigear.general.utils.Ref2F position) {
-		mPosition = position;
+		mPosition = position.clone();
 	}
 	
 	/**
@@ -86,7 +86,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 *            Draw texture dest Size
 	 */
 	final public void setSize(final multigear.general.utils.Ref2F size) {
-		mSize = size;
+		mSize = size.clone();
 	}
 	
 	/**
@@ -96,7 +96,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 *            {@link multigear.general.utils.Ref2F} Center
 	 */
 	final public void setCenter(final multigear.general.utils.Ref2F center) {
-		mCenter = center;
+		mCenter = center.clone();
 	}
 	
 	/**
@@ -106,7 +106,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 *            {@link multigear.general.utils.Vector2D} Angle
 	 */
 	final public void setAngle(final multigear.general.utils.Vector2D angle) {
-		mAngle = angle;
+		mAngle = angle.clone();
 	}
 	
 	/**
@@ -116,10 +116,8 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 *            {@link multigear.general.utils.Ref2F} Scroll
 	 */
 	final public void setScroll(final multigear.general.utils.Ref2F scroll) {
-		mScroll = scroll;
+		mScroll = scroll.clone();
 	}
-	
-	
 	
 	/**
 	 * Get Texture
@@ -152,7 +150,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * Get Scale
 	 */
 	final public Ref2F getScale() {
-		return mScale;
+		return mScale.clone();
 	}
 	
 	/**
@@ -161,7 +159,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @return {@link multigear.general.utils.Ref2F} Position
 	 */
 	final public multigear.general.utils.Ref2F getPosition() {
-		return mPosition;
+		return mPosition.clone();
 	}
 	
 	/**
@@ -170,7 +168,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @return {@link multigear.general.utils.Ref2F} Size
 	 */
 	final public multigear.general.utils.Ref2F getSize() {
-		return mSize;
+		return mSize.clone();
 	}
 	
 	/**
@@ -179,7 +177,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @return {@link multigear.general.utils.Ref2F} Center
 	 */
 	final public multigear.general.utils.Ref2F getCenter() {
-		return mCenter;
+		return mCenter.clone();
 	}
 	
 	/**
@@ -188,7 +186,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @return {@link multigear.general.utils.Vector2D} Angle
 	 */
 	final public multigear.general.utils.Vector2D getAngle() {
-		return mAngle;
+		return mAngle.clone();
 	}
 	
 	/**
@@ -197,7 +195,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @return {@link multigear.general.utils.Ref2F} Scroll
 	 */
 	final public multigear.general.utils.Ref2F getScroll() {
-		return mScroll;
+		return mScroll.clone();
 	}
 	
 	/**

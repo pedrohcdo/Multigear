@@ -16,8 +16,6 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.createlier.pong.MainActivity;
-
 /**
  * Used for Support Multigear Engine in background works.
  * 
@@ -121,13 +119,13 @@ public class SupportService extends Service {
 			final NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			// Build default notification
 			if(notification == null) {
-				Intent notificationIntent = new Intent(this, MainActivity.class);
+				Intent notificationIntent = new Intent(this, this.getClass());
 				notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 				PendingIntent intent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 				notification = new NotificationCompat
 					.Builder(this)
 					.setOngoing(true)
-					.setSmallIcon(com.createlier.pong.R.drawable.ic_launcher)
+					//.setSmallIcon(com.createlier.pong.R.drawable.ic_launcher)
 					.setContentTitle("Multigear")
 					.setContentText("Start after game closed for restore all connections.")
 					.setContentIntent(intent)

@@ -171,7 +171,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 *            {@link Ref2F} Center
 	 */
 	final public void setCenter(final Ref2F center) {
-		mCenter = center;
+		mCenter = center.clone();
 	}
 	
 	/**
@@ -201,7 +201,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 *            {@link Ref2F} Scroll
 	 */
 	final public void setScroll(final Ref2F scroll) {
-		mScroll = scroll;
+		mScroll = scroll.clone();
 	}
 	
 	/**

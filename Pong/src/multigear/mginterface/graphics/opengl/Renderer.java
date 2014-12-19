@@ -20,6 +20,7 @@ public class Renderer extends BaseRenderer {
 	final public static int STRETCH_TEXTURE_RENDERER = 0;
 	final public static int REPEAT_TEXTURE_RENDERER = 1;
 	final public static int TRANSITION_TEXTURE_RENDERER = 2;
+	final public static int PARTICLES_RENDERER = 3;
 	
 	// Final private Variables
 	final private multigear.mginterface.engine.Configuration.OptimizedKey mOptimizedKey;

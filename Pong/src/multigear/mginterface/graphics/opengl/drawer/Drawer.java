@@ -1,5 +1,7 @@
 package multigear.mginterface.graphics.opengl.drawer;
 
+import java.nio.FloatBuffer;
+
 import multigear.general.utils.Color;
 import multigear.general.utils.Ref2F;
 import multigear.mginterface.graphics.opengl.Renderer;
@@ -7,6 +9,8 @@ import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWrapper;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
 import multigear.mginterface.graphics.opengl.programs.BaseProgram;
+import multigear.mginterface.graphics.opengl.programs.ParticlesTextureRenderer;
+import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.scene.Scene;
 import android.opengl.GLES20;
 
@@ -92,6 +96,27 @@ public class Drawer {
 		mTextureContainer.prepare(texture, size);
 		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 		texture.getMapper().onMap(mTextureContainer);
+	}
+	
+	/**
+	 * Draw Particles
+	 * 
+	 * @param designedDrawInfo
+	 *            Drawer Information for GLES20 draw.
+	 */
+	public void drawParticles(final Texture texture, final int particlesCount, final FloatBuffer vertexBuffer, final FloatBuffer opacityBuffer, final FloatBuffer scaleBuffer) {
+		// Prepare Texture
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getHandle());
+		
+		
+		// Set Blend Func
+		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+	
+		// Swap Buffers
+		ParticlesTextureRenderer renderer = (ParticlesTextureRenderer)begin(Renderer.PARTICLES_RENDERER, Color.TRANSPARENT);
+		renderer.setBuffers(vertexBuffer, opacityBuffer, scaleBuffer);
+		renderer.render(particlesCount);
 	}
 	
 	/**

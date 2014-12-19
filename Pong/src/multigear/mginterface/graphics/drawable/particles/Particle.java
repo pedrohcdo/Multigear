@@ -18,9 +18,6 @@ public class Particle {
 	
 	// Private Variables
 	private Ref2F mPosition = new Ref2F(0, 0);
-	private Ref2F mSize = new Ref2F(32, 32);
-	private Texture mTexture;
-	private Ref2F mCenter = multigear.general.utils.KernelUtils.ref2d(0, 0);
 	private boolean mFixedSpace = false;
 	private Ref2F mForces = new Ref2F(0, 0);
 	private Ref2F mAccelerations = new Ref2F(0, 0);
@@ -32,8 +29,7 @@ public class Particle {
 	
 	// Modifiers
 	private float mOpacityModifier[] = { 1.0f, 1.0f };
-	private float mRotationModifier[] = { 0.0f, 0.0f };
-	private Ref2F mScaleModifier[] = { new Ref2F(1.0f, 1.0f), new Ref2F(1.0f, 1.0f) };
+	private float mScaleModifier[] = { 1.0f, 1.0f };
 	
 	/**
 	 * Constructor
@@ -75,30 +71,11 @@ public class Particle {
 	 * @param start
 	 * @param end
 	 */
-	final public void setScaleModifier(final Ref2F start, final Ref2F end) {
-		mScaleModifier = new Ref2F[] { start, end };
-	}
-	
-	/**
-	 * Set Scale Modifier
-	 * 
-	 * @param start
-	 * @param end
-	 */
 	final public void setScaleModifier(final float start, final float end) {
-		mScaleModifier = new Ref2F[] { new Ref2F(start, start), new Ref2F(end, end) };
+		mScaleModifier = new float[] { start, end };
 	}
 	
-	/**
-	 * Set Rotation Modifier
-	 * 
-	 * @param start
-	 * @param end
-	 */
-	final public void setRotationModifier(final float start, final float end) {
-		mRotationModifier = new float[] { start, end };
-	}
-	
+
 	/**
 	 * Set Forces
 	 * <p>
@@ -120,17 +97,6 @@ public class Particle {
 	}
 	
 	/**
-	 * Set Texture
-	 * 
-	 * @param texture
-	 *            {@link multigear.mginterface.graphics.opengl.texture.Texture}
-	 */
-	final public void setTexture(final Texture texture) {
-		mTexture = texture;
-		this.setSize(mTexture.getSize());
-	}
-	
-	/**
 	 * Set Sprite Position
 	 * 
 	 * @param position
@@ -138,26 +104,6 @@ public class Particle {
 	 */
 	final public void setPosition(final multigear.general.utils.Ref2F position) {
 		mPosition = position;
-	}
-	
-	/**
-	 * Set draw dest texture size.
-	 * 
-	 * @param size
-	 *            Draw texture dest Size
-	 */
-	final public void setSize(final multigear.general.utils.Ref2F size) {
-		mSize = size;
-	}
-	
-	/**
-	 * Set center axis.
-	 * 
-	 * @param center
-	 *            {@link multigear.general.utils.Ref2F} Center
-	 */
-	final public void setCenter(final multigear.general.utils.Ref2F center) {
-		mCenter = center;
 	}
 	
 	/**
@@ -186,18 +132,8 @@ public class Particle {
 	 * @param start
 	 * @param end
 	 */
-	final public Ref2F[] getScaleModifier() {
+	final public float[] getScaleModifier() {
 		return mScaleModifier.clone();
-	}
-	
-	/**
-	 * Get Rotation Modifier
-	 * 
-	 * @param start
-	 * @param end
-	 */
-	final public float[] getRotationModifier() {
-		return mRotationModifier.clone();
 	}
 	
 	/**
@@ -221,40 +157,12 @@ public class Particle {
 	}
 	
 	/**
-	 * Get Texture
-	 * 
-	 * @return texture
-	 *         {@link multigear.mginterface.graphics.opengl.texture.Texture}
-	 */
-	final public Texture getTexture() {
-		return mTexture;
-	}
-	
-	/**
 	 * Return Position
 	 * 
 	 * @return {@link multigear.general.utils.Ref2F} Position
 	 */
 	final public Ref2F getPosition() {
 		return mPosition.clone();
-	}
-	
-	/**
-	 * Return draw dest Texture size.
-	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Size
-	 */
-	final public Ref2F getSize() {
-		return mSize.clone();
-	}
-	
-	/**
-	 * Get center axis.
-	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Center
-	 */
-	final public Ref2F getCenter() {
-		return mCenter.clone();
 	}
 	
 	/**
@@ -281,19 +189,8 @@ public class Particle {
 	 * 
 	 * @return
 	 */
-	final protected Ref2F getScale() {
-		final float scaleX = (mScaleModifier[0].XAxis - mScaleModifier[0].XAxis * mTimeDelta) + (mTimeDelta * mScaleModifier[1].XAxis);
-		final float scaleY = (mScaleModifier[0].YAxis - mScaleModifier[0].YAxis * mTimeDelta) + (mTimeDelta * mScaleModifier[1].YAxis);
-		return new Ref2F(scaleX, scaleY);
-	}
-	
-	/**
-	 * Get Frame Rotation
-	 * 
-	 * @return
-	 */
-	final protected float getRotation() {
-		return (mRotationModifier[0] - mRotationModifier[0] * mTimeDelta) + (mTimeDelta * mRotationModifier[1]);
+	final protected float getScale() {
+		return (mScaleModifier[0] - mScaleModifier[0] * mTimeDelta) + (mTimeDelta * mScaleModifier[1]);
 	}
 	
 	/**
@@ -322,16 +219,12 @@ public class Particle {
 	protected Particle prepareToInsert() {
 		final Particle copy = new Particle(mDuration);
 		copy.mAccelerations = mAccelerations.clone();
-		copy.mCenter = mCenter.clone();
 		copy.mCreatedTime = mCreatedTime;
 		copy.mFixedSpace = mFixedSpace;
 		copy.mForces = mForces.clone();
 		copy.mPosition = mPosition.clone();
-		copy.mSize = mSize.clone();
-		copy.mTexture = mTexture;
 		copy.mOpacityModifier = mOpacityModifier.clone();
 		copy.mScaleModifier = mScaleModifier.clone();
-		copy.mRotationModifier = mRotationModifier.clone();
 		return copy;
 	}
 }

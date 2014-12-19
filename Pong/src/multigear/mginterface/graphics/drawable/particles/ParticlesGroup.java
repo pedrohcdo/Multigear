@@ -1,13 +1,15 @@
 package multigear.mginterface.graphics.drawable.particles;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import multigear.general.utils.Color;
+import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Ref2F;
 import multigear.mginterface.graphics.drawable.BaseDrawable;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
-import multigear.mginterface.graphics.opengl.drawer.MatrixRow;
 import multigear.mginterface.graphics.opengl.texture.Loader;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.scene.Scene;
@@ -20,18 +22,25 @@ import android.opengl.GLES20;
  * 
  *         Property Createlier.
  */
-public class ParticlesGroup extends BaseDrawable {
+final public class ParticlesGroup extends BaseDrawable {
 	
 	// Private Variables
+	private Texture mTexture;
 	private ParticlesHelper mParticlesHelper;
 	private ParticlesGenerator mParticlesGenerator;
 	private int mHelperFrequency = 100;
-	private int mParticlesLimit = 50;
+	private int mParticlesLimit;
 	private long mLastTime;
 	private List<Particle> mParticles = new ArrayList<Particle>();
 	private Rect mViewport;
 	private Ref2F mPosition = new Ref2F(0, 0);
 	private boolean mAutoHelper = true;
+	
+	// Buffers
+	private FloatBuffer mParticlesPositionBuffer;
+	private FloatBuffer mParticlesOpacityBuffer;
+	private FloatBuffer mParticlesScaleBuffer;
+	private Color mParticlesColorBuffer[];
 	
 	/**
 	 * Constructor
@@ -42,6 +51,17 @@ public class ParticlesGroup extends BaseDrawable {
 		super(room);
 		mLastTime = getAttachedRoom().getThisTime();
 		mParticlesGenerator = new ParticlesGenerator(this);
+		// 
+		setParticlesLimit(10);
+	}
+	
+	/**
+	 * Set Particle group texture
+	 * 
+	 * @param texture
+	 */
+	final public void setTexture(final Texture texture) {
+		mTexture = texture;
 	}
 	
 	/**
@@ -107,13 +127,30 @@ public class ParticlesGroup extends BaseDrawable {
 	}
 	
 	/**
-	 * Set Particles Limit
+	 * Set Particles Limit and allocate spaces. 
+	 * Allocates all clearances, for performance reasons it is not
+	 *  recommended to invoke this method often.
 	 * <p>
 	 * 
 	 * @param limit
 	 */
 	final public void setParticlesLimit(final int limit) {
+		if(limit < 0)
+			throw new IllegalArgumentException("The amount can not be negative.");
 		mParticlesLimit = limit;
+		mParticlesPositionBuffer = GeneralUtils.createFloatBuffer(limit * 2);;
+		mParticlesOpacityBuffer = GeneralUtils.createFloatBuffer(limit);;
+		mParticlesScaleBuffer = GeneralUtils.createFloatBuffer(limit);;
+		mParticlesColorBuffer = new Color[limit];
+	}
+	
+	/**
+	 * Get Particle group texture
+	 * 
+	 * @param texture
+	 */
+	final public Texture getTexture() {
+		return mTexture;
 	}
 	
 	/**
@@ -184,9 +221,18 @@ public class ParticlesGroup extends BaseDrawable {
 	 */
 	@Override
 	final public void updateAndDraw(final Drawer drawer, final float preOpacity) {
-		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
 		
+		// Get Opacity
+		final float opacityGroup = getOpacity() * preOpacity;
+		
+		// Not has draw content
+		if(opacityGroup <= 0 || mTexture == null) {
+			// Update Particles
+			updateParticles();
+			
+			return;
+		}
+
 		// Disable Scissor
 		boolean disableScissor = false;
 		
@@ -200,59 +246,43 @@ public class ParticlesGroup extends BaseDrawable {
 			disableScissor = true;
 		}
 		
-		// Get Opacity
-		final float opacityGroup = getOpacity();
+		// Clear buffers
+		mParticlesPositionBuffer.clear();
+		mParticlesOpacityBuffer.clear();
+		mParticlesScaleBuffer.clear();
 		
 		// Draw
-		for (final Particle particle : mParticles) {
+		for (int i=0; i<mParticles.size(); i++) {
+			
+			// Get particle
+			final Particle particle = mParticles.get(i);
 			
 			// Update Particle
 			particle.update();
 			
-			// Get texture
-			final Texture texture = particle.getTexture();
-			
 			// Get Values
-			final Ref2F scale = particle.getScale();
+			final Ref2F position = particle.getPosition();
+			final float scale = particle.getScale();
 			final float finalOpacity = particle.getOpacity() * opacityGroup;
-			final float rotation = particle.getRotation();
 			
-			// Not Update
-			if (texture == null || finalOpacity <= 0)
-				continue;
+			// Put to Vertex buffer
+			mParticlesPositionBuffer.put(position.XAxis + getPosition().XAxis);
+			mParticlesPositionBuffer.put(position.YAxis + getPosition().YAxis);
 			
-			// Get Infos
-			final float ox = (float) particle.getCenter().XAxis * scale.XAxis;
-			final float oy = (float) particle.getCenter().YAxis * scale.YAxis;
-			final float sx = (float) particle.getSize().XAxis * scale.XAxis;
-			final float sy = (float) particle.getSize().YAxis * scale.YAxis;
+			// Put to Opacity buffer
+			mParticlesOpacityBuffer.put(finalOpacity);
 			
-			// Push Matrix
-			matrixRow.push();
-			
-			// Scale Matrix
-			matrixRow.postScalef(sx, sy);
-			
-			// Translate and Rotate Matrix
-			matrixRow.postTranslatef(-ox, -oy);
-			matrixRow.postRotatef(rotation);
-			matrixRow.postTranslatef(ox, oy);
-			
-			// Animate Matrix
-			// animation.animateMatrix(drawer.getTransformMatrix(),
-			// multigear.general.utils.KernelUtils.ref2d(sx, sy));
-			
-			// Translate Matrix
-			final float tX = (float) ((particle.getPosition().XAxis - ox) + mPosition.XAxis);
-			final float tY = (float) ((particle.getPosition().YAxis - oy) + mPosition.YAxis);
-			matrixRow.postTranslatef(tX, tY);
-			
-			// Draw Particle
-			drawer.drawTexture(texture, particle.getSize(), finalOpacity);
-			
-			// Pop Matrix
-			matrixRow.pop();
+			// Put to Scale buffer
+			mParticlesScaleBuffer.put(mTexture.getSize().XAxis * scale);
 		}
+		
+		// Set Buffers Position
+		mParticlesPositionBuffer.position(0);
+		mParticlesOpacityBuffer.position(0);
+		mParticlesScaleBuffer.position(0);
+		
+		// draw Particles
+		drawer.drawParticles(mTexture, mParticles.size(), mParticlesPositionBuffer, mParticlesOpacityBuffer, mParticlesScaleBuffer);
 		
 		// Disable Scissor
 		if (disableScissor)
@@ -298,7 +328,7 @@ public class ParticlesGroup extends BaseDrawable {
 	 */
 	final protected void addParticle(final Particle particle, final boolean top) {
 		if (mParticlesLimit != -1)
-			if (mParticles.size() < mParticlesLimit + 1)
+			if (mParticles.size() > mParticlesLimit + 1)
 				return;
 		
 		particle.onCreated(getAttachedRoom().getThisTime());
