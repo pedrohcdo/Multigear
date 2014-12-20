@@ -1,5 +1,6 @@
 package multigear.mginterface.engine;
 
+import multigear.general.utils.Vector2;
 import android.widget.LinearLayout;
 
 /**
@@ -66,7 +67,7 @@ final public class MultigearSync {
 	/*
 	 * Redimensionamento da tela preparativo
 	 */
-	final public multigear.mginterface.engine.MultigearSync prepareScreen(final multigear.general.utils.Ref2F screenSize) {
+	final public multigear.mginterface.engine.MultigearSync prepareScreen(final Vector2 screenSize) {
 		if(mMultigear.isFinished())
 			return this;
 		mEventHandler.prepareScreen(screenSize);

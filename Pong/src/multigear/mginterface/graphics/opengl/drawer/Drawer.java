@@ -3,7 +3,7 @@ package multigear.mginterface.graphics.opengl.drawer;
 import java.nio.FloatBuffer;
 
 import multigear.general.utils.Color;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.Renderer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWrapper;
@@ -80,7 +80,7 @@ public class Drawer {
 	 * @param designedDrawInfo
 	 *            Drawer Information for GLES20 draw.
 	 */
-	public void drawTexture(final multigear.mginterface.graphics.opengl.texture.Texture texture, final Ref2F recipientSize, final float finalOpacity) {
+	public void drawTexture(final multigear.mginterface.graphics.opengl.texture.Texture texture, final Vector2 recipientSize, final float finalOpacity) {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getHandle());
 		mMatrixRow.copyValues(mTransformMatrix);
@@ -90,7 +90,7 @@ public class Drawer {
 		final float b = mTransformMatrix[4];
 		final float c = mTransformMatrix[1];
 		final float d = mTransformMatrix[5];
-		Ref2F size = new Ref2F((float) Math.hypot(a, c), (float) Math.hypot(b, d));
+		Vector2 size = new Vector2((float) Math.hypot(a, c), (float) Math.hypot(b, d));
 		// Prepare Map
 		mFinalOpacity = finalOpacity;
 		mTextureContainer.prepare(texture, size);

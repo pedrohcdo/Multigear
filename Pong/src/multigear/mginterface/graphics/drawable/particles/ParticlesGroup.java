@@ -7,7 +7,7 @@ import java.util.List;
 
 import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.drawable.BaseDrawable;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.texture.Loader;
@@ -33,7 +33,7 @@ final public class ParticlesGroup extends BaseDrawable {
 	private long mLastTime;
 	private List<Particle> mParticles = new ArrayList<Particle>();
 	private Rect mViewport;
-	private Ref2F mPosition = new Ref2F(0, 0);
+	private Vector2 mPosition = new Vector2(0, 0);
 	private boolean mAutoHelper = true;
 	
 	// Buffers
@@ -68,9 +68,9 @@ final public class ParticlesGroup extends BaseDrawable {
 	 * Set Sprite Position
 	 * 
 	 * @param position
-	 *            {@link multigear.general.utils.Ref2F} Position
+	 *            {@link Vector2} Position
 	 */
-	final public void setPosition(final multigear.general.utils.Ref2F position) {
+	final public void setPosition(final Vector2 position) {
 		mPosition = position;
 	}
 	
@@ -164,9 +164,9 @@ final public class ParticlesGroup extends BaseDrawable {
 	/**
 	 * Return Position
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Position
+	 * @return {@link Vector2} Position
 	 */
-	final public multigear.general.utils.Ref2F getPosition() {
+	final public Vector2 getPosition() {
 		return mPosition;
 	}
 	
@@ -238,7 +238,7 @@ final public class ParticlesGroup extends BaseDrawable {
 		
 		// Set Scisor
 		if (mViewport != null) {
-			final int screenHeight = (int) getAttachedRoom().getScreenSize().YAxis;
+			final int screenHeight = (int) getAttachedRoom().getScreenSize().y;
 			final int top = screenHeight - mViewport.bottom;
 			final int bottom = screenHeight - mViewport.top - top;
 			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
@@ -261,19 +261,19 @@ final public class ParticlesGroup extends BaseDrawable {
 			particle.update();
 			
 			// Get Values
-			final Ref2F position = particle.getPosition();
+			final Vector2 position = particle.getPosition();
 			final float scale = particle.getScale();
 			final float finalOpacity = particle.getOpacity() * opacityGroup;
 			
 			// Put to Vertex buffer
-			mParticlesPositionBuffer.put(position.XAxis + getPosition().XAxis);
-			mParticlesPositionBuffer.put(position.YAxis + getPosition().YAxis);
+			mParticlesPositionBuffer.put(position.x + getPosition().x);
+			mParticlesPositionBuffer.put(position.y + getPosition().y);
 			
 			// Put to Opacity buffer
 			mParticlesOpacityBuffer.put(finalOpacity);
 			
 			// Put to Scale buffer
-			mParticlesScaleBuffer.put(mTexture.getSize().XAxis * scale);
+			mParticlesScaleBuffer.put(mTexture.getSize().x * scale);
 		}
 		
 		// Set Buffers Position

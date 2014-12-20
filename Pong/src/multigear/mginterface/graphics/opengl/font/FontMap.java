@@ -5,7 +5,7 @@ import java.util.List;
 import multigear.cache.CacheComponent;
 import multigear.general.exceptions.MultigearException;
 import multigear.general.utils.GeneralUtils;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.drawer.TextureContainer;
 import multigear.mginterface.graphics.opengl.texture.Loader;
 import multigear.mginterface.graphics.opengl.texture.Texture;
@@ -242,7 +242,7 @@ final public class FontMap extends CacheComponent {
 		protected FontMapMetrics mFontMetrics;
 		private Texture mTextureFont;
 		protected float[] mCharactersWidths;
-		protected Ref2F[] mCharactersBounds;
+		protected Vector2[] mCharactersBounds;
 		protected int mMaxWidth;
 		protected int mMaxHeight;
 		protected int mMaxBoundedWidth;
@@ -293,7 +293,7 @@ final public class FontMap extends CacheComponent {
 	// Private Variables
 	protected Style mStyle = Style.Normal;
 	protected CharMap mCharMap;
-	protected FontAttributes mAttributes = new FontAttributes(new Ref2F(0, 0), true, false);
+	protected FontAttributes mAttributes = new FontAttributes(new Vector2(0, 0), true, false);
 	
 	/**
 	 * Metrics
@@ -501,12 +501,12 @@ final public class FontMap extends CacheComponent {
 			
 			// Get Bounds
 			Rect rect = new Rect();
-			Ref2F bounds[] = new Ref2F[map.mCharactersPack.length];
+			Vector2 bounds[] = new Vector2[map.mCharactersPack.length];
 			int maxBoundedWidth = 0;
 			for (int i = 0; i < map.mCharactersPack.length; i++) {
 				final char char_ = map.mCharactersPack[i];
 				paint.getTextBounds(char_ + "", 0, 1, rect);
-				bounds[i] = new Ref2F(rect.left, rect.right);
+				bounds[i] = new Vector2(rect.left, rect.right);
 				maxBoundedWidth = Math.max(maxBoundedWidth, rect.width());
 			}
 			maxBoundedWidth += 2;
@@ -539,9 +539,9 @@ final public class FontMap extends CacheComponent {
 			float dy = fontAscent;
 			for (int i = 0; i < map.mCharactersPack.length; i++) {
 				final char c = map.mCharactersPack[i];
-				final Ref2F bound = bounds[i];
-				final int width = (int) (bound.YAxis - bound.XAxis);
-				canvas.drawText(c + "", (dx - bound.XAxis) - (width / 2.0f), dy, paint);
+				final Vector2 bound = bounds[i];
+				final int width = (int) (bound.y - bound.x);
+				canvas.drawText(c + "", (dx - bound.x) - (width / 2.0f), dy, paint);
 				dx += maxBoundedWidth;
 				if (dx + maxWidth2 >= textureWidth) {
 					dy += fontHeight;
@@ -573,22 +573,22 @@ final public class FontMap extends CacheComponent {
 	 * 
 	 * @return
 	 */
-	final public Ref2F getTextSize(final String text, final int start, final int size) {
+	final public Vector2 getTextSize(final String text, final int start, final int size) {
 		// Check range
 		if (start < 0 || start + size > text.length())
 			throw new IndexOutOfBoundsException();
 		// Get Layer
 		final Layer layer = getActiveLayer();
 		// Get Padd distance
-		Ref2F padd = mAttributes.getPadd();
+		Vector2 padd = mAttributes.getPadd();
 		// Measure text
 		if (mAttributes.isLinear()) {
-			final float textWidth = layer.mMaxWidth * size + padd.XAxis * (size + 1);
-			final float textHeight = layer.mMaxHeight + padd.YAxis * 2;
-			return new Ref2F(textWidth, textHeight);
+			final float textWidth = layer.mMaxWidth * size + padd.x * (size + 1);
+			final float textHeight = layer.mMaxHeight + padd.y * 2;
+			return new Vector2(textWidth, textHeight);
 		} else {
-			float textWidth = padd.XAxis * (size + 1);
-			float textHeight = layer.mMaxHeight + padd.YAxis * 2;
+			float textWidth = padd.x * (size + 1);
+			float textHeight = layer.mMaxHeight + padd.y * 2;
 			char chars[] = new char[size];
 			text.getChars(start, start + size, chars, 0);
 			for (char c : chars) {
@@ -597,7 +597,7 @@ final public class FontMap extends CacheComponent {
 					textWidth += layer.mCharactersWidths[index];
 				}
 			}
-			return new Ref2F(textWidth, textHeight);
+			return new Vector2(textWidth, textHeight);
 		}
 	}
 
@@ -606,7 +606,7 @@ final public class FontMap extends CacheComponent {
 	 * 
 	 * @return
 	 */
-	final public Ref2F getTextSize(final String text) {
+	final public Vector2 getTextSize(final String text) {
 		return getTextSize(text, 0, text.length());
 	}
 
@@ -615,21 +615,21 @@ final public class FontMap extends CacheComponent {
 	 * 
 	 * @return
 	 */
-	final public Ref2F getTextSize(final char[] text, final int start, final int size) {
+	final public Vector2 getTextSize(final char[] text, final int start, final int size) {
 		if (start < 0 || start + size > text.length)
 			throw new IndexOutOfBoundsException();
 		// Get Layer
 		final Layer layer = getActiveLayer();
 		// Get padd distance		
-		Ref2F padd = mAttributes.getPadd();
+		Vector2 padd = mAttributes.getPadd();
 		// Measure text
 		if (mAttributes.isLinear()) {
-			final float textWidth = layer.mMaxWidth * size + padd.XAxis * (size + 1);
-			final float textHeight = layer.mMaxHeight + padd.YAxis * 2;
-			return new Ref2F(textWidth, textHeight);
+			final float textWidth = layer.mMaxWidth * size + padd.x * (size + 1);
+			final float textHeight = layer.mMaxHeight + padd.y * 2;
+			return new Vector2(textWidth, textHeight);
 		} else {
-			float textWidth = padd.XAxis * (size + 1);
-			float textHeight = layer.mMaxHeight + padd.YAxis * 2;
+			float textWidth = padd.x * (size + 1);
+			float textHeight = layer.mMaxHeight + padd.y * 2;
 			for (int i = start; i < (start + size); i++) {
 				char c = text[i];
 				if (mCharMap.mCharacters[c]) {
@@ -637,7 +637,7 @@ final public class FontMap extends CacheComponent {
 					textWidth += layer.mCharactersWidths[index];
 				}
 			}
-			return new Ref2F(textWidth, textHeight);
+			return new Vector2(textWidth, textHeight);
 		}
 	}
 
@@ -646,7 +646,7 @@ final public class FontMap extends CacheComponent {
 	 * 
 	 * @return
 	 */
-	final public Ref2F getTextSize(final char[] text) {
+	final public Vector2 getTextSize(final char[] text) {
 		return getTextSize(text, 0, text.length);
 	}
 
@@ -797,11 +797,11 @@ final public class FontMap extends CacheComponent {
 	 * 
 	 * @return
 	 */
-	final public Ref2F getLinearCharSize() {
+	final public Vector2 getLinearCharSize() {
 		// Get Layer
 		final Layer layer = getActiveLayer();
 		// Return linear layer size
-		return new Ref2F(layer.mMaxWidth, layer.mMaxHeight);
+		return new Vector2(layer.mMaxWidth, layer.mMaxHeight);
 	}
 
 	/**

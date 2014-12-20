@@ -1,5 +1,7 @@
 package multigear.communication.tcp.support.objectmessage;
 
+import multigear.general.utils.Vector2;
+
 /**
  * Object Message
  * 
@@ -89,18 +91,8 @@ final public class ObjectMessageBuilder {
 	 * @param value Boolean Value
 	 * @return This ObjectMessage reference
 	 */
-	final public ObjectMessageBuilder add(final multigear.general.utils.Ref2F value) {
-		addToStackMessages("ref2d:" + value.XAxis + "," + value.YAxis);
-		return this;
-	}
-	
-	/**
-	 * Add Vector2D Value
-	 * @param value Boolean Value
-	 * @return This ObjectMessage reference
-	 */
-	final public ObjectMessageBuilder add(final multigear.general.utils.Vector2D value) {
-		addToStackMessages("vec2d:" + value.getX() + "," + value.getY());
+	final public ObjectMessageBuilder add(final Vector2 value) {
+		addToStackMessages("ref2d:" + value.x + "," + value.y);
 		return this;
 	}
 	

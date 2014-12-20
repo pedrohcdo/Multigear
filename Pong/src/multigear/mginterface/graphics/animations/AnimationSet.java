@@ -1,6 +1,6 @@
 package multigear.mginterface.graphics.animations;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 
 /**
@@ -13,8 +13,8 @@ import multigear.mginterface.graphics.opengl.texture.Texture;
 final public class AnimationSet {
 	
 	// Private Variables
-	final private Ref2F mPosition;
-	final private Ref2F mScale;
+	final private Vector2 mPosition;
+	final private Vector2 mScale;
 	private float mRotation;
 	private float mOpacity;
 	private Texture mTexture;
@@ -23,8 +23,8 @@ final public class AnimationSet {
 	 * Constructor
 	 */
 	public AnimationSet() {
-		mPosition = new Ref2F(0, 0);
-		mScale = new Ref2F(1, 1);
+		mPosition = new Vector2(0, 0);
+		mScale = new Vector2(1, 1);
 		mTexture = null;
 		reset();
 	}
@@ -43,8 +43,8 @@ final public class AnimationSet {
 	 * Set Animation Position
 	 * @param arg
 	 */
-	final public void setPosition(final Ref2F position) {
-		mPosition.add(position);
+	final public void setPosition(final Vector2 position) {
+		mPosition.sum(position);
 	}
 	
 	/**
@@ -52,14 +52,14 @@ final public class AnimationSet {
 	 * @param arg
 	 */
 	final public void setPosition(final float positionX, float positionY) {
-		mPosition.add(positionX, positionY);
+		mPosition.sum(positionX, positionY);
 	}
 	
 	/**
 	 * Set Scale
 	 * @param scale
 	 */
-	final public void setScale(final Ref2F scale) {
+	final public void setScale(final Vector2 scale) {
 		mScale.set(scale);
 	}
 	
@@ -99,7 +99,7 @@ final public class AnimationSet {
 	 * Get Animation Position
 	 * @param arg
 	 */
-	final public Ref2F getPosition() {
+	final public Vector2 getPosition() {
 		return mPosition.clone();
 	}
 	
@@ -107,7 +107,7 @@ final public class AnimationSet {
 	 * Get Scale
 	 * @param scale
 	 */
-	final public Ref2F getScale() {
+	final public Vector2 getScale() {
 		return mScale.clone();
 	}
 	

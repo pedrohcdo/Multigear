@@ -1,5 +1,6 @@
 package multigear.physics;
 
+import multigear.general.utils.Vector2;
 import android.graphics.RectF;
 
 /**
@@ -25,7 +26,7 @@ final public class ColideDetector {
 	/*
 	 * Detector de colisão
 	 */
-	final static public int detect(final int mode, final multigear.general.utils.Ref2F[] bodyA, final multigear.general.utils.Ref2F[] bodyB) {
+	final static public int detect(final int mode, final Vector2[] bodyA, final Vector2[] bodyB) {
 		switch(mode) {
 			case BODY_A_RECTANGLE:
 				return detectRectangle(bodyA, bodyB);
@@ -40,13 +41,13 @@ final public class ColideDetector {
 	/*
 	 * Detector de colisão em forma de retangulo
 	 */
-	final static private int detectRectangle(final multigear.general.utils.Ref2F[] bodyA, final multigear.general.utils.Ref2F[] bodyB) {
+	final static private int detectRectangle(final Vector2[] bodyA, final Vector2[] bodyB) {
 		// Make Rectangle
 		final RectF rectangle = multigear.physics.ColideMath.getRectangle(bodyA);
 		// Search for colide vertice
 		for(int i=0; i<bodyB.length; i++) {
-			final float vX = (float) bodyB[i].XAxis;
-			final float vY = (float) bodyB[i].YAxis;
+			final float vX = (float) bodyB[i].x;
+			final float vY = (float) bodyB[i].y;
 			if(rectangle.contains(vX, vY)) {
 				// Colided vertice
 				return i;
@@ -59,10 +60,10 @@ final public class ColideDetector {
 	/*
 	 * Detector de colisão em forma de retangulo em poligono
 	 */
-	final static private int detectRectangles(final multigear.general.utils.Ref2F[] bodyA, final multigear.general.utils.Ref2F[] bodyB) {
+	final static private int detectRectangles(final Vector2[] bodyA, final Vector2[] bodyB) {
 		// Get Rectangles size
 		final int rectanglesSize = bodyA.length / 4;
-		final multigear.general.utils.Ref2F[] rectangle = new multigear.general.utils.Ref2F[4];
+		final Vector2[] rectangle = new Vector2[4];
 		// Check colide with rectangles
 		for(int i=0; i<rectanglesSize; i++) {
 			final int j = i * 4;
@@ -81,12 +82,12 @@ final public class ColideDetector {
 	/*
 	 * Detector de colisão com limite inferior
 	 */
-	final static private int detectBottomLimited(final multigear.general.utils.Ref2F[] bodyA, final multigear.general.utils.Ref2F[] bodyB) {
+	final static private int detectBottomLimited(final Vector2[] bodyA, final Vector2[] bodyB) {
 		// Get bottom
-		final double bottom = bodyA[0].YAxis;
+		final double bottom = bodyA[0].y;
 		// Search for colide Bottom
 		for(int i=0; i<bodyB.length; i++) {
-			final float vY = (float) bodyB[i].YAxis;
+			final float vY = (float) bodyB[i].y;
 			if(vY >= bottom) {
 				// Colided vertice
 				return i;

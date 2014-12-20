@@ -3,7 +3,7 @@ package multigear.mginterface.graphics.opengl.texture;
 import java.util.Locale;
 
 import multigear.general.utils.KernelUtils;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -31,12 +31,12 @@ final public class Loader {
 	final private multigear.mginterface.engine.Multigear mEngine;
 	final private multigear.mginterface.graphics.opengl.texture.Cache mCache;
 	final private Resources mResources;
-	final private multigear.general.utils.Ref2F mScreenSize;
+	final private Vector2 mScreenSize;
 	
 	/*
 	 * Construtor
 	 */
-	public Loader(final multigear.mginterface.engine.Multigear engine, final multigear.general.utils.Ref2F screenSize) {
+	public Loader(final multigear.mginterface.engine.Multigear engine, final Vector2 screenSize) {
 		mEngine = engine;
 		mResources = mEngine.getActivity().getResources();
 		mCache = new Cache();
@@ -63,7 +63,7 @@ final public class Loader {
 		// Decode Bitmap
 		BitmapFactory.decodeResource(mResources, resourceId, option);
 		// Get Real Size
-		multigear.general.utils.Ref2F size = multigear.general.utils.KernelUtils.ref2d(option.outWidth, option.outHeight);
+		Vector2 size = new Vector2(option.outWidth, option.outHeight);
 		// Get Bitmap
 		option = new BitmapFactory.Options();
 		option.inScaled = false;
@@ -94,15 +94,15 @@ final public class Loader {
 	/*
 	 * Correct Texture Size
 	 */
-	final private multigear.general.utils.Ref2F correctSize(final multigear.general.utils.Ref2F textureSize) {
+	final private Vector2 correctSize(final Vector2 textureSize) {
 		// If Texture proportion Enabled
 		if (mEngine.getConfiguration().hasFunc(multigear.mginterface.engine.Configuration.FUNC_TEXTURE_PROPORTION)) {
 			// Get Attributes
 			final float selfDensity = mResources.getDisplayMetrics().density;
-			final multigear.general.utils.Ref2F selfScreenSize = mScreenSize;
+			final Vector2 selfScreenSize = mScreenSize;
 			// Get Base Attributes
 			float baseDensity = mEngine.getConfiguration().getFloatAttr(multigear.mginterface.engine.Configuration.ATTR_BASE_DENSITY);
-			multigear.general.utils.Ref2F baseScreenSize = mEngine.getConfiguration().getRef2DAttr(multigear.mginterface.engine.Configuration.ATTR_BASE_SCREEN);
+			Vector2 baseScreenSize = mEngine.getConfiguration().getRef2DAttr(multigear.mginterface.engine.Configuration.ATTR_BASE_SCREEN);
 			// If not set, set as default display
 			if (baseScreenSize == multigear.mginterface.engine.Configuration.DEFAULT_REF2D)
 				baseScreenSize = selfScreenSize;
@@ -161,7 +161,7 @@ final public class Loader {
 	/*
 	 * Carrega um Bitmap diretamente no OGL
 	 */
-	final private multigear.mginterface.graphics.opengl.texture.Texture load(final Bitmap bitmap, final int id, final Ref2F size) {
+	final private multigear.mginterface.graphics.opengl.texture.Texture load(final Bitmap bitmap, final int id, final Vector2 size) {
 		// Create Handle for texture
 		int[] handleVec = new int[1];
 		GLES20.glGenTextures(1, handleVec, 0);
@@ -249,7 +249,7 @@ final public class Loader {
 			multigear.general.utils.KernelUtils.error(mEngine.getActivity(), String.format(Locale.US, ERROR_GLTEXTURE_LOAD_ERROR), ERROR_GLTEXTURE_LOAD_ERROR_CODE);
 		
 		// References
-		final Ref2F size = KernelUtils.ref2d(bitmap.getWidth(), bitmap.getHeight());
+		final Vector2 size = new Vector2(bitmap.getWidth(), bitmap.getHeight());
 		final Updater updater = new Updater(mEngine);
 		final Texture texture = new Texture(mTextureHandle, -1, size, size, updater);
 		

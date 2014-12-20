@@ -27,21 +27,7 @@ final public class KernelUtils {
 	/* Privando COnstrutor */
 	private KernelUtils() {
 	};
-	
-	/*
-	 * Retorna uma instancia do objeto utilisado como referencia 2D
-	 */
-	final static public multigear.general.utils.Ref2F ref2d(final float xaxis, final float yaxis) {
-		return new multigear.general.utils.Ref2F(xaxis, yaxis);
-	}
-	
-	/*
-	 * Retorna uma instancia do objeto utilisado como vetor 2D
-	 */
-	final static public multigear.general.utils.Vector2D vec2d(final float vx, final float vy) {
-		return new multigear.general.utils.Vector2D(vx, vy);
-	}
-	
+
 	/*
 	 * Log de aviso
 	 */

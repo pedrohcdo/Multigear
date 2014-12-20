@@ -3,7 +3,7 @@ package multigear.mginterface.graphics.opengl.programs;
 import java.nio.FloatBuffer;
 
 import multigear.general.utils.GeneralUtils;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
@@ -25,7 +25,7 @@ final public class RepeatTextureRenderer extends BaseProgram {
 	private int mBoundsHandle;
 	private int mBlendColorHandle;
 	private float[] mTransformationComponents;
-	private Ref2F mTransformationSize;
+	private Vector2 mTransformationSize;
 	
 	// Final Private Variables
 	final private float[] mOrthoMatrix = new float[16];
@@ -83,7 +83,7 @@ final public class RepeatTextureRenderer extends BaseProgram {
 	 * Setup Program
 	 */
 	@Override
-	final protected void onSetup(final Ref2F screenSize) {
+	final protected void onSetup(final Vector2 screenSize) {
 		// Get Handles
 		mElementVerticesHandle = GLES20.glGetAttribLocation(getHandle(), "aElementVertices");
 		mTextureVerticesHandle = GLES20.glGetAttribLocation(getHandle(), "aTextureVertices");
@@ -93,7 +93,7 @@ final public class RepeatTextureRenderer extends BaseProgram {
 		mBoundsHandle = GLES20.glGetUniformLocation(getHandle(), "uBounds");
 		mBlendColorHandle = GLES20.glGetUniformLocation(getHandle(), "uBlendColor");
 		// Set Projection Matrix
-		Matrix.orthoM(mOrthoMatrix, 0, 0.0f, (float) screenSize.XAxis, (float) screenSize.YAxis, 0.0f, 0.0f, 1.0f);
+		Matrix.orthoM(mOrthoMatrix, 0, 0.0f, (float) screenSize.x, (float) screenSize.y, 0.0f, 0.0f, 1.0f);
 		Matrix.multiplyMM(mProjectionMatrix, 0, mOrthoMatrix, 0, mIdentityMatrix, 0);
 		// Setup default buffers
 		GLES20.glVertexAttribPointer(mElementVerticesHandle, 2, GLES20.GL_FLOAT, false, 8, mDefaultElementsBuffer);
@@ -113,7 +113,7 @@ final public class RepeatTextureRenderer extends BaseProgram {
 		final float c = transformMatrix[1];
 		final float d = transformMatrix[5];
 		mTransformationComponents = new float[] {a, c, b, d};
-		mTransformationSize = new Ref2F((float)Math.hypot(a, c), (float)Math.hypot(b, d));
+		mTransformationSize = new Vector2((float)Math.hypot(a, c), (float)Math.hypot(b, d));
 		// Pas Attributes
 		GLES20.glUniformMatrix4fv(mProjectionMatrixHandle, 1, false, mProjectionMatrix, 0);
 		GLES20.glUniform4f(mBlendColorHandle, blendColor[0], blendColor[1], blendColor[2], blendColor[3]);
@@ -134,7 +134,7 @@ final public class RepeatTextureRenderer extends BaseProgram {
 		final float w = elementsBuffer[4] - elementsBuffer[0];
 		final float h = elementsBuffer[5] - elementsBuffer[1];
 		// Set Transformation Size
-		mTransformationSize = new Ref2F((float)Math.hypot(a * w, c * w), (float)Math.hypot(b * h, d * h));
+		mTransformationSize = new Vector2((float)Math.hypot(a * w, c * w), (float)Math.hypot(b * h, d * h));
 		// Set Buffers
 		GeneralUtils.putFloatBuffer(mElementsBuffer, elementsBuffer);
 		GeneralUtils.putFloatBuffer(mTextureBuffer, textureBuffer);
@@ -156,16 +156,16 @@ final public class RepeatTextureRenderer extends BaseProgram {
 	 * You will not be possible to render with this program while another is
 	 * being used.
 	 */
-	final public void render(final float[] repeatBounds, final Ref2F repeatSize, final boolean horizontalRepeat, final boolean verticalRepeat) {
+	final public void render(final float[] repeatBounds, final Vector2 repeatSize, final boolean horizontalRepeat, final boolean verticalRepeat) {
 		// Enable Attributes
 		GLES20.glEnableVertexAttribArray(mElementVerticesHandle);
 		GLES20.glEnableVertexAttribArray(mTextureVerticesHandle);
 		// Set Repeat Step
 		final float step[] = new float[] {1, 1};
 		if(horizontalRepeat)
-			step[0] = (float) (mTransformationSize.XAxis / repeatSize.XAxis);
+			step[0] = (float) (mTransformationSize.x / repeatSize.x);
 		if(verticalRepeat)
-			step[1] = (float) (mTransformationSize.YAxis / repeatSize.YAxis);
+			step[1] = (float) (mTransformationSize.y / repeatSize.y);
 		// Initialize Uniform Locations
 		GLES20.glUniform1i(mTextureSampleHandle, 0);
 		// Initialize Uniform Locations

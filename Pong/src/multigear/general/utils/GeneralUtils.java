@@ -63,36 +63,36 @@ final public class GeneralUtils {
 	 * Como é mostrado no exemplo, a proporção se mantem, sendo possivel o
 	 * funcionamento correto da função abaixo.
 	 */
-	final static public multigear.general.utils.Ref2F calculateGeneralTextureSizeBigger(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final float baseDensity, final multigear.general.utils.Ref2F selfScreenSize, final float selfDensity) {
+	final static public Vector2 calculateGeneralTextureSizeBigger(final Vector2 textureSize, final Vector2 baseScreenSize, final float baseDensity, final Vector2 selfScreenSize, final float selfDensity) {
 		// Get Scale Density
 		final float scaleDensity = baseDensity / selfDensity;
 		// Get Base Size
-		final float baseWidth = textureSize.XAxis * scaleDensity;
-		final float baseHeight = textureSize.YAxis * scaleDensity;
+		final float baseWidth = textureSize.x * scaleDensity;
+		final float baseHeight = textureSize.y * scaleDensity;
 		// Scale Factor
 		float xScaleFactor = 0f;
 		float yScaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis > baseScreenSize.YAxis) {
-			xScaleFactor = baseWidth / baseScreenSize.XAxis;
-			yScaleFactor = baseHeight / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x > baseScreenSize.y) {
+			xScaleFactor = baseWidth / baseScreenSize.x;
+			yScaleFactor = baseHeight / baseScreenSize.x;
 		} else {
-			xScaleFactor = baseWidth / baseScreenSize.YAxis;
-			yScaleFactor = baseHeight / baseScreenSize.YAxis;
+			xScaleFactor = baseWidth / baseScreenSize.y;
+			yScaleFactor = baseHeight / baseScreenSize.y;
 		}
 		// Correct Texture Size
 		float textureWidth = 0;
 		float textureHeight = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis > selfScreenSize.YAxis) {
-			textureWidth = xScaleFactor * selfScreenSize.XAxis;
-			textureHeight = yScaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x > selfScreenSize.y) {
+			textureWidth = xScaleFactor * selfScreenSize.x;
+			textureHeight = yScaleFactor * selfScreenSize.x;
 		} else {
-			textureWidth = xScaleFactor * selfScreenSize.YAxis;
-			textureHeight = yScaleFactor * selfScreenSize.YAxis;
+			textureWidth = xScaleFactor * selfScreenSize.y;
+			textureHeight = yScaleFactor * selfScreenSize.y;
 		}
 		// Return correct Texture size
-		return multigear.general.utils.KernelUtils.ref2d(textureWidth, textureHeight);
+		return new Vector2(textureWidth, textureHeight);
 	}
 	
 	/*
@@ -107,36 +107,36 @@ final public class GeneralUtils {
 	 * Como é mostrado no exemplo, a proporção se mantem, sendo possivel o
 	 * funcionamento correto da função abaixo.
 	 */
-	final static public multigear.general.utils.Ref2F calculateGeneralTextureSizeSmaller(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final float baseDensity, final multigear.general.utils.Ref2F selfScreenSize, final float selfDensity) {
+	final static public Vector2 calculateGeneralTextureSizeSmaller(final Vector2 textureSize, final Vector2 baseScreenSize, final float baseDensity, final Vector2 selfScreenSize, final float selfDensity) {
 		// Get Scale Density
 		final float scaleDensity = baseDensity / selfDensity;
 		// Get Base Size
-		final float baseWidth = textureSize.XAxis * scaleDensity;
-		final float baseHeight = textureSize.YAxis * scaleDensity;
+		final float baseWidth = textureSize.x * scaleDensity;
+		final float baseHeight = textureSize.y * scaleDensity;
 		// Scale Factor
 		float xScaleFactor = 0f;
 		float yScaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis < baseScreenSize.YAxis) {
-			xScaleFactor = baseWidth / baseScreenSize.XAxis;
-			yScaleFactor = baseHeight / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x < baseScreenSize.y) {
+			xScaleFactor = baseWidth / baseScreenSize.x;
+			yScaleFactor = baseHeight / baseScreenSize.x;
 		} else {
-			xScaleFactor = baseWidth / baseScreenSize.YAxis;
-			yScaleFactor = baseHeight / baseScreenSize.YAxis;
+			xScaleFactor = baseWidth / baseScreenSize.y;
+			yScaleFactor = baseHeight / baseScreenSize.y;
 		}
 		// Correct Texture Size
 		float textureWidth = 0;
 		float textureHeight = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis < selfScreenSize.YAxis) {
-			textureWidth = xScaleFactor * selfScreenSize.XAxis;
-			textureHeight = yScaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x < selfScreenSize.y) {
+			textureWidth = xScaleFactor * selfScreenSize.x;
+			textureHeight = yScaleFactor * selfScreenSize.x;
 		} else {
-			textureWidth = xScaleFactor * selfScreenSize.YAxis;
-			textureHeight = yScaleFactor * selfScreenSize.YAxis;
+			textureWidth = xScaleFactor * selfScreenSize.y;
+			textureHeight = yScaleFactor * selfScreenSize.y;
 		}
 		// Return correct Texture size
-		return multigear.general.utils.KernelUtils.ref2d(textureWidth, textureHeight);
+		return new Vector2(textureWidth, textureHeight);
 	}
 	
 	/*
@@ -151,19 +151,19 @@ final public class GeneralUtils {
 	 * Como é mostrado no exemplo, a proporção se mantem, sendo possivel o
 	 * funcionamento correto da função abaixo.
 	 */
-	final static public multigear.general.utils.Ref2F calculateGeneralTextureSizeDiagonal(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final float baseDensity, final multigear.general.utils.Ref2F selfScreenSize, final float selfDensity) {
+	final static public Vector2 calculateGeneralTextureSizeDiagonal(final Vector2 textureSize, final Vector2 baseScreenSize, final float baseDensity, final Vector2 selfScreenSize, final float selfDensity) {
 		// Get Scale Density
 		final float scaleDensity = baseDensity / selfDensity;
 		// Get Base Size
-		final float baseWidth = textureSize.XAxis * scaleDensity;
-		final float baseHeight = textureSize.YAxis * scaleDensity;
+		final float baseWidth = textureSize.x * scaleDensity;
+		final float baseHeight = textureSize.y * scaleDensity;
 		// Scale Factor
-		float xScaleFactor = selfScreenSize.XAxis / baseScreenSize.XAxis;
-		float yScaleFactor = selfScreenSize.YAxis / baseScreenSize.YAxis;
+		float xScaleFactor = selfScreenSize.x / baseScreenSize.x;
+		float yScaleFactor = selfScreenSize.y / baseScreenSize.y;
 		// Get Diagonal
 		float xyScaleFactor = (float)Math.hypot(xScaleFactor, yScaleFactor);
 		// Return correct Texture size
-		return new Ref2F(xyScaleFactor * baseWidth, xyScaleFactor * baseHeight);
+		return new Vector2(xyScaleFactor * baseWidth, xyScaleFactor * baseHeight);
 	}
 	
 	/*
@@ -178,17 +178,17 @@ final public class GeneralUtils {
 	 * Como é mostrado no exemplo, a proporção se mantem, sendo possivel o
 	 * funcionamento correto da função abaixo.
 	 */
-	final static public multigear.general.utils.Ref2F calculateGeneralTextureSizeUnspect(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final float baseDensity, final multigear.general.utils.Ref2F selfScreenSize, final float selfDensity) {
+	final static public Vector2 calculateGeneralTextureSizeUnspect(final Vector2 textureSize, final Vector2 baseScreenSize, final float baseDensity, final Vector2 selfScreenSize, final float selfDensity) {
 		// Get Scale Density
 		final float scaleDensity = baseDensity / selfDensity;
 		// Get Base Size
-		final float baseWidth = textureSize.XAxis * scaleDensity;
-		final float baseHeight = textureSize.YAxis * scaleDensity;
+		final float baseWidth = textureSize.x * scaleDensity;
+		final float baseHeight = textureSize.y * scaleDensity;
 		// Scale Factor
-		float xScaleFactor = selfScreenSize.XAxis / baseScreenSize.XAxis;
-		float yScaleFactor = selfScreenSize.YAxis / baseScreenSize.YAxis;
+		float xScaleFactor = selfScreenSize.x / baseScreenSize.x;
+		float yScaleFactor = selfScreenSize.y / baseScreenSize.y;
 		// Return correct Texture size
-		return new Ref2F(xScaleFactor * baseWidth, yScaleFactor * baseHeight);
+		return new Vector2(xScaleFactor * baseWidth, yScaleFactor * baseHeight);
 	}
 	
 	/*
@@ -199,31 +199,31 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public multigear.general.utils.Ref2F calculateIndividualTextureSizeBigger(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public Vector2 calculateIndividualTextureSizeBigger(final Vector2 textureSize, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// Scale Factor
 		float xScaleFactor = 0f;
 		float yScaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis > baseScreenSize.YAxis) {
-			xScaleFactor = textureSize.XAxis / baseScreenSize.XAxis;
-			yScaleFactor = textureSize.YAxis / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x > baseScreenSize.y) {
+			xScaleFactor = textureSize.x / baseScreenSize.x;
+			yScaleFactor = textureSize.y / baseScreenSize.x;
 		} else {
-			xScaleFactor = textureSize.XAxis / baseScreenSize.YAxis;
-			yScaleFactor = textureSize.YAxis / baseScreenSize.YAxis;
+			xScaleFactor = textureSize.x / baseScreenSize.y;
+			yScaleFactor = textureSize.y / baseScreenSize.y;
 		}
 		// Correct Texture Size
 		float correctTextureWidth = 0;
 		float correctTextureHeight = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis > selfScreenSize.YAxis) {
-			correctTextureWidth = xScaleFactor * selfScreenSize.XAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x > selfScreenSize.y) {
+			correctTextureWidth = xScaleFactor * selfScreenSize.x;
+			correctTextureHeight = yScaleFactor * selfScreenSize.x;
 		} else {
-			correctTextureWidth = xScaleFactor * selfScreenSize.YAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.YAxis;
+			correctTextureWidth = xScaleFactor * selfScreenSize.y;
+			correctTextureHeight = yScaleFactor * selfScreenSize.y;
 		}
 		// Return correct Texture size
-		return multigear.general.utils.KernelUtils.ref2d(correctTextureWidth, correctTextureHeight);
+		return new Vector2(correctTextureWidth, correctTextureHeight);
 	}
 	
 	/*
@@ -234,14 +234,14 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public multigear.general.utils.Ref2F calculateIndividualTextureSizeDiagonal(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public Vector2 calculateIndividualTextureSizeDiagonal(final Vector2 textureSize, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// Scale Factor
-		float xScaleFactor = selfScreenSize.XAxis / baseScreenSize.XAxis;
-		float yScaleFactor = selfScreenSize.YAxis / baseScreenSize.YAxis;
+		float xScaleFactor = selfScreenSize.x / baseScreenSize.x;
+		float yScaleFactor = selfScreenSize.y / baseScreenSize.y;
 		// Get Diagonal
 		float xyScaleFactor = (float)Math.hypot(xScaleFactor, yScaleFactor);
 		// Return correct Texture size
-		return textureSize.clone().mul(new Ref2F(xyScaleFactor, xyScaleFactor));
+		return Vector2.scale(textureSize, xyScaleFactor);
 	}
 	
 	/*
@@ -252,12 +252,12 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public multigear.general.utils.Ref2F calculateIndividualTextureSizeUnspect(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public Vector2 calculateIndividualTextureSizeUnspect(final Vector2 textureSize, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// Scale Factor
-		float xScaleFactor = selfScreenSize.XAxis / baseScreenSize.XAxis;
-		float yScaleFactor = selfScreenSize.YAxis / baseScreenSize.YAxis;
+		float xScaleFactor = selfScreenSize.x / baseScreenSize.x;
+		float yScaleFactor = selfScreenSize.y / baseScreenSize.y;
 		// Return correct Texture size
-		return textureSize.clone().mul(new Ref2F(xScaleFactor, yScaleFactor));
+		return Vector2.scale(textureSize, xScaleFactor, yScaleFactor);
 	}
 	
 	/*
@@ -268,31 +268,31 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public multigear.general.utils.Ref2F calculateIndividualTextureSizeSmaller(final multigear.general.utils.Ref2F textureSize, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public Vector2 calculateIndividualTextureSizeSmaller(final Vector2 textureSize, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// Scale Factor
 		float xScaleFactor = 0f;
 		float yScaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis < baseScreenSize.YAxis) {
-			xScaleFactor = textureSize.XAxis / baseScreenSize.XAxis;
-			yScaleFactor = textureSize.YAxis / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x < baseScreenSize.y) {
+			xScaleFactor = textureSize.x / baseScreenSize.x;
+			yScaleFactor = textureSize.y / baseScreenSize.x;
 		} else {
-			xScaleFactor = textureSize.XAxis / baseScreenSize.YAxis;
-			yScaleFactor = textureSize.YAxis / baseScreenSize.YAxis;
+			xScaleFactor = textureSize.x / baseScreenSize.y;
+			yScaleFactor = textureSize.y / baseScreenSize.y;
 		}
 		// Correct Texture Size
 		float correctTextureWidth = 0;
 		float correctTextureHeight = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis < selfScreenSize.YAxis) {
-			correctTextureWidth = xScaleFactor * selfScreenSize.XAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x < selfScreenSize.y) {
+			correctTextureWidth = xScaleFactor * selfScreenSize.x;
+			correctTextureHeight = yScaleFactor * selfScreenSize.x;
 		} else {
-			correctTextureWidth = xScaleFactor * selfScreenSize.YAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.YAxis;
+			correctTextureWidth = xScaleFactor * selfScreenSize.y;
+			correctTextureHeight = yScaleFactor * selfScreenSize.y;
 		}
 		// Return correct Texture size
-		return multigear.general.utils.KernelUtils.ref2d(correctTextureWidth, correctTextureHeight);
+		return new Vector2(correctTextureWidth, correctTextureHeight);
 	}
 	
 	/*
@@ -303,25 +303,25 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public float calculateIndividualValueBigger(final float value, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public float calculateIndividualValueBigger(final float value, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// If same Display
-		if((baseScreenSize.YAxis - selfScreenSize.YAxis) <= 0.01)
+		if((baseScreenSize.y - selfScreenSize.y) <= 0.01)
 			return value;
 		
 		// Scale Factor
 		float scaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis > baseScreenSize.YAxis)
-			scaleFactor = value / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x > baseScreenSize.y)
+			scaleFactor = value / baseScreenSize.x;
 		else
-			scaleFactor = value / baseScreenSize.YAxis;
+			scaleFactor = value / baseScreenSize.y;
 		// Correct Texture Size
 		float correctValue = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis > selfScreenSize.YAxis)
-			correctValue = scaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x > selfScreenSize.y)
+			correctValue = scaleFactor * selfScreenSize.x;
 		else
-			correctValue = scaleFactor * selfScreenSize.YAxis;
+			correctValue = scaleFactor * selfScreenSize.y;
 		// Return correct Texture size
 		return correctValue;
 	}
@@ -334,25 +334,25 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public float calculateIndividualValueSmaller(final float value, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public float calculateIndividualValueSmaller(final float value, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// If same Display
-		if((baseScreenSize.XAxis - selfScreenSize.XAxis) <= 0.01)
+		if((baseScreenSize.x - selfScreenSize.x) <= 0.01)
 			return value;
 		
 		// Scale Factor
 		float scaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis < baseScreenSize.YAxis)
-			scaleFactor = value / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x < baseScreenSize.y)
+			scaleFactor = value / baseScreenSize.x;
 		else
-			scaleFactor = value / baseScreenSize.YAxis;
+			scaleFactor = value / baseScreenSize.y;
 		// Correct Texture Size
 		float correctValue = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis < selfScreenSize.YAxis)
-			correctValue = scaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x < selfScreenSize.y)
+			correctValue = scaleFactor * selfScreenSize.x;
 		else
-			correctValue = scaleFactor * selfScreenSize.YAxis;
+			correctValue = scaleFactor * selfScreenSize.y;
 		// Return correct Texture size
 		return correctValue;
 	}
@@ -365,31 +365,31 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public multigear.general.utils.Ref2F calculateIndividualRef2DBigger(final multigear.general.utils.Ref2F ref2D, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public Vector2 calculateIndividualRef2DBigger(final Vector2 ref2D, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// Scale Factor
 		float xScaleFactor = 0f;
 		float yScaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis > baseScreenSize.YAxis) {
-			xScaleFactor = ref2D.XAxis / baseScreenSize.XAxis;
-			yScaleFactor = ref2D.YAxis / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x > baseScreenSize.y) {
+			xScaleFactor = ref2D.x / baseScreenSize.x;
+			yScaleFactor = ref2D.y / baseScreenSize.x;
 		} else {
-			xScaleFactor = ref2D.XAxis / baseScreenSize.YAxis;
-			yScaleFactor = ref2D.YAxis / baseScreenSize.YAxis;
+			xScaleFactor = ref2D.x / baseScreenSize.y;
+			yScaleFactor = ref2D.y / baseScreenSize.y;
 		}
 		// Correct Texture Size
 		float correctTextureWidth = 0;
 		float correctTextureHeight = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis > selfScreenSize.YAxis) {
-			correctTextureWidth = xScaleFactor * selfScreenSize.XAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x > selfScreenSize.y) {
+			correctTextureWidth = xScaleFactor * selfScreenSize.x;
+			correctTextureHeight = yScaleFactor * selfScreenSize.x;
 		} else {
-			correctTextureWidth = xScaleFactor * selfScreenSize.YAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.YAxis;
+			correctTextureWidth = xScaleFactor * selfScreenSize.y;
+			correctTextureHeight = yScaleFactor * selfScreenSize.y;
 		}
 		// Return correct Texture size
-		return multigear.general.utils.KernelUtils.ref2d(correctTextureWidth, correctTextureHeight);
+		return new Vector2(correctTextureWidth, correctTextureHeight);
 	}
 	
 	/*
@@ -400,31 +400,31 @@ final public class GeneralUtils {
 	 * incorretos, coloque as texturas desejadas somente na pasta base e
 	 * desabilite o redimensionamento para outras densidades)
 	 */
-	final static public multigear.general.utils.Ref2F calculateIndividualRef2DSmaller(final multigear.general.utils.Ref2F ref2D, final multigear.general.utils.Ref2F baseScreenSize, final multigear.general.utils.Ref2F selfScreenSize) {
+	final static public Vector2 calculateIndividualRef2DSmaller(final Vector2 ref2D, final Vector2 baseScreenSize, final Vector2 selfScreenSize) {
 		// Scale Factor
 		float xScaleFactor = 0f;
 		float yScaleFactor = 0f;
-		// Get Scale Factor for Minor Screen Axis value
-		if (baseScreenSize.XAxis < baseScreenSize.YAxis) {
-			xScaleFactor = ref2D.XAxis / baseScreenSize.XAxis;
-			yScaleFactor = ref2D.YAxis / baseScreenSize.XAxis;
+		// Get Scale Factor for Minor Screen  value
+		if (baseScreenSize.x < baseScreenSize.y) {
+			xScaleFactor = ref2D.x / baseScreenSize.x;
+			yScaleFactor = ref2D.y / baseScreenSize.x;
 		} else {
-			xScaleFactor = ref2D.XAxis / baseScreenSize.YAxis;
-			yScaleFactor = ref2D.YAxis / baseScreenSize.YAxis;
+			xScaleFactor = ref2D.x / baseScreenSize.y;
+			yScaleFactor = ref2D.y / baseScreenSize.y;
 		}
 		// Correct Texture Size
 		float correctTextureWidth = 0;
 		float correctTextureHeight = 0;
-		// Get Corrected Texture Size for Minor Screen Axis Value
-		if (selfScreenSize.XAxis < selfScreenSize.YAxis) {
-			correctTextureWidth = xScaleFactor * selfScreenSize.XAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.XAxis;
+		// Get Corrected Texture Size for Minor Screen  Value
+		if (selfScreenSize.x < selfScreenSize.y) {
+			correctTextureWidth = xScaleFactor * selfScreenSize.x;
+			correctTextureHeight = yScaleFactor * selfScreenSize.x;
 		} else {
-			correctTextureWidth = xScaleFactor * selfScreenSize.YAxis;
-			correctTextureHeight = yScaleFactor * selfScreenSize.YAxis;
+			correctTextureWidth = xScaleFactor * selfScreenSize.y;
+			correctTextureHeight = yScaleFactor * selfScreenSize.y;
 		}
 		// Return correct Texture size
-		return multigear.general.utils.KernelUtils.ref2d(correctTextureWidth, correctTextureHeight);
+		return new Vector2(correctTextureWidth, correctTextureHeight);
 	}
 	
 	/*
@@ -446,17 +446,17 @@ final public class GeneralUtils {
 	 * Retorna o tamanho real da tela
 	 */
 	@SuppressLint("NewApi")
-	final static public multigear.general.utils.Ref2F getRealScreenSize(Display display, multigear.general.utils.Ref2F defaultScreenSize) {
-		multigear.general.utils.Ref2F finalScreenSize = multigear.general.utils.KernelUtils.ref2d(0, 0);
+	final static public Vector2 getRealScreenSize(Display display, Vector2 defaultScreenSize) {
+		Vector2 finalScreenSize = new Vector2(0, 0);
 		if (Build.VERSION.SDK_INT >= 19) {
 			Point outPoint = new Point();
 			DisplayMetrics metrics = new DisplayMetrics();
 			display.getRealMetrics(metrics);
 			outPoint.x = metrics.widthPixels;
 			outPoint.y = metrics.heightPixels;
-			finalScreenSize = multigear.general.utils.KernelUtils.ref2d(outPoint.x, outPoint.y);
+			finalScreenSize = new Vector2(outPoint.x, outPoint.y);
 		}
-		if (finalScreenSize.XAxis < defaultScreenSize.XAxis && finalScreenSize.YAxis < defaultScreenSize.YAxis) {
+		if (finalScreenSize.x < defaultScreenSize.x && finalScreenSize.y < defaultScreenSize.y) {
 			return defaultScreenSize;
 		}
 		return finalScreenSize;
@@ -519,9 +519,9 @@ final public class GeneralUtils {
 	 * (0,0) -> (1, 0) -> (1, 1) -> (0, 1)
 	 * @return
 	 */
-	final static public float[] mapRectToFloat(final Rect ref, final Ref2F measure) {
-		final float width = (float)measure.XAxis;
-		final float height = (float)measure.YAxis;
+	final static public float[] mapRectToFloat(final Rect ref, final Vector2 measure) {
+		final float width = (float)measure.x;
+		final float height = (float)measure.y;
 		final float left = ref.left / width;
 		final float top = ref.top / height;
 		final float right = ref.right / width;
@@ -536,9 +536,9 @@ final public class GeneralUtils {
 	 * (0,0) -> (1, 0) -> (1, 1) -> (0, 1)
 	 * @return
 	 */
-	final static public float[] mapRectToFloat(final RectF ref, final Ref2F measure) {
-		final float width = (float)measure.XAxis;
-		final float height = (float)measure.YAxis;
+	final static public float[] mapRectToFloat(final RectF ref, final Vector2 measure) {
+		final float width = (float)measure.x;
+		final float height = (float)measure.y;
 		final float left = ref.left / width;
 		final float top = ref.top / height;
 		final float right = ref.right / width;
@@ -553,9 +553,9 @@ final public class GeneralUtils {
 	 * (0,0) -> (1, 0) -> (1, 1) -> (0, 1)
 	 * @return
 	 */
-	final static public void mapRectToFloat(final RectF ref, final Ref2F measure, float[] out, int offset) {
-		final float width = (float)measure.XAxis;
-		final float height = (float)measure.YAxis;
+	final static public void mapRectToFloat(final RectF ref, final Vector2 measure, float[] out, int offset) {
+		final float width = (float)measure.x;
+		final float height = (float)measure.y;
 		final float left = ref.left / width;
 		final float top = ref.top / height;
 		final float right = ref.right / width;

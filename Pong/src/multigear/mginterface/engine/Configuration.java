@@ -3,7 +3,7 @@ package multigear.mginterface.engine;
 import java.util.ArrayList;
 import java.util.List;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import android.app.Activity;
 
 /**
@@ -49,12 +49,12 @@ final public class Configuration {
 	
 	// Default Values
 	final static public int DEFAULT_VALUE = -1;
-	final static public multigear.general.utils.Ref2F DEFAULT_REF2D = null;
+	final static public Vector2 DEFAULT_REF2D = null;
 	
 	// Default Constants
 	final static private float DEFAULT_BASE_DPI = DEFAULT_VALUE;
 	final static private float DEFAULT_BASE_DENSITY = DEFAULT_VALUE;
-	final static private multigear.general.utils.Ref2F DEFAULT_BASE_SCREEN = DEFAULT_REF2D;
+	final static private Vector2 DEFAULT_BASE_SCREEN = DEFAULT_REF2D;
 	final static private int DEFAULT_PROPORTION_FROM = PROPORTION_FROM_GENERAL;
 	final static private int DEFAULT_PROPORTION_MODES = PROPORTION_MODE_UNSPECT;
 	final static private int DEFAULT_BACKGROUND_COLOR = 0;
@@ -78,7 +78,7 @@ final public class Configuration {
 		volatile public String Name;
 		volatile public float Value;
 		volatile public Object Object;
-		volatile public multigear.general.utils.Ref2F Ref2D;
+		volatile public Vector2 Vector;
 		
 		/*
 		 * Construtor
@@ -86,15 +86,15 @@ final public class Configuration {
 		public Attr(final String name, final float value) {
 			Name = name;
 			Value = value;
-			Ref2D = multigear.general.utils.KernelUtils.ref2d(0, 0);
+			Vector = new Vector2(0, 0);
 		}
 		
 		/*
 		 * Construtor Secundario
 		 */
-		public Attr(final String name, final multigear.general.utils.Ref2F value) {
+		public Attr(final String name, final Vector2 value) {
 			Name = name;
-			Ref2D = value;
+			Vector = value;
 		}
 		
 		/*
@@ -108,19 +108,19 @@ final public class Configuration {
 		/*
 		 * Construtor Conjugado
 		 */
-		public Attr(final String name, final float valueF, final multigear.general.utils.Ref2F valueR) {
+		public Attr(final String name, final float valueF, final Vector2 valueR) {
 			Name = name;
 			Value = valueF;
-			Ref2D = valueR;
+			Vector = valueR;
 		}
 		
 		/*
 		 * Construtor Conjugado
 		 */
-		public Attr(final String name, final float valueF, final Ref2F valueR, final Object object) {
+		public Attr(final String name, final float valueF, final Vector2 valueR, final Object object) {
 			Name = name;
 			Value = valueF;
-			Ref2D = valueR;
+			Vector = valueR;
 			Object = object;
 		}
 		
@@ -128,12 +128,12 @@ final public class Configuration {
 		 * Retorna uma copia do objeto
 		 */
 		final public Attr clone() {
-			if(Ref2D == null)
+			if(Vector == null)
 				return new Attr(Name, Value, null);
 			else if(Object == null)
-				return new Attr(Name, Value, Ref2D.clone());
+				return new Attr(Name, Value, Vector.clone());
 			else
-				return new Attr(Name, Value, Ref2D.clone(), Object);
+				return new Attr(Name, Value, Vector.clone(), Object);
 		}
 	}
 	
@@ -187,9 +187,9 @@ final public class Configuration {
 					mSaveAttr = attr.clone();
 					return true;
 				}
-				final int an = mSaveAttr.Ref2D == null ? 1 : 0;
-				final int bn = attr.Ref2D == null ? 1 : 0;
-				if(an != bn || !(mSaveAttr.Ref2D.equals(attr.Ref2D))) {
+				final int an = mSaveAttr.Vector == null ? 1 : 0;
+				final int bn = attr.Vector == null ? 1 : 0;
+				if(an != bn || !(mSaveAttr.Vector.equals(attr.Vector))) {
 					mSaveAttr = attr.clone();
 					return true;
 				}
@@ -212,12 +212,12 @@ final public class Configuration {
 		/*
 		 * Retorna o valore longo referente a chave
 		 */
-		final public multigear.general.utils.Ref2F getRef2DAttr() {
+		final public Vector2 getRef2DAttr() {
 			if(mName.length() == 0)
 				return null;
 			if(mSaveAttr == null)
-				return getAttr(mName).Ref2D;
-			return mSaveAttr.Ref2D;
+				return getAttr(mName).Vector;
+			return mSaveAttr.Vector;
 		}
 	}
 	
@@ -327,14 +327,14 @@ final public class Configuration {
 	/*
 	 * Adiciona um atributo
 	 */
-	final public void setAttr(final String name, final multigear.general.utils.Ref2F value) {
+	final public void setAttr(final String name, final Vector2 value) {
 		mOptmizedKey++;
 		for(final Attr attr : mAttributes) {
 			if(attr.Name.equals(name)) {
 				if(value == null)
-					attr.Ref2D = null;
+					attr.Vector = null;
 				else
-					attr.Ref2D = value.clone();
+					attr.Vector = value.clone();
 			}
 		}
 	}
@@ -375,12 +375,12 @@ final public class Configuration {
 	/*
 	 * Retorna um atributo
 	 */
-	final public multigear.general.utils.Ref2F getRef2DAttr(final String name) {
+	final public Vector2 getRef2DAttr(final String name) {
 		for(final Attr attr : mAttributes) {
 			if(attr.Name.equals(name))
-				return attr.Ref2D;
+				return attr.Vector;
 		}
-		return multigear.general.utils.KernelUtils.ref2d(0, 0);
+		return new Vector2(0, 0);
 	}
 	
 	/*

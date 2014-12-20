@@ -1,7 +1,6 @@
 package multigear.mginterface.graphics.drawable.particles;
 
-import multigear.general.utils.Ref2F;
-import multigear.mginterface.graphics.opengl.texture.Texture;
+import multigear.general.utils.Vector2;
 
 /**
  * Particle used to add in Particles Group
@@ -17,10 +16,10 @@ public class Particle {
 	final private int mDuration;
 	
 	// Private Variables
-	private Ref2F mPosition = new Ref2F(0, 0);
+	private Vector2 mPosition = new Vector2(0, 0);
 	private boolean mFixedSpace = false;
-	private Ref2F mForces = new Ref2F(0, 0);
-	private Ref2F mAccelerations = new Ref2F(0, 0);
+	private Vector2 mForces = new Vector2(0, 0);
+	private Vector2 mAccelerations = new Vector2(0, 0);
 	
 	// Runn Variables
 	private long mCreatedTime;
@@ -82,7 +81,7 @@ public class Particle {
 	 * 
 	 * @param forces
 	 */
-	final public void setForces(final Ref2F forces) {
+	final public void setForces(final Vector2 forces) {
 		mForces = forces;
 	}
 	
@@ -92,7 +91,7 @@ public class Particle {
 	 * 
 	 * @param accelerations
 	 */
-	final public void setAccelerations(final Ref2F accelerations) {
+	final public void setAccelerations(final Vector2 accelerations) {
 		mAccelerations = accelerations;
 	}
 	
@@ -100,9 +99,9 @@ public class Particle {
 	 * Set Sprite Position
 	 * 
 	 * @param position
-	 *            {@link multigear.general.utils.Ref2F} Position
+	 *            {@link Vector2} Position
 	 */
-	final public void setPosition(final multigear.general.utils.Ref2F position) {
+	final public void setPosition(final Vector2 position) {
 		mPosition = position;
 	}
 	
@@ -142,7 +141,7 @@ public class Particle {
 	 * 
 	 * @param forces
 	 */
-	final public Ref2F getForces() {
+	final public Vector2 getForces() {
 		return mForces.clone();
 	}
 	
@@ -152,16 +151,16 @@ public class Particle {
 	 * 
 	 * @param accelerations
 	 */
-	final public Ref2F getAccelerations() {
+	final public Vector2 getAccelerations() {
 		return mAccelerations.clone();
 	}
 	
 	/**
 	 * Return Position
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Position
+	 * @return {@link Vector2} Position
 	 */
-	final public Ref2F getPosition() {
+	final public Vector2 getPosition() {
 		return mPosition.clone();
 	}
 	
@@ -197,8 +196,8 @@ public class Particle {
 	 * Update this Particle
 	 */
 	final protected void update() {
-		mAccelerations.add(mForces);
-		mPosition.add(mAccelerations);
+		mAccelerations.sum(mForces);
+		mPosition.sum(mAccelerations);
 	}
 	
 	/**

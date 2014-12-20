@@ -1,5 +1,7 @@
 package multigear.mginterface.graphics.drawable;
 
+import multigear.general.utils.Vector2;
+
 
 /**
  * Listener utilizado pelo Sprite.
@@ -14,7 +16,7 @@ public interface SimpleListener extends multigear.mginterface.graphics.drawable.
 	public void onPress(final multigear.mginterface.graphics.drawable.BaseDrawable drawable);
 	
 	/** On Move Event */
-	public void onMove(final multigear.mginterface.graphics.drawable.BaseDrawable drawable, final multigear.general.utils.Ref2F moved);
+	public void onMove(final multigear.mginterface.graphics.drawable.BaseDrawable drawable, final Vector2 moved);
 	
 	/** On Release Event */
 	public void onRelease(final multigear.mginterface.graphics.drawable.BaseDrawable drawable);

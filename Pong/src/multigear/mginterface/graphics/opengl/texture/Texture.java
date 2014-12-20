@@ -1,7 +1,7 @@
 package multigear.mginterface.graphics.opengl.texture;
 
 import multigear.cache.CacheComponent;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.drawer.TextureContainer;
 import android.graphics.Bitmap;
 
@@ -29,9 +29,9 @@ final public class Texture extends CacheComponent {
 	// Variables
 	final private int mHandle;
 	final private int mID;
-	final private multigear.general.utils.Ref2F mSize;
+	final private Vector2 mSize;
 	final private multigear.mginterface.graphics.opengl.texture.Updater mUpdater;
-	final private Ref2F mResourceSize;
+	final private Vector2 mResourceSize;
 	
 	// Private Variables
 	private TextureMap mTextureMap = DefaultTextureMap;
@@ -39,7 +39,7 @@ final public class Texture extends CacheComponent {
 	/*
 	 * Construtor
 	 */
-	protected Texture(final int handle, final int id, final Ref2F size, final Ref2F resourceSize, final Updater updater) {
+	protected Texture(final int handle, final int id, final Vector2 size, final Vector2 resourceSize, final Updater updater) {
 		mHandle = handle;
 		mID = id;
 		mSize = size.clone();
@@ -66,9 +66,9 @@ final public class Texture extends CacheComponent {
 	 * Atualiza o conteudo da textura
 	 */
 	final public multigear.mginterface.graphics.opengl.texture.Texture setBitmap(final Bitmap bitmap) {
-		final multigear.general.utils.Ref2F size = mUpdater.update(mHandle, bitmap);
-		mSize.XAxis = size.XAxis;
-		mSize.YAxis = size.YAxis;
+		final Vector2 size = mUpdater.update(mHandle, bitmap);
+		mSize.x = size.x;
+		mSize.y = size.y;
 		return this;
 	}
 	
@@ -76,7 +76,7 @@ final public class Texture extends CacheComponent {
 	 * Return Texture Size
 	 * @return
 	 */
-	final public Ref2F getSize() {
+	final public Vector2 getSize() {
 		return mSize.clone();
 	}
 	
@@ -84,7 +84,7 @@ final public class Texture extends CacheComponent {
 	 * Return Resource Size without proportion.
 	 * @return
 	 */
-	final public Ref2F getResourceSize() {
+	final public Vector2 getResourceSize() {
 		return mResourceSize.clone();
 	}
 	
@@ -100,11 +100,11 @@ final public class Texture extends CacheComponent {
 	 * Atualiza o conteudo da textura
 	 */
 	final public multigear.mginterface.graphics.opengl.texture.Texture setBitmap(final Bitmap bitmap, final boolean recycle) {
-		final multigear.general.utils.Ref2F size = mUpdater.update(mHandle, bitmap);
+		final Vector2 size = mUpdater.update(mHandle, bitmap);
 		if(recycle)
 			bitmap.recycle();
-		mSize.XAxis = size.XAxis;
-		mSize.YAxis = size.YAxis;
+		mSize.x = size.x;
+		mSize.y = size.y;
 		return this;
 	}
 	
@@ -112,9 +112,9 @@ final public class Texture extends CacheComponent {
 	 * Stretch Texture.
 	 * @param size Size
 	 */
-	final public void stretch(final multigear.general.utils.Ref2F size) {
-		mSize.XAxis = size.XAxis;
-		mSize.YAxis = size.YAxis;
+	final public void stretch(final Vector2 size) {
+		mSize.x = size.x;
+		mSize.y = size.y;
 	}
 	
 	/**

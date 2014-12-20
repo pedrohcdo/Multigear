@@ -2,6 +2,7 @@ package multigear.mginterface.graphics.opengl.texture;
 
 import java.util.Locale;
 
+import multigear.general.utils.Vector2;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
@@ -29,7 +30,7 @@ final public class Updater {
 	/*
 	 * Atualiza uma textura
 	 */
-	final protected multigear.general.utils.Ref2F update(final int handle, final Bitmap bitmap) {
+	final protected Vector2 update(final int handle, final Bitmap bitmap) {
 		// Parametrize TExture
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, handle);
@@ -67,6 +68,6 @@ final public class Updater {
 			multigear.general.utils.KernelUtils.error(mEngine.getActivity(), String.format(Locale.US, Loader.ERROR_GLTEXTURE_LOAD_ERROR, error), Loader.ERROR_GLTEXTURE_LOAD_ERROR_CODE);
 	
 		// Return new Texture Size
-		return multigear.general.utils.KernelUtils.ref2d(bitmap.getWidth(), bitmap.getHeight());
+		return new Vector2(bitmap.getWidth(), bitmap.getHeight());
 	}
 }

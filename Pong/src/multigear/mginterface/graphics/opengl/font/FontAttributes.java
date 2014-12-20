@@ -1,6 +1,6 @@
 package multigear.mginterface.graphics.opengl.font;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 
 /**
  * Font Attributes
@@ -12,7 +12,7 @@ import multigear.general.utils.Ref2F;
 public class FontAttributes {
 	
 	// Private Variables
-	private Ref2F mPadd = new Ref2F(0, 0);
+	private Vector2 mPadd = new Vector2(0, 0);
 	private boolean mUseMetrics = true;
 	private boolean mLinear = false;
 	
@@ -23,7 +23,7 @@ public class FontAttributes {
 	 * @param useMetrics Use metrics guid
 	 * @param isLinear Set linear text
 	 */
-	public FontAttributes(Ref2F padd, boolean useMetrics, boolean isLinear) {
+	public FontAttributes(Vector2 padd, boolean useMetrics, boolean isLinear) {
 		mPadd = padd;
 		mUseMetrics = useMetrics;
 		mLinear = isLinear;
@@ -34,7 +34,7 @@ public class FontAttributes {
 	 * 
 	 * @return
 	 */
-	public Ref2F getPadd() {
+	public Vector2 getPadd() {
 		return mPadd;
 	}
 	
@@ -42,7 +42,7 @@ public class FontAttributes {
 	 * Set Padd
 	 * @param mPadd
 	 */
-	public void setPadd(Ref2F padd) {
+	public void setPadd(Vector2 padd) {
 		this.mPadd = padd;
 	}
 	

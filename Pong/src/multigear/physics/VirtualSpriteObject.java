@@ -3,7 +3,7 @@ package multigear.physics;
 
 import java.util.List;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 
 
 
@@ -28,8 +28,8 @@ public class VirtualSpriteObject {
 	
 	// Private Variables
 	private boolean mStarted;
-	private multigear.general.utils.Vector2D mForce;
-	private multigear.general.utils.Ref2F[] mVertices;
+	private multigear.general.utils.Vector2 mForce;
+	private Vector2[] mVertices;
 	//private int mWait;
 	private multigear.physics.Shape mShapeSquare;
 	private int mFlags;
@@ -42,7 +42,7 @@ public class VirtualSpriteObject {
 	/** Friction used for decelerate force */
 	public float Friction = 1.01f;
 	/** Screen Size */
-	public Ref2F ScreenSize;
+	public Vector2 ScreenSize;
 	
 	/*
 	 * Constutor
@@ -52,7 +52,7 @@ public class VirtualSpriteObject {
 		mRoom = mSprite.getAttachedRoom();
 		mRoom.addVirtualSpriteObject(this);
 		mStarted = false;
-		mForce = new multigear.general.utils.Vector2D(0, 0);
+		mForce = new multigear.general.utils.Vector2(0, 0);
 		ScreenSize = mRoom.getScreenSize();
 		
 		//mWait = 0;
@@ -87,8 +87,8 @@ public class VirtualSpriteObject {
 	 */
 	final public void update() {
 		if(mStarted) {
-			mSprite.getPosition().applyForce(mForce);
-			mForce.friction(Friction);
+			mSprite.getPosition().sum(mForce);
+			mForce.div(Friction);
 			mVertices = mSprite.getDesignedVerticesPosition();
 			if(mVertices == null)
 				return;
@@ -120,22 +120,22 @@ public class VirtualSpriteObject {
 		float xForce = 0;
 		float yForce = 0;
 		boolean over = false;
-		for(final multigear.general.utils.Ref2F vertice : mVertices) {
-			if(vertice.XAxis < 0 && !hasFlag(FLAG_DISABLE_LEFT_LIMITSCREEN)) {
-				xForce += vertice.XAxis * -1;
+		for(final Vector2 vertice : mVertices) {
+			if(vertice.x < 0 && !hasFlag(FLAG_DISABLE_LEFT_LIMITSCREEN)) {
+				xForce += vertice.x * -1;
 				over = true;
 			}
-			if(vertice.YAxis < 0 && !hasFlag(FLAG_DISABLE_TOP_LIMITSCREEN)) {
-				yForce += vertice.YAxis * -1;
+			if(vertice.y < 0 && !hasFlag(FLAG_DISABLE_TOP_LIMITSCREEN)) {
+				yForce += vertice.y * -1;
 				over = true;
 			}
-			if(vertice.XAxis >= ScreenSize.XAxis && !hasFlag(FLAG_DISABLE_RIGHT_LIMITSCREEN)) {
-				final double diff = (vertice.XAxis - ScreenSize.XAxis);
+			if(vertice.x >= ScreenSize.x && !hasFlag(FLAG_DISABLE_RIGHT_LIMITSCREEN)) {
+				final double diff = (vertice.x - ScreenSize.x);
 				xForce -= diff;
 				over = true;
 			}
-			if(vertice.YAxis >= ScreenSize.YAxis && !hasFlag(FLAG_DISABLE_BOTTOM_LIMITSCREEN)) {
-				final double diff = (vertice.YAxis - ScreenSize.YAxis);
+			if(vertice.y >= ScreenSize.y && !hasFlag(FLAG_DISABLE_BOTTOM_LIMITSCREEN)) {
+				final double diff = (vertice.y - ScreenSize.y);
 				yForce -= diff;
 				over = true;
 			}
@@ -145,12 +145,12 @@ public class VirtualSpriteObject {
 			xForce /= scaleFactor;
 			yForce /= scaleFactor;
 		
-			final multigear.general.utils.Vector2D force = new multigear.general.utils.Vector2D(xForce, yForce);
+			final multigear.general.utils.Vector2 force = new multigear.general.utils.Vector2(xForce, yForce);
 			
 		
-			mForce.applyForce(force);
-			mSprite.getPosition().applyForce(force);
-			mForce.friction(1.1f);
+			mForce.sum(force);
+			mSprite.getPosition().sum(force);
+			mForce.div(1.1f);
 		}
 		
 	
@@ -169,9 +169,9 @@ public class VirtualSpriteObject {
 		}
 		multigear.physics.Emulator.Response response = multigear.physics.Emulator.emulateLineMoviment(mShapeSquare, mForce, shapes);
 		if(response != null) {
-			mSprite.getPosition().applyForce(response.getApplyForce());
+			mSprite.getPosition().sum(response.getApplyForce());
 			mForce = response.getFinalForce();
-			mForce.friction(1.4f);
+			mForce.div(1.4f);
 			//mWait = 5;
 		}
 	}
@@ -179,14 +179,14 @@ public class VirtualSpriteObject {
 	/**
 	 * Return forces.
 	 */
-	final public multigear.general.utils.Vector2D getForces() {
+	final public multigear.general.utils.Vector2 getForces() {
 		return mForce;
 	}
 	
 	/**
 	 * Set forces.
 	 */
-	final public void setForces(final multigear.general.utils.Vector2D forces) {
+	final public void setForces(final multigear.general.utils.Vector2 forces) {
 		mForce = forces;
 	}
 	
@@ -210,14 +210,14 @@ public class VirtualSpriteObject {
 	 * 
 	 * @param force Force to Apply
 	 */
-	final public void applyForce(final multigear.general.utils.Vector2D force) {
-		mForce.applyForce(force);
+	final public void applyForce(final multigear.general.utils.Vector2 force) {
+		mForce.sum(force);
 	}
 	
 	/**
 	 * Reset Physics.
 	 */
 	final public void reset() {
-		mForce = new multigear.general.utils.Vector2D(0, 0);
+		mForce = new multigear.general.utils.Vector2(0, 0);
 	}
 }

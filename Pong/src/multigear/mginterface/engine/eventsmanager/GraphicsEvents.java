@@ -1,5 +1,7 @@
 package multigear.mginterface.engine.eventsmanager;
 
+import multigear.general.utils.Vector2;
+
 /**
  * 
  * Controla os eventos relacionados com grafico
@@ -25,7 +27,7 @@ public class GraphicsEvents {
 	/*
 	 * Evento para redimensionamento da tela preparativo
 	 */
-	public void prepareScreen(final multigear.general.utils.Ref2F screenSize) {
+	public void prepareScreen(final Vector2 screenSize) {
 		mMainRoom.prepareScreen(screenSize);
 	}
 	

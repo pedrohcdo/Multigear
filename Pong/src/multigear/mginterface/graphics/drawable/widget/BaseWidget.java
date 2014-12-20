@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.drawable.SimpleDrawable;
@@ -118,7 +118,7 @@ public class BaseWidget extends SimpleDrawable {
 	// Private Variables
 	private int mState;
 	private boolean mTouchHandledImpl;
-	private multigear.general.utils.Ref2F mTouchLastPositionImpl;
+	private Vector2 mTouchLastPositionImpl;
 	private multigear.mginterface.graphics.animations.AnimationStack mAnimationStack;
 	
 	/**
@@ -257,7 +257,7 @@ public class BaseWidget extends SimpleDrawable {
 		
 		// Set Scisor
 		if (mViewport != null) {
-			final int screenHeight = (int) getAttachedRoom().getScreenSize().YAxis;
+			final int screenHeight = (int) getAttachedRoom().getScreenSize().y;
 			final int top = screenHeight - mViewport.bottom;
 			final int bottom = screenHeight - mViewport.top - top;
 			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
@@ -267,17 +267,17 @@ public class BaseWidget extends SimpleDrawable {
 		
 		// Prepare Transformations
 		// Top Level
-		final float ox = mCenter.XAxis * mScale.XAxis;
-		final float oy = mCenter.YAxis * mScale.YAxis;
-		final float sx = mSize.XAxis * mScale.XAxis;
-		final float sy = mSize.YAxis * mScale.YAxis;
+		final float ox = mCenter.x * mScale.x;
+		final float oy = mCenter.y * mScale.y;
+		final float sx = mSize.x * mScale.x;
+		final float sy = mSize.y * mScale.y;
 		
 		// Animation Level
-		final Ref2F ascale = mScale.clone().mul(animationSet.getScale());
-		final float aox = mCenter.XAxis * ascale.XAxis;
-		final float aoy = mCenter.YAxis * ascale.YAxis;
+		final Vector2 ascale =Vector2.scale(mScale, animationSet.getScale());
+		final float aox = mCenter.x * ascale.x;
+		final float aoy = mCenter.y * ascale.y;
 		final float arotation = mAngle + animationSet.getRotation();
-		final Ref2F atranslate = animationSet.getPosition();
+		final Vector2 atranslate = animationSet.getPosition();
 		
 		// Get Matrix Row
 		final MatrixRow matrixRow = drawer.getMatrixRow();
@@ -297,7 +297,7 @@ public class BaseWidget extends SimpleDrawable {
 			if (layer.beginDraw(opacity, drawer)) {
 				
 				// Scale
-				matrixRow.postScalef(ascale.XAxis, ascale.YAxis);
+				matrixRow.postScalef(ascale.x, ascale.y);
 				
 				// Top Transformations
 				matrixRow.postTranslatef(-aox, -aoy);
@@ -305,8 +305,8 @@ public class BaseWidget extends SimpleDrawable {
 				matrixRow.postTranslatef(aox, aoy);
 				
 				// Bottom Transformations
-				final float tX = (mPosition.XAxis - mScroll.XAxis - aox) + atranslate.XAxis;
-				final float tY = (mPosition.YAxis - mScroll.YAxis - aoy) + atranslate.YAxis;
+				final float tX = (mPosition.x - mScroll.x - aox) + atranslate.x;
+				final float tY = (mPosition.y - mScroll.y - aoy) + atranslate.y;
 				matrixRow.postTranslatef(tX, tY);
 				
 				// End Layer Draw
@@ -327,8 +327,8 @@ public class BaseWidget extends SimpleDrawable {
 		matrixRow.postTranslatef(ox, oy);
 		
 		// Translate Matrix
-		final float tX = (float) (mPosition.XAxis - mScroll.XAxis - ox);
-		final float tY = (float) (mPosition.YAxis - mScroll.YAxis - oy);
+		final float tX = (float) (mPosition.x - mScroll.x - ox);
+		final float tY = (float) (mPosition.y - mScroll.y - oy);
 		matrixRow.postTranslatef(tX, tY);
 		
 		// Get Transformed Vertices
@@ -358,11 +358,11 @@ public class BaseWidget extends SimpleDrawable {
 			return;
 		}
 		final multigear.mginterface.graphics.drawable.BaseListener listener = getListener();
-		multigear.general.utils.Ref2F point = null;
+		Vector2 point = null;
 		switch (motionEvent.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
 				addState(STATE_PRESSED);
-				point = multigear.general.utils.KernelUtils.ref2d(motionEvent.getX(), motionEvent.getY());
+				point = new Vector2(motionEvent.getX(), motionEvent.getY());
 				if (pointOver(point)) {
 					mTouchLastPositionImpl = point;
 					addState(STATE_IN);
@@ -394,7 +394,7 @@ public class BaseWidget extends SimpleDrawable {
 					removeState(STATE_PRESSED);
 					onRelease();
 					mTouchHandledImpl = false;
-					point = multigear.general.utils.KernelUtils.ref2d(motionEvent.getX(), motionEvent.getY());
+					point = new Vector2(motionEvent.getX(), motionEvent.getY());
 					onTouch(motionEvent);
 					if (listener != null) {
 						if (listener instanceof multigear.mginterface.graphics.drawable.SimpleListener)
@@ -409,11 +409,11 @@ public class BaseWidget extends SimpleDrawable {
 				break;
 			case MotionEvent.ACTION_MOVE:
 				if (mTouchHandledImpl) {
-					point = multigear.general.utils.KernelUtils.ref2d(motionEvent.getX(), motionEvent.getY());
-					final float diffX = point.XAxis - mTouchLastPositionImpl.XAxis;
-					final float diffY = point.YAxis - mTouchLastPositionImpl.YAxis;
+					point = new Vector2(motionEvent.getX(), motionEvent.getY());
+					final float diffX = point.x - mTouchLastPositionImpl.x;
+					final float diffY = point.y - mTouchLastPositionImpl.y;
 					final float scaleFactor = getBaseScaleFacor();
-					final multigear.general.utils.Ref2F moved = multigear.general.utils.KernelUtils.ref2d(diffX / scaleFactor, diffY / scaleFactor);
+					final Vector2 moved = new Vector2(diffX / scaleFactor, diffY / scaleFactor);
 					boolean switchFlag = false;
 					if (pointOver(point)) {
 						switchFlag = !hasState(STATE_IN);
@@ -451,7 +451,7 @@ public class BaseWidget extends SimpleDrawable {
 	}
 	
 	/** On Move Event */
-	protected void onMove(final multigear.general.utils.Ref2F moved, boolean inOutSwitch) {
+	protected void onMove(final Vector2 moved, boolean inOutSwitch) {
 	}
 	
 	/** On Update Event */

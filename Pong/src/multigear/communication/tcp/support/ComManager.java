@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import multigear.general.utils.Vector2;
+
 /**
  * Connection Support
  * 
@@ -179,8 +181,8 @@ final public class ComManager {
 	 */
 	final public void sendCalibratedAttributes() {
 		final float sendDpi = mManager.getMainRoom().getDPI();
-		final int sendWidth = (int) mManager.getMainRoom().getScreenSize().XAxis;
-		final int sendHeight = (int) mManager.getMainRoom().getScreenSize().YAxis;
+		final int sendWidth = (int) mManager.getMainRoom().getScreenSize().x;
+		final int sendHeight = (int) mManager.getMainRoom().getScreenSize().y;
 		sendForAll(multigear.communication.tcp.support.objectmessage.ObjectMessage.create(OBJECT_CODE_PARENTCALIBRATEDATTRIBUTES).add(sendDpi).add(sendWidth).add(sendHeight).build());
 	}
 	
@@ -196,14 +198,14 @@ final public class ComManager {
 			if (code < 0) {
 				if (code == OBJECT_CODE_PREPAREPARENTATTRIBUTES) {
 					final float sendDpi = mManager.getMainRoom().getDPI();
-					final int sendWidth = (int) mManager.getMainRoom().getScreenSize().XAxis;
-					final int sendHeight = (int) mManager.getMainRoom().getScreenSize().YAxis;
+					final int sendWidth = (int) mManager.getMainRoom().getScreenSize().x;
+					final int sendHeight = (int) mManager.getMainRoom().getScreenSize().y;
 					sendForAll(multigear.communication.tcp.support.objectmessage.ObjectMessage.create(OBJECT_CODE_PARENTATTRIBUTESPREPARED).add(sendDpi).add(sendWidth).add(sendHeight).build());
 				} else if (code == OBJECT_CODE_PARENTATTRIBUTESPREPARED) {
 					final float dpi = (Float) objectMessage.getValue(0);
 					final int width = (Integer) objectMessage.getValue(1);
 					final int height = (Integer) objectMessage.getValue(2);
-					final multigear.general.utils.Ref2F size = multigear.general.utils.KernelUtils.ref2d(width, height);
+					final Vector2 size = new Vector2(width, height);
 					final multigear.communication.tcp.support.ParentAttributes clientAttributes = new multigear.communication.tcp.support.ParentAttributes(dpi, size, mManager.getMainRoom().getScreenSize());
 					final multigear.communication.tcp.support.SupportMessage recvMessage = new multigear.communication.tcp.support.SupportMessage(multigear.communication.tcp.support.SupportMessage.PARENT_PREPAREDATTRIBUTES, clientAttributes);
 					recvMessageForSupport(recvMessage);
@@ -211,7 +213,7 @@ final public class ComManager {
 					final float dpi = (Float) objectMessage.getValue(0);
 					final int width = (Integer) objectMessage.getValue(1);
 					final int height = (Integer) objectMessage.getValue(2);
-					final multigear.general.utils.Ref2F size = multigear.general.utils.KernelUtils.ref2d(width, height);
+					final Vector2 size = new Vector2(width, height);
 					final multigear.communication.tcp.support.ParentAttributes clientAttributes = new multigear.communication.tcp.support.ParentAttributes(dpi, size, mManager.getMainRoom().getScreenSize());
 					final multigear.communication.tcp.support.SupportMessage recvMessage = new multigear.communication.tcp.support.SupportMessage(multigear.communication.tcp.support.SupportMessage.PARENT_CALIBRATEDATTRIBUTES, clientAttributes);
 					recvMessageForSupport(recvMessage);

@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import multigear.general.utils.Vector2;
 import android.annotation.SuppressLint;
 import android.view.MotionEvent;
 
@@ -265,7 +266,7 @@ final public class InstallManager {
 	/*
 	 * Redimensiona a tela
 	 */
-	final protected void screen(final multigear.general.utils.Ref2F screenSize) {
+	final protected void screen(final Vector2 screenSize) {
 		mLifeStep = 2;
 		for (int index = 0; index < mInstallationList.size(); index++)
 			mInstallationList.get(index).screen();

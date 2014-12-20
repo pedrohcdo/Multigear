@@ -1,5 +1,6 @@
 package multigear.mginterface.engine.eventsmanager;
 
+import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GeneralEvents.SyncClock;
 import android.view.MotionEvent;
 
@@ -47,7 +48,7 @@ final public class EventHandler {
 	/*
 	 * Evento para redimensionamento da tela preparativo
 	 */
-	public void prepareScreen(final multigear.general.utils.Ref2F screenSize) {
+	public void prepareScreen(final Vector2 screenSize) {
 		mGraphicsEvents.prepareScreen(screenSize);
 	}
 	

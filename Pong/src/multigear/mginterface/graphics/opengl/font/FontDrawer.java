@@ -1,7 +1,7 @@
 package multigear.mginterface.graphics.opengl.font;
 
 import multigear.general.utils.Color;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.drawer.TextureContainer;
 import multigear.mginterface.graphics.opengl.drawer.TextureContainer.BltGroup;
 import multigear.mginterface.graphics.opengl.texture.Texture;
@@ -81,7 +81,7 @@ final public class FontDrawer {
 	 * Draw Text
 	 * @param text
 	 */
-	final public void drawText(final String text, Ref2F position) {
+	final public void drawText(final String text, Vector2 position) {
 		
 		// Swap buffers if switched style
 		if(mActivedStyle != mFontMap.mStyle) {
@@ -96,17 +96,17 @@ final public class FontDrawer {
 		char chars[] = new char[text.length()];
 		text.getChars(0, text.length(), chars, 0);
 		
-		Ref2F padd = mFontMap.getAttributes().getPadd();
+		Vector2 padd = mFontMap.getAttributes().getPadd();
 		float scale = layer.mScale;
 		
-		float x = padd.XAxis + position.XAxis;
-		float y = padd.YAxis + position.YAxis;
+		float x = padd.x + position.x;
+		float y = padd.y + position.y;
 		
 		if(mFontMap.getAttributes().isUseMetrics())
 			y += mFontMap.getMetrics().getAscent() * scale;
 			
-		Ref2F textureSize = mActivedTexture.getSize();
-		int maxTextX = (int)textureSize.XAxis / (int)layer.mMaxBoundedWidth;
+		Vector2 textureSize = mActivedTexture.getSize();
+		int maxTextX = (int)textureSize.x / (int)layer.mMaxBoundedWidth;
 		float maxBoundedWidth2 = (layer.mMaxBoundedWidth / 2.0f);
 		
 		for(char c : chars) {
@@ -115,11 +115,11 @@ final public class FontDrawer {
 				float tX = (index % maxTextX) * layer.mMaxBoundedWidth + maxBoundedWidth2; // centered;
 				int tY = (index / maxTextX) * layer.mMaxBoundedHeight;
 				
-				final Ref2F bounds = layer.mCharactersBounds[index];
-				final float center = (int)(bounds.YAxis - bounds.XAxis) / 2.0f;
+				final Vector2 bounds = layer.mCharactersBounds[index];
+				final float center = (int)(bounds.y - bounds.x) / 2.0f;
 				
 				RectF src = new RectF((tX - center) - 1, tY, tX + center + 1, tY + layer.mMaxBoundedHeight);
-				RectF dst = new RectF(x + bounds.XAxis * scale, y, x + bounds.YAxis * scale, y + layer.mMaxHeight);
+				RectF dst = new RectF(x + bounds.x * scale, y, x + bounds.y * scale, y + layer.mMaxHeight);
 				
 				mBltGorup.blt(src, dst);
 				
@@ -128,7 +128,7 @@ final public class FontDrawer {
 				else
 					x += layer.mCharactersWidths[index];
 				
-				x += padd.XAxis;
+				x += padd.x;
 			}
 		}
 	}

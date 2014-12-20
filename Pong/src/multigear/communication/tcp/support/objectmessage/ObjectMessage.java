@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import multigear.general.utils.Vector2;
+
 /**
  * Object Message
  * 
@@ -66,14 +68,14 @@ final public class ObjectMessage {
 		}
 		if (cmd.equals("ref2d")) {
 			String[] refList = value.split("\\,");
-			final multigear.general.utils.Ref2F ref2d = multigear.general.utils.KernelUtils.ref2d(0, 0);
-			ref2d.XAxis = Float.parseFloat(refList[0]);
-			ref2d.YAxis = Float.parseFloat(refList[1]);
+			final Vector2 ref2d = new Vector2(0, 0);
+			ref2d.x = Float.parseFloat(refList[0]);
+			ref2d.y = Float.parseFloat(refList[1]);
 			mValues.add(ref2d);
 		}
 		if (cmd.equals("vec2d")) {
 			String[] vecList = value.split("\\,");
-			final multigear.general.utils.Vector2D vec2d = multigear.general.utils.KernelUtils.vec2d(Float.parseFloat(vecList[0]), Float.parseFloat(vecList[1]));
+			final multigear.general.utils.Vector2 vec2d = new Vector2(Float.parseFloat(vecList[0]), Float.parseFloat(vecList[1]));
 			mValues.add(vec2d);
 		}
 	}

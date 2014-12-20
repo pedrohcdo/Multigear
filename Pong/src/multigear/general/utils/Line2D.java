@@ -11,13 +11,13 @@ package multigear.general.utils;
 final public class Line2D {
 	
 	// Variables
-	public multigear.general.utils.Ref2F Start;
-	public multigear.general.utils.Ref2F End;
+	public Vector2 Start;
+	public Vector2 End;
 	
 	/*
 	 * Comnstrutor
 	 */
-	public Line2D(multigear.general.utils.Ref2F start, multigear.general.utils.Ref2F end) {
+	public Line2D(Vector2 start, Vector2 end) {
 		Start = start;
 		End = end;
 	}

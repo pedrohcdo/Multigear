@@ -2,7 +2,7 @@ package multigear.mginterface.graphics.opengl.font.writerstyles;
 
 import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
 
@@ -16,7 +16,7 @@ import multigear.mginterface.graphics.opengl.font.FontWriter;
 public class FontWriterStyleShadow implements FontWriter {
 	
 	// Final Private Variables
-	final private Ref2F mProjection;
+	final private Vector2 mProjection;
 	final private Color mShadowColor;
 	
 	/**
@@ -29,7 +29,7 @@ public class FontWriterStyleShadow implements FontWriter {
 		final double rad = GeneralUtils.degreeToRad(angle);
 		final float x = (float)Math.cos(rad) * distance;
 		final float y = (float)Math.sin(rad) * distance;
-		mProjection = new Ref2F(x, y);
+		mProjection = new Vector2(x, y);
 		mShadowColor = Color.BLACK;
 	}
 	
@@ -44,7 +44,7 @@ public class FontWriterStyleShadow implements FontWriter {
 		final double rad = GeneralUtils.degreeToRad(angle);
 		final float x = (float)Math.cos(rad) * distance;
 		final float y = (float)Math.sin(rad) * distance;
-		mProjection = new Ref2F(x, y);
+		mProjection = new Vector2(x, y);
 		mShadowColor = shadowColor;
 	}
 	
@@ -56,6 +56,6 @@ public class FontWriterStyleShadow implements FontWriter {
 		fontDrawer.setColor(mShadowColor);
 		fontDrawer.drawText(text, mProjection);
 		fontDrawer.setColor(Color.WHITE);
-		fontDrawer.drawText(text, new Ref2F(0, 0));
+		fontDrawer.drawText(text, new Vector2(0, 0));
 	}
 }

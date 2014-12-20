@@ -1,5 +1,7 @@
 package multigear.mginterface.scene;
 
+import multigear.general.utils.Vector2;
+
 
 
 
@@ -67,11 +69,11 @@ public class SpaceParser {
 	/*
 	 * Retorna o tamanho da tela
 	 */
-	final public multigear.general.utils.Ref2F getScreenSize() {
-		final multigear.general.utils.Ref2F size = multigear.general.utils.KernelUtils.ref2d(0, 0);
+	final public Vector2 getScreenSize() {
+		final Vector2 size = new Vector2(0, 0);
 		final float scaleFactor = getScaleFactor();
-		size.XAxis = mRoom.getScreenSize().XAxis / scaleFactor;
-		size.YAxis = mRoom.getScreenSize().YAxis / scaleFactor;
+		size.x = mRoom.getScreenSize().x / scaleFactor;
+		size.y = mRoom.getScreenSize().y / scaleFactor;
 		return size;
 	}
 	
@@ -95,8 +97,8 @@ public class SpaceParser {
 	/*
 	 * Passa uma referencia2d para a base
 	 */
-	final public multigear.general.utils.Ref2F parseToBase(final multigear.general.utils.Ref2F ref2d) {
+	final public Vector2 parseToBase(final Vector2 ref2d) {
 		final float scaleFactor = getScaleFactor();
-		return multigear.general.utils.KernelUtils.ref2d(ref2d.XAxis * scaleFactor, ref2d.YAxis * scaleFactor);
+		return new Vector2(ref2d.x * scaleFactor, ref2d.y * scaleFactor);
 	}
 }

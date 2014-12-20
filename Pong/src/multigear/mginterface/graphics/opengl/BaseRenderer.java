@@ -3,8 +3,8 @@ package multigear.mginterface.graphics.opengl;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
-
 import android.annotation.SuppressLint;
 import android.opengl.GLSurfaceView.Renderer;
 
@@ -23,7 +23,7 @@ public abstract class BaseRenderer implements Renderer {
     
     // Private Variables
     private boolean mSurfaceCreated;
-    private multigear.general.utils.Ref2F mScreenSize;
+    private Vector2 mScreenSize;
 	private Drawer mDrawer;
     
     /*
@@ -32,7 +32,7 @@ public abstract class BaseRenderer implements Renderer {
     public BaseRenderer(final multigear.mginterface.engine.Multigear engine) {
     	mEngine = engine;
         mSurfaceCreated = false;
-        mScreenSize = multigear.general.utils.KernelUtils.ref2d(-1, -1);
+        mScreenSize = new Vector2(-1, -1);
     }
     
     /*
@@ -64,7 +64,7 @@ public abstract class BaseRenderer implements Renderer {
         // Set surface created
         mSurfaceCreated = false;
         // Get Display Size
-        final multigear.general.utils.Ref2F defaultScreenSize = multigear.general.utils.KernelUtils.ref2d(width, height);
+        final Vector2 defaultScreenSize = new Vector2(width, height);
         mScreenSize  = multigear.general.utils.GeneralUtils.getRealScreenSize(mEngine.getActivity().getWindowManager().getDefaultDisplay(), defaultScreenSize);
         // Send Message to extended Object
         onCreate(mScreenSize); 
@@ -98,12 +98,12 @@ public abstract class BaseRenderer implements Renderer {
     /*
      * Retorna o tamanho
      */
-    protected multigear.general.utils.Ref2F getScreenSize() {
+    protected Vector2 getScreenSize() {
     	return mScreenSize;
     }
     
     /* Criação da surface abstrata */
-    public abstract void onCreate(final multigear.general.utils.Ref2F screenSize);
+    public abstract void onCreate(final Vector2 screenSize);
     
     /* Desenhando frame atual abstrata */
     public abstract void onDraw();

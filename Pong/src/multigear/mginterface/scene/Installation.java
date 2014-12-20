@@ -1,5 +1,6 @@
 package multigear.mginterface.scene;
 
+import multigear.general.utils.Vector2;
 import android.annotation.SuppressLint;
 import android.view.MotionEvent;
 
@@ -16,7 +17,7 @@ abstract public class Installation {
 	// Private Variables
 	private int mZ;
 	private multigear.mginterface.scene.Scene mFatherRoom;
-	private multigear.general.utils.Ref2F mScreenSize;
+	private Vector2 mScreenSize;
 	private multigear.mginterface.graphics.opengl.texture.Loader mTextureLoader;
 	private boolean mUninstalled;
 	
@@ -99,7 +100,7 @@ abstract public class Installation {
 	/*
 	 * Redimensiona a tela
 	 */
-	final public void prepareScreen(final multigear.general.utils.Ref2F screenSize) {
+	final public void prepareScreen(final Vector2 screenSize) {
 		mScreenSize = screenSize;
 	}
 	
@@ -116,7 +117,7 @@ abstract public class Installation {
 	 * 
 	 * @return Screen Size.
 	 */
-	public multigear.general.utils.Ref2F getScreenSize() {
+	public Vector2 getScreenSize() {
 		return mScreenSize.clone();
 	}
 	

@@ -1,8 +1,7 @@
 package multigear.mginterface.graphics.drawable.widget;
 
 import multigear.general.utils.KernelUtils;
-import multigear.general.utils.Ref2F;
-import multigear.general.utils.Vector2D;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
@@ -30,10 +29,10 @@ final public class WidgetTextLayer extends WidgetLayer {
 	private AnimationStack mAnimationStack;
 	private FontMap mFontMap;
 	private String mText = "";
-	private Ref2F mScale = new Ref2F(1, 1);
-	private Ref2F mPosition = KernelUtils.ref2d(0, 0);
-	private Ref2F mCenter = KernelUtils.ref2d(0, 0);
-	private Ref2F mScroll = KernelUtils.ref2d(0, 0);
+	private Vector2 mScale = new Vector2(1, 1);
+	private Vector2 mPosition = new Vector2(0, 0);
+	private Vector2 mCenter = new Vector2(0, 0);
+	private Vector2 mScroll = new Vector2(0, 0);
 	private float mOpacity = 1.0f;
 	private float mAngle = 0;
 	private boolean mTouchable = true;
@@ -43,7 +42,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 	private FontWriter mFontWriter = new FontWriter() {
 		
 		// Final private Variable
-		final private Ref2F mDefaultDrawPos = new Ref2F(0, 0);
+		final private Vector2 mDefaultDrawPos = new Vector2(0, 0);
 		
 		/**
 		 * Default Draw
@@ -130,7 +129,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * @param scale
 	 *            Float Scale
 	 */
-	final public void setScale(final Ref2F scale) {
+	final public void setScale(final Vector2 scale) {
 		mScale = scale.clone();
 	}
 	
@@ -141,7 +140,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 *            Float Scale
 	 */
 	final public void setScale(final float scaleX, final float scaleY) {
-		mScale = new Ref2F(scaleX, scaleY);
+		mScale = new Vector2(scaleX, scaleY);
 	}
 	
 	/**
@@ -151,16 +150,16 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 *            Float Scale
 	 */
 	final public void setScale(final float scale) {
-		mScale = new Ref2F(scale, scale);
+		mScale = new Vector2(scale, scale);
 	}
 	
 	/**
 	 * Set Sprite Position
 	 * 
 	 * @param position
-	 *            {@link Ref2F} Position
+	 *            {@link Vector2} Position
 	 */
-	final public void setPosition(final Ref2F position) {
+	final public void setPosition(final Vector2 position) {
 		mPosition = position.clone();
 	}
 	
@@ -168,9 +167,9 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * Set center axis.
 	 * 
 	 * @param center
-	 *            {@link Ref2F} Center
+	 *            {@link Vector2} Center
 	 */
-	final public void setCenter(final Ref2F center) {
+	final public void setCenter(final Vector2 center) {
 		mCenter = center.clone();
 	}
 	
@@ -178,7 +177,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * Set Angle.
 	 * 
 	 * @param angle
-	 *            {@link Vector2D} Angle
+	 *            {@link Vector2} Angle
 	 */
 	final public void setAngle(final float angle) {
 		mAngle = angle;
@@ -198,9 +197,9 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * Set Scroll.
 	 * 
 	 * @param center
-	 *            {@link Ref2F} Scroll
+	 *            {@link Vector2} Scroll
 	 */
-	final public void setScroll(final Ref2F scroll) {
+	final public void setScroll(final Vector2 scroll) {
 		mScroll = scroll.clone();
 	}
 	
@@ -269,16 +268,16 @@ final public class WidgetTextLayer extends WidgetLayer {
 	/**
 	 * Get Scale
 	 */
-	final public Ref2F getScale() {
+	final public Vector2 getScale() {
 		return mScale.clone();
 	}
 	
 	/**
 	 * Return Position
 	 * 
-	 * @return {@link Ref2F} Position
+	 * @return {@link Vector2} Position
 	 */
-	final public Ref2F getPosition() {
+	final public Vector2 getPosition() {
 		return mPosition.clone();
 	}
 	
@@ -287,28 +286,28 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * <p>
 	 * Get Position with animations modify.
 	 * 
-	 * @return {@link Ref2F} Position
+	 * @return {@link Vector2} Position
 	 */
-	final public Ref2F getRealPosition() {
+	final public Vector2 getRealPosition() {
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
-		Ref2F position = mPosition.clone();
-		position.add(animationSet.getPosition());
+		Vector2 position = mPosition.clone();
+		position.sum(animationSet.getPosition());
 		return position;
 	}
 	
 	/**
 	 * Get center axis.
 	 * 
-	 * @return {@link Ref2F} Center
+	 * @return {@link Vector2} Center
 	 */
-	final public Ref2F getCenter() {
+	final public Vector2 getCenter() {
 		return mCenter.clone();
 	}
 	
 	/**
 	 * Get Angle.
 	 * 
-	 * @return {@link Vector2D} Angle
+	 * @return {@link Vector2} Angle
 	 */
 	final public float getAngle() {
 		return mAngle;
@@ -325,9 +324,9 @@ final public class WidgetTextLayer extends WidgetLayer {
 	/**
 	 * Get Scroll.
 	 * 
-	 * @return {@link Ref2F} Scroll
+	 * @return {@link Vector2} Scroll
 	 */
-	final public Ref2F getScroll() {
+	final public Vector2 getScroll() {
 		return mScroll.clone();
 	}
 	
@@ -393,11 +392,11 @@ final public class WidgetTextLayer extends WidgetLayer {
 			return false;
 
 		// Get Infos
-		final Ref2F scale = mScale.clone().mul(animationSet.getScale());
-		final float ox = mCenter.XAxis * scale.XAxis;
-		final float oy = mCenter.YAxis * scale.YAxis;
-		final float sx = scale.XAxis;
-		final float sy = scale.YAxis;
+		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
+		final float ox = mCenter.x * scale.x;
+		final float oy = mCenter.y * scale.y;
+		final float sx = scale.x;
+		final float sy = scale.y;
 		
 		// Get Matrix Row
 		final MatrixRow matrixRow = drawer.getMatrixRow();
@@ -414,9 +413,9 @@ final public class WidgetTextLayer extends WidgetLayer {
 		matrixRow.postTranslatef(ox, oy);
 		
 		// Translate Matrix
-		final Ref2F translate = animationSet.getPosition();
-		final float tX = (mPosition.XAxis - mScroll.XAxis - ox) + translate.XAxis;
-		final float tY = (mPosition.YAxis - mScroll.YAxis - oy) + translate.YAxis;
+		final Vector2 translate = animationSet.getPosition();
+		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
+		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
 		matrixRow.postTranslatef(tX, tY);
 
 		return true;

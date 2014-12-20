@@ -1,6 +1,6 @@
 package multigear.mginterface.graphics.drawable.gui.widgets;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.drawable.widget.BaseWidget;
 import multigear.mginterface.graphics.drawable.widget.WidgetSpriteLayer;
 
@@ -108,7 +108,7 @@ public class Button extends BaseWidget {
 	 * Evento on Move
 	 */
 	@Override
-	protected void onMove(Ref2F moved, boolean inOutSwitch) {
+	protected void onMove(Vector2 moved, boolean inOutSwitch) {
 		if (inOutSwitch) {
 			if (hasState(STATE_IN))
 				pressAnimation();

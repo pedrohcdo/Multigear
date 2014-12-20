@@ -3,7 +3,7 @@ package multigear.mginterface.graphics.opengl.programs;
 import java.nio.FloatBuffer;
 
 import multigear.general.utils.GeneralUtils;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 
@@ -64,13 +64,13 @@ final public class StretchTextureRenderer extends BaseProgram {
 	 * Setup Program
 	 */
 	@Override
-	final protected void onSetup(final Ref2F screenSize) {
+	final protected void onSetup(final Vector2 screenSize) {
 		mElementVerticesHandle = GLES20.glGetAttribLocation(getHandle(), "aElementVertices");
 		mTextureVerticesHandle = GLES20.glGetAttribLocation(getHandle(), "aTextureVertices");
 		mProjectionMatrixHandle = GLES20.glGetUniformLocation(getHandle(), "uProjectionMatrix");
 		mTextureSampleHandle = GLES20.glGetUniformLocation(getHandle(), "uTextureSample");
 		mBlendColorHandle = GLES20.glGetUniformLocation(getHandle(), "uBlendColor");
-		Matrix.orthoM(mOrthoMatrix, 0, 0.0f, (float) screenSize.XAxis, (float) screenSize.YAxis, 0.0f, 0.0f, 1.0f);
+		Matrix.orthoM(mOrthoMatrix, 0, 0.0f, (float) screenSize.x, (float) screenSize.y, 0.0f, 0.0f, 1.0f);
 		Matrix.multiplyMM(mProjectionMatrix, 0, mOrthoMatrix, 0, mIdentityMatrix, 0);
 		
 		// Setup default buffers

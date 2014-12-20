@@ -1,8 +1,7 @@
 package multigear.mginterface.graphics.drawable.sprite;
 
 import multigear.general.utils.KernelUtils;
-import multigear.general.utils.Ref2F;
-import multigear.general.utils.Vector2D;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.drawable.BaseDrawable;
@@ -25,7 +24,7 @@ import android.opengl.GLES20;
 public class TextSprite extends BaseDrawable {
 	
 	// Final Private Variables
-	final private Ref2F[] mVertices;
+	final private Vector2[] mVertices;
 	final private float mResultMatrixA[] = new float[4];
 	final private float mResultMatrixB[] = new float[4];
 	final private float mResultMatrixC[] = new float[4];
@@ -39,10 +38,10 @@ public class TextSprite extends BaseDrawable {
 	private AnimationStack mAnimationStack;
 	private FontMap mFontMap;
 	private String mText = "";
-	private Ref2F mScale = new Ref2F(1, 1);
-	private Ref2F mPosition = KernelUtils.ref2d(0, 0);
-	private Ref2F mCenter = KernelUtils.ref2d(0, 0);
-	private Ref2F mScroll = KernelUtils.ref2d(0, 0);
+	private Vector2 mScale = new Vector2(1, 1);
+	private Vector2 mPosition = new Vector2(0, 0);
+	private Vector2 mCenter = new Vector2(0, 0);
+	private Vector2 mScroll = new Vector2(0, 0);
 	private float mAngle = 0;
 	private boolean mTouchable = true;
 	private boolean mFixedSpace = false;
@@ -51,7 +50,7 @@ public class TextSprite extends BaseDrawable {
 	private FontWriter mFontWriter = new FontWriter() {
 		
 		// Final private Variable
-		final private Ref2F mDefaultDrawPos = new Ref2F(0, 0);
+		final private Vector2 mDefaultDrawPos = new Vector2(0, 0);
 		
 		/**
 		 * Default Draw
@@ -68,7 +67,7 @@ public class TextSprite extends BaseDrawable {
 	public TextSprite(final Scene scene) {
 		super(scene);
 		mAnimationStack = new AnimationStack(scene);
-		mVertices = new Ref2F[4];
+		mVertices = new Vector2[4];
 	}
 	
 	/**
@@ -138,7 +137,7 @@ public class TextSprite extends BaseDrawable {
 	 * @param scale
 	 *            Float Scale
 	 */
-	final public void setScale(final Ref2F scale) {
+	final public void setScale(final Vector2 scale) {
 		mScale = scale.clone();
 	}
 	
@@ -149,7 +148,7 @@ public class TextSprite extends BaseDrawable {
 	 *            Float Scale
 	 */
 	final public void setScale(final float scaleX, final float scaleY) {
-		mScale = new Ref2F(scaleX, scaleY);
+		mScale = new Vector2(scaleX, scaleY);
 	}
 	
 	/**
@@ -159,26 +158,26 @@ public class TextSprite extends BaseDrawable {
 	 *            Float Scale
 	 */
 	final public void setScale(final float scale) {
-		mScale = new Ref2F(scale, scale);
+		mScale = new Vector2(scale, scale);
 	}
 	
 	/**
 	 * Set Sprite Position
 	 * 
 	 * @param position
-	 *            {@link Ref2F} Position
+	 *            {@link Vector2} Position
 	 */
-	final public void setPosition(final Ref2F position) {
+	final public void setPosition(final Vector2 position) {
 		mPosition = position.clone();
 	}
 	
 	/**
-	 * Set center axis.
+	 * Set center .
 	 * 
 	 * @param center
-	 *            {@link Ref2F} Center
+	 *            {@link Vector2} Center
 	 */
-	final public void setCenter(final Ref2F center) {
+	final public void setCenter(final Vector2 center) {
 		mCenter = center;
 	}
 	
@@ -186,7 +185,7 @@ public class TextSprite extends BaseDrawable {
 	 * Set Angle.
 	 * 
 	 * @param angle
-	 *            {@link Vector2D} Angle
+	 *            {@link Vector2} Angle
 	 */
 	final public void setAngle(final float angle) {
 		mAngle = angle;
@@ -196,9 +195,9 @@ public class TextSprite extends BaseDrawable {
 	 * Set Scroll.
 	 * 
 	 * @param center
-	 *            {@link Ref2F} Scroll
+	 *            {@link Vector2} Scroll
 	 */
-	final public void setScroll(final Ref2F scroll) {
+	final public void setScroll(final Vector2 scroll) {
 		mScroll = scroll;
 	}
 	
@@ -267,16 +266,16 @@ public class TextSprite extends BaseDrawable {
 	/**
 	 * Get Scale
 	 */
-	final public Ref2F getScale() {
+	final public Vector2 getScale() {
 		return mScale.clone();
 	}
 	
 	/**
 	 * Return Position
 	 * 
-	 * @return {@link Ref2F} Position
+	 * @return {@link Vector2} Position
 	 */
-	final public Ref2F getPosition() {
+	final public Vector2 getPosition() {
 		return mPosition.clone();
 	}
 	
@@ -285,28 +284,28 @@ public class TextSprite extends BaseDrawable {
 	 * <p>
 	 * Get Position with animations modify.
 	 * 
-	 * @return {@link Ref2F} Position
+	 * @return {@link Vector2} Position
 	 */
-	final public Ref2F getRealPosition() {
+	final public Vector2 getRealPosition() {
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
-		Ref2F position = mPosition.clone();
-		position.add(animationSet.getPosition());
+		Vector2 position = mPosition.clone();
+		position.sum(animationSet.getPosition());
 		return position;
 	}
 	
 	/**
-	 * Get center axis.
+	 * Get center .
 	 * 
-	 * @return {@link Ref2F} Center
+	 * @return {@link Vector2} Center
 	 */
-	final public Ref2F getCenter() {
+	final public Vector2 getCenter() {
 		return mCenter.clone();
 	}
 	
 	/**
 	 * Get Angle.
 	 * 
-	 * @return {@link Vector2D} Angle
+	 * @return {@link Vector2} Angle
 	 */
 	final public float getAngle() {
 		return mAngle;
@@ -315,9 +314,9 @@ public class TextSprite extends BaseDrawable {
 	/**
 	 * Get Scroll.
 	 * 
-	 * @return {@link Ref2F} Scroll
+	 * @return {@link Vector2} Scroll
 	 */
-	final public Ref2F getScroll() {
+	final public Vector2 getScroll() {
 		return mScroll.clone();
 	}
 	
@@ -390,11 +389,11 @@ public class TextSprite extends BaseDrawable {
 			return;
 		
 		// Get Infos
-		final Ref2F scale = mScale.clone().mul(animationSet.getScale());
-		final float ox = mCenter.XAxis * scale.XAxis;
-		final float oy = mCenter.YAxis * scale.YAxis;
-		float sx = scale.XAxis;
-		float sy = scale.YAxis;
+		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
+		final float ox = mCenter.x * scale.x;
+		final float oy = mCenter.y * scale.y;
+		float sx = scale.x;
+		float sy = scale.y;
 		float six = 0;
 		float siy = 0;
 		if (mInverted[0]) {
@@ -424,9 +423,9 @@ public class TextSprite extends BaseDrawable {
 		matrixRow.postTranslatef(ox, oy);
 		
 		// Translate Matrix
-		final Ref2F translate = animationSet.getPosition();
-		final float tX = (mPosition.XAxis - mScroll.XAxis - ox) + translate.XAxis;
-		final float tY = (mPosition.YAxis - mScroll.YAxis - oy) + translate.YAxis;
+		final Vector2 translate = animationSet.getPosition();
+		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
+		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
 		matrixRow.postTranslatef(tX, tY);
 		
 		// Invert Scale Factor
@@ -448,7 +447,7 @@ public class TextSprite extends BaseDrawable {
 		
 		// Set Scisor
 		if (mViewport != null) {
-			final int screenHeight = (int) getAttachedRoom().getScreenSize().YAxis;
+			final int screenHeight = (int) getAttachedRoom().getScreenSize().y;
 			final int top = screenHeight - mViewport.bottom;
 			final int bottom = screenHeight - mViewport.top - top;
 			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
@@ -479,10 +478,10 @@ public class TextSprite extends BaseDrawable {
 		android.opengl.Matrix.multiplyMV(mResultMatrixC, 0, transformMatrix, 0, mBaseVerticeC, 0);
 		android.opengl.Matrix.multiplyMV(mResultMatrixD, 0, transformMatrix, 0, mBaseVerticeD, 0);
 		// Set Vertices
-		mVertices[0] = KernelUtils.ref2d(mResultMatrixA[0], mResultMatrixA[1]);
-		mVertices[1] = KernelUtils.ref2d(mResultMatrixB[0], mResultMatrixB[1]);
-		mVertices[2] = KernelUtils.ref2d(mResultMatrixC[0], mResultMatrixC[1]);
-		mVertices[3] = KernelUtils.ref2d(mResultMatrixD[0], mResultMatrixD[1]);
+		mVertices[0] = new Vector2(mResultMatrixA[0], mResultMatrixA[1]);
+		mVertices[1] = new Vector2(mResultMatrixB[0], mResultMatrixB[1]);
+		mVertices[2] = new Vector2(mResultMatrixC[0], mResultMatrixC[1]);
+		mVertices[3] = new Vector2(mResultMatrixD[0], mResultMatrixD[1]);
 	}
 	
 	

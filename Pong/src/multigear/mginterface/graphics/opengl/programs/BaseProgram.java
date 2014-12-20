@@ -1,6 +1,6 @@
 package multigear.mginterface.graphics.opengl.programs;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 
 /**
  * Simple Renderer Program
@@ -55,7 +55,7 @@ public abstract class BaseProgram {
 	public abstract void onPrepare(final float[] transformMatrix, final float[] blendColor);
 	
 	/** Setup Program */
-	protected abstract void onSetup(final Ref2F screenSize);
+	protected abstract void onSetup(final Vector2 screenSize);
 	
 	/** Unused Program */
 	protected abstract void onUnused();

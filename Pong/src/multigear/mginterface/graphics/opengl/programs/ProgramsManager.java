@@ -3,8 +3,9 @@ package multigear.mginterface.graphics.opengl.programs;
 import java.util.ArrayList;
 import java.util.List;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import android.opengl.GLES20;
+import android.util.Log;
 
 /**
  * Programs Manager
@@ -47,7 +48,7 @@ final public class ProgramsManager {
 	 * Install Program
 	 * @param programClass
 	 */
-	final private void installProgram(final Class<? extends BaseProgram> programClass, final Ref2F screenSize) {
+	final private void installProgram(final Class<? extends BaseProgram> programClass, final Vector2 screenSize) {
 		try {
 			final BaseProgram program = programClass.newInstance();
 			final int vertexShaderHandle = loadShader(GLES20.GL_VERTEX_SHADER, program.onLoadVertexShader());
@@ -58,7 +59,8 @@ final public class ProgramsManager {
 			GLES20.glLinkProgram(program.getHandle());
 			program.onSetup(screenSize);
 			mInstalledPrograms.add(program);
-		} catch (Exception e) {}
+		} catch (Exception e) {
+		}
 	}
 	
 	/**
@@ -66,7 +68,7 @@ final public class ProgramsManager {
 	 * Note: This method will be called automatically by the renderer.
 	 * Do not call this method manually, because it can cost a high CPU cycle and can cause overrun error.
 	 */
-	final public void installPrograms(final Ref2F screenSize) {
+	final public void installPrograms(final Vector2 screenSize) {
 		installProgram(StretchTextureRenderer.class, screenSize);
 		installProgram(RepeatTextureRenderer.class, screenSize);
 		installProgram(TransitionTextureRenderer.class, screenSize);

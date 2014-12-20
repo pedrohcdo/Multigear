@@ -1,10 +1,11 @@
 package multigear.mginterface.graphics.drawable.widget;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.MatrixRow;
 import multigear.mginterface.graphics.opengl.texture.Texture;
+import android.graphics.Point;
 
 /**
  * WidgetLayer
@@ -18,13 +19,13 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	// Private Variables
 	private multigear.mginterface.graphics.opengl.texture.Texture mTexture;
 	private multigear.mginterface.graphics.animations.AnimationStack mAnimationStack;
-	private Ref2F mScale = new Ref2F(1, 1);
-	private multigear.general.utils.Ref2F mPosition = multigear.general.utils.KernelUtils.ref2d(0, 0);
+	private Vector2 mScale = new Vector2(1, 1);
+	private multigear.general.utils.Vector2 mPosition = new Vector2(0, 0);
 	private float mOpacity = 1.0f;
-	private multigear.general.utils.Ref2F mSize = multigear.general.utils.KernelUtils.ref2d(32, 32);
-	private multigear.general.utils.Ref2F mCenter = multigear.general.utils.KernelUtils.ref2d(0, 0);
-	private multigear.general.utils.Ref2F mScroll = multigear.general.utils.KernelUtils.ref2d(0, 0);
-	private multigear.general.utils.Vector2D mAngle = multigear.general.utils.KernelUtils.vec2d(0, -1);
+	private multigear.general.utils.Vector2 mSize = new Vector2(32, 32);
+	private multigear.general.utils.Vector2 mCenter = new Vector2(0, 0);
+	private multigear.general.utils.Vector2 mScroll = new Vector2(0, 0);
+	private float mAngle = 0;
 
 	
 	// For Draw
@@ -65,7 +66,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @param scale
 	 *            Float Scale
 	 */
-	final public void setScale(final Ref2F scale) {
+	final public void setScale(final Vector2 scale) {
 		mScale = scale.clone();
 	}
 	
@@ -73,9 +74,9 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * Set Sprite Position
 	 * 
 	 * @param position
-	 *            {@link multigear.general.utils.Ref2F} Position
+	 *            {@link multigear.general.utils.Vector2} Position
 	 */
-	final public void setPosition(final multigear.general.utils.Ref2F position) {
+	final public void setPosition(final multigear.general.utils.Vector2 position) {
 		mPosition = position.clone();
 	}
 	
@@ -85,17 +86,17 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @param size
 	 *            Draw texture dest Size
 	 */
-	final public void setSize(final multigear.general.utils.Ref2F size) {
+	final public void setSize(final multigear.general.utils.Vector2 size) {
 		mSize = size.clone();
 	}
 	
 	/**
-	 * Set center axis.
+	 * Set center .
 	 * 
 	 * @param center
-	 *            {@link multigear.general.utils.Ref2F} Center
+	 *            {@link multigear.general.utils.Vector2} Center
 	 */
-	final public void setCenter(final multigear.general.utils.Ref2F center) {
+	final public void setCenter(final multigear.general.utils.Vector2 center) {
 		mCenter = center.clone();
 	}
 	
@@ -103,19 +104,19 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * Set Angle.
 	 * 
 	 * @param angle
-	 *            {@link multigear.general.utils.Vector2D} Angle
+	 *            {@link multigear.general.utils.Vector2} Angle
 	 */
-	final public void setAngle(final multigear.general.utils.Vector2D angle) {
-		mAngle = angle.clone();
+	final public void setAngle(final float angle) {
+		mAngle = angle;
 	}
 	
 	/**
 	 * Set Scroll.
 	 * 
 	 * @param center
-	 *            {@link multigear.general.utils.Ref2F} Scroll
+	 *            {@link multigear.general.utils.Vector2} Scroll
 	 */
-	final public void setScroll(final multigear.general.utils.Ref2F scroll) {
+	final public void setScroll(final multigear.general.utils.Vector2 scroll) {
 		mScroll = scroll.clone();
 	}
 	
@@ -149,52 +150,52 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	/**
 	 * Get Scale
 	 */
-	final public Ref2F getScale() {
+	final public Vector2 getScale() {
 		return mScale.clone();
 	}
 	
 	/**
 	 * Return Position
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Position
+	 * @return {@link multigear.general.utils.Vector2} Position
 	 */
-	final public multigear.general.utils.Ref2F getPosition() {
+	final public multigear.general.utils.Vector2 getPosition() {
 		return mPosition.clone();
 	}
 	
 	/**
 	 * Return draw dest Texture size.
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Size
+	 * @return {@link multigear.general.utils.Vector2} Size
 	 */
-	final public multigear.general.utils.Ref2F getSize() {
+	final public multigear.general.utils.Vector2 getSize() {
 		return mSize.clone();
 	}
 	
 	/**
-	 * Get center axis.
+	 * Get center .
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Center
+	 * @return {@link multigear.general.utils.Vector2} Center
 	 */
-	final public multigear.general.utils.Ref2F getCenter() {
+	final public multigear.general.utils.Vector2 getCenter() {
 		return mCenter.clone();
 	}
 	
 	/**
 	 * Get Angle.
 	 * 
-	 * @return {@link multigear.general.utils.Vector2D} Angle
+	 * @return {@link multigear.general.utils.Vector2} Angle
 	 */
-	final public multigear.general.utils.Vector2D getAngle() {
-		return mAngle.clone();
+	final public float getAngle() {
+		return mAngle;
 	}
 	
 	/**
 	 * Get Scroll.
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Scroll
+	 * @return {@link multigear.general.utils.Vector2} Scroll
 	 */
-	final public multigear.general.utils.Ref2F getScroll() {
+	final public multigear.general.utils.Vector2 getScroll() {
 		return mScroll.clone();
 	}
 	
@@ -227,11 +228,12 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 			return false;
 		
 		// Get Infos
-		final Ref2F scale = mScale.clone().mul(animationSet.getScale());
-		final float ox = mCenter.XAxis * scale.XAxis;
-		final float oy = mCenter.YAxis * scale.YAxis;
-		final float sx = mSize.XAxis * scale.XAxis;
-		final float sy = mSize.YAxis * scale.YAxis;
+		
+		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
+		final float ox = mCenter.x * scale.x;
+		final float oy = mCenter.y * scale.y;
+		final float sx = mSize.x * scale.x;
+		final float sy = mSize.y * scale.y;
 		
 		// Get Matrix Row
 		final MatrixRow matrixRow = drawer.getMatrixRow();
@@ -244,13 +246,12 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 		
 		// Translate and Rotate Matrix
 		matrixRow.postTranslatef(-ox, -oy);
-		matrixRow.postRotatef(mAngle.getDirection() + animationSet.getRotation());
+		matrixRow.postRotatef(mAngle + animationSet.getRotation());
 		matrixRow.postTranslatef(ox, oy);
-		
 		// Translate Matrix
-		final Ref2F translate = animationSet.getPosition();
-		final float tX = (mPosition.XAxis - mScroll.XAxis - ox) + translate.XAxis;
-		final float tY = (mPosition.YAxis - mScroll.YAxis - oy) + translate.YAxis;
+		final Vector2 translate = animationSet.getPosition();
+		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
+		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
 		matrixRow.postTranslatef(tX, tY);
 
 		return true;

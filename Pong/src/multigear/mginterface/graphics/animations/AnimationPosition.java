@@ -1,6 +1,6 @@
 package multigear.mginterface.graphics.animations;
 
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 
 /**
  * 
@@ -13,14 +13,14 @@ import multigear.general.utils.Ref2F;
 public class AnimationPosition extends Animation {
 	
 	// Final Private Variables
-	final private Ref2F mStart, mEnd;
+	final private Vector2 mStart, mEnd;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param duration
 	 */
-	public AnimationPosition(final int duration, final Ref2F start, final Ref2F end) {
+	public AnimationPosition(final int duration, final Vector2 start, final Vector2 end) {
 		super(duration);
 		mStart = start.clone();
 		mEnd = end.clone();
@@ -31,6 +31,6 @@ public class AnimationPosition extends Animation {
 	 */
 	@Override
 	final public void onAnimation(AnimationSet animationSet, float delta) {
-		animationSet.setPosition(mStart.clone().add(mEnd.clone().sub(mStart).mul(delta)));
+		animationSet.setPosition(Vector2.sum(mStart, Vector2.scale( Vector2.sub(mEnd, mStart), delta)));
 	}
 }

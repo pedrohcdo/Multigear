@@ -9,7 +9,7 @@ import java.util.Vector;
 import multigear.cache.CacheManager;
 import multigear.communication.tcp.support.ParentAttributes;
 import multigear.general.utils.Measure;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.Configuration;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
@@ -137,13 +137,13 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	// private Interface.Room.ProportionParser mProportionalSupport;
 	private Vector<MotionEvent> mMotionEventList;
 	private multigear.mginterface.graphics.animations.AnimationStack mAnimationStack = new multigear.mginterface.graphics.animations.AnimationStack(this);
-	private Ref2F mScale = new Ref2F(1, 1);
-	private multigear.general.utils.Ref2F mPosition = multigear.general.utils.KernelUtils.ref2d(0, 0);
+	private Vector2 mScale = new Vector2(1, 1);
+	private Vector2 mPosition = new Vector2(0, 0);
 	private float mOpacity = 1.0f;
-	private multigear.general.utils.Ref2F mSize = multigear.general.utils.KernelUtils.ref2d(32, 32);
-	private multigear.general.utils.Ref2F mCenter = multigear.general.utils.KernelUtils.ref2d(0, 0);
-	private multigear.general.utils.Ref2F mScroll = multigear.general.utils.KernelUtils.ref2d(0, 0);
-	private multigear.general.utils.Vector2D mAngle = multigear.general.utils.KernelUtils.vec2d(0, -1);
+	private Vector2 mSize = new Vector2(32, 32);
+	private Vector2 mCenter = new Vector2(0, 0);
+	private Vector2 mScroll = new Vector2(0, 0);
+	private float mAngle = 0;
 	private boolean mTouchable = true;
 	private int mID = 0;
 	
@@ -276,7 +276,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * @param scale
 	 *            Float Scale
 	 */
-	final public void setScale(final Ref2F scale) {
+	final public void setScale(final Vector2 scale) {
 		mScale = scale;
 	}
 	
@@ -284,9 +284,9 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * Set Sprite Position
 	 * 
 	 * @param position
-	 *            {@link multigear.general.utils.Ref2F} Position
+	 *            {@link Vector2} Position
 	 */
-	final public void setPosition(final multigear.general.utils.Ref2F position) {
+	final public void setPosition(final Vector2 position) {
 		mPosition = position;
 	}
 	
@@ -296,7 +296,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * @param size
 	 *            Draw texture dest Size
 	 */
-	final public void setSize(final multigear.general.utils.Ref2F size) {
+	final public void setSize(final Vector2 size) {
 		mSize = size;
 	}
 	
@@ -304,9 +304,9 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * Set center axis.
 	 * 
 	 * @param center
-	 *            {@link multigear.general.utils.Ref2F} Center
+	 *            {@link Vector2} Center
 	 */
-	final public void setCenter(final multigear.general.utils.Ref2F center) {
+	final public void setCenter(final Vector2 center) {
 		mCenter = center;
 	}
 	
@@ -314,9 +314,9 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * Set Angle.
 	 * 
 	 * @param angle
-	 *            {@link multigear.general.utils.Vector2D} Angle
+	 *            {@link multigear.general.utils.Vector2} Angle
 	 */
-	final public void setAngle(final multigear.general.utils.Vector2D angle) {
+	final public void setAngle(final float angle) {
 		mAngle = angle;
 	}
 	
@@ -324,9 +324,9 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * Set Scroll.
 	 * 
 	 * @param center
-	 *            {@link multigear.general.utils.Ref2F} Scroll
+	 *            {@link Vector2} Scroll
 	 */
-	final public void setScroll(final multigear.general.utils.Ref2F scroll) {
+	final public void setScroll(final Vector2 scroll) {
 		mScroll = scroll;
 	}
 	
@@ -373,52 +373,52 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	/**
 	 * Get Scale
 	 */
-	final public Ref2F getScale() {
+	final public Vector2 getScale() {
 		return mScale;
 	}
 	
 	/**
 	 * Return Position
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Position
+	 * @return {@link Vector2} Position
 	 */
-	final public multigear.general.utils.Ref2F getPosition() {
+	final public Vector2 getPosition() {
 		return mPosition;
 	}
 	
 	/**
 	 * Return draw dest Texture size.
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Size
+	 * @return {@link Vector2} Size
 	 */
-	final public multigear.general.utils.Ref2F getSize() {
+	final public Vector2 getSize() {
 		return mSize;
 	}
 	
 	/**
 	 * Get center axis.
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Center
+	 * @return {@link Vector2} Center
 	 */
-	final public multigear.general.utils.Ref2F getCenter() {
+	final public Vector2 getCenter() {
 		return mCenter;
 	}
 	
 	/**
 	 * Get Angle.
 	 * 
-	 * @return {@link multigear.general.utils.Vector2D} Angle
+	 * @return {@link multigear.general.utils.Vector2} Angle
 	 */
-	final public multigear.general.utils.Vector2D getAngle() {
+	final public float getAngle() {
 		return mAngle;
 	}
 	
 	/**
 	 * Get Scroll.
 	 * 
-	 * @return {@link multigear.general.utils.Ref2F} Scroll
+	 * @return {@link Vector2} Scroll
 	 */
-	final public multigear.general.utils.Ref2F getScroll() {
+	final public Vector2 getScroll() {
 		return mScroll;
 	}
 	
@@ -568,10 +568,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * 
 	 * @return Measure Value
 	 */
-	final public Ref2F getPhysicalScreenSize(final multigear.general.utils.Measure measure) {
+	final public Vector2 getPhysicalScreenSize(final multigear.general.utils.Measure measure) {
 		final float physicalWidth = Measure.Inch.convertTo(mWidthPixels / mDPI, measure);
 		final float physicalHeight = Measure.Inch.convertTo(mHeightPixels / mDPI, measure);
-		return new Ref2F(physicalWidth, physicalHeight);
+		return new Vector2(physicalWidth, physicalHeight);
 	}
 	
 	/**
@@ -585,10 +585,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * 
 	 * @return Measure Value
 	 */
-	final public Ref2F getPhysicalScreenSize() {
+	final public Vector2 getPhysicalScreenSize() {
 		final float physicalWidth = Measure.Inch.convertTo(mWidthPixels / mDPI, Measure.Inch);
 		final float physicalHeight = Measure.Inch.convertTo(mHeightPixels / mDPI, Measure.Inch);
-		return new Ref2F(physicalWidth, physicalHeight);
+		return new Vector2(physicalWidth, physicalHeight);
 	}
 	
 	/*
@@ -684,12 +684,12 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 		else
 			scaleFactor = 1;
 		
-		final Ref2F scale = mScale;
+		final Vector2 scale = mScale;
 		
-		final float ox = mCenter.XAxis * scale.XAxis;
-		final float oy = mCenter.YAxis * scale.YAxis;
-		final float sx = (float) ((mSize.XAxis * scale.XAxis) / getScreenSize().XAxis);
-		final float sy = (float) ((mSize.YAxis * scale.YAxis) / getScreenSize().YAxis);
+		final float ox = mCenter.x * scale.x;
+		final float oy = mCenter.y * scale.y;
+		final float sx = (float) ((mSize.x * scale.x) / getScreenSize().x);
+		final float sy = (float) ((mSize.y * scale.y) / getScreenSize().y);
 		
 		// Get Matrix Row
 		final MatrixRow matrixRow = drawer.getMatrixRow();
@@ -705,13 +705,13 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 		
 		// Translate and Rotate Matrix
 		postTransformations.postTranslate(-ox, -oy);
-		postTransformations.postRotate(mAngle.getDirection() + animationSet.getRotation());
+		postTransformations.postRotate(mAngle + animationSet.getRotation());
 		postTransformations.postTranslate(ox, oy);
 		
 		// Translate Matrix
-		final Ref2F translate = animationSet.getPosition();
-		final float tX = (mPosition.XAxis - mScroll.XAxis - ox) + translate.XAxis;
-		final float tY = (mPosition.YAxis - mScroll.YAxis - oy) + translate.YAxis;
+		final Vector2 translate = animationSet.getPosition();
+		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
+		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
 		postTransformations.postTranslate(tX, tY);
 		
 		// Scale Factor
@@ -801,7 +801,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * 
 	 * @return Screen Size.
 	 */
-	final public multigear.general.utils.Ref2F getScreenSize() {
+	final public Vector2 getScreenSize() {
 		return super.getScreenSize().clone();
 	}
 	
@@ -1018,7 +1018,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	};
 	
 	/* Evento para redimensionamento da tela */
-	public void onScreen(final multigear.general.utils.Ref2F mScreenSize) {
+	public void onScreen(final Vector2 mScreenSize) {
 	};
 	
 	/* Evento para atualização */

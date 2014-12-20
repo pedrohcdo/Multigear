@@ -1,5 +1,6 @@
 package multigear.physics;
 
+import multigear.general.utils.Vector2;
 import android.graphics.RectF;
 
 /**
@@ -15,16 +16,16 @@ final public class ColideMath {
 	/*
 	 * Retorna posição de uma interseção entre duas retas
 	 */
-	final static protected multigear.general.utils.Ref2F getIntersectionLines(multigear.general.utils.Line2D a, multigear.general.utils.Line2D b) {
+	final static protected Vector2 getIntersectionLines(multigear.general.utils.Line2D a, multigear.general.utils.Line2D b) {
 		// Get Positions
-		final int x1 = (int)Math.floor(a.Start.XAxis);
-		final int x2 = (int)Math.ceil(a.End.XAxis);
-		final int x3 = (int)Math.floor(b.Start.XAxis);
-		final int x4 = (int)Math.ceil(b.End.XAxis);
-		final int y1 = (int)Math.floor(a.Start.YAxis);
-		final int y2 = (int)Math.ceil(a.End.YAxis);
-		final int y3 = (int)Math.floor(b.Start.YAxis);
-		final int y4 = (int)Math.ceil(b.End.YAxis);
+		final int x1 = (int)Math.floor(a.Start.x);
+		final int x2 = (int)Math.ceil(a.End.x);
+		final int x3 = (int)Math.floor(b.Start.x);
+		final int x4 = (int)Math.ceil(b.End.x);
+		final int y1 = (int)Math.floor(a.Start.y);
+		final int y2 = (int)Math.ceil(a.End.y);
+		final int y3 = (int)Math.floor(b.Start.y);
+		final int y4 = (int)Math.ceil(b.End.y);
 		
 		int d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 		if (d == 0)
@@ -38,22 +39,22 @@ final public class ColideMath {
 		if (y < Math.min(y1, y2) || y > Math.max(y1, y2) || y < Math.min(y3, y4) || y > Math.max(y3, y4))
 			return null;
 		
-		return multigear.general.utils.KernelUtils.ref2d(x, y);
+		return new Vector2(x, y);
 	}
 	
 	/*
 	 * Retorna o retangulo entre os vertices
 	 */
-	final static public RectF getRectangle(multigear.general.utils.Ref2F[] vertices) {
+	final static public RectF getRectangle(Vector2[] vertices) {
 		// Ensure extremes
-		float minX = (float)(vertices[0].XAxis);
+		float minX = (float)(vertices[0].x);
 		float maxX = minX;
-		float minY = (float)(vertices[0].YAxis);
+		float minY = (float)(vertices[0].y);
 		float maxY = minY;
 		// Limit extremes
 		for(int i=1; i<vertices.length; i++) {
-			final float vX = (float)(vertices[i].XAxis);
-			final float vY = (float)(vertices[i].YAxis);
+			final float vX = (float)(vertices[i].x);
+			final float vY = (float)(vertices[i].y);
 			// Get max extremes
 			maxX = Math.max(maxX, vX);
 			minX = Math.min(minX, vX);
@@ -69,17 +70,17 @@ final public class ColideMath {
 	 * 
 	 * @param shape Shape used for get center.
 	 */
-	final static public multigear.general.utils.Ref2F getCenterOfShape(final multigear.physics.Shape shape) {
+	final static public Vector2 getCenterOfShape(final multigear.physics.Shape shape) {
 		float totalX = 0;
 		float totalY = 0;
 		for(int i=0; i<shape.getSize(); i++) {
-			final multigear.general.utils.Ref2F vertice = shape.getVertice(i);
-			totalX += vertice.XAxis;
-			totalY += vertice.YAxis;
+			final Vector2 vertice = shape.getVertice(i);
+			totalX += vertice.x;
+			totalY += vertice.y;
 		}
 		final float centerX = totalX / shape.getSize();
 		final float centerY = totalY / shape.getSize();
-		return multigear.general.utils.KernelUtils.ref2d(centerX, centerY);
+		return new Vector2(centerX, centerY);
 	}
 	
 	/**
@@ -93,21 +94,21 @@ final public class ColideMath {
 		if(size < 3)
 			return null;
 		final multigear.physics.Shape[] shapes = new multigear.physics.Shape[size];
-		final multigear.general.utils.Ref2F center = getCenterOfShape(shape);
+		final Vector2 center = getCenterOfShape(shape);
 		// Create Uniform Triangles
 		for(int i=0; i<(size-1); i++) {
-			final multigear.general.utils.Ref2F verticeA = shape.getVertice(i);
-			final multigear.general.utils.Ref2F verticeB = shape.getVertice(i + 1);
-			final multigear.general.utils.Ref2F[] trianglePackage = new multigear.general.utils.Ref2F[3];
+			final Vector2 verticeA = shape.getVertice(i);
+			final Vector2 verticeB = shape.getVertice(i + 1);
+			final Vector2[] trianglePackage = new Vector2[3];
 			trianglePackage[0] = verticeA;
 			trianglePackage[1] = verticeB;
 			trianglePackage[2] = center;
 			shapes[i] = multigear.physics.Shape.createShape(trianglePackage);
 		}
 		// Close Shape
-		final multigear.general.utils.Ref2F verticeA = shape.getVertice(size-1);
-		final multigear.general.utils.Ref2F verticeB = shape.getVertice(0);
-		final multigear.general.utils.Ref2F[] trianglePackage = new multigear.general.utils.Ref2F[3];
+		final Vector2 verticeA = shape.getVertice(size-1);
+		final Vector2 verticeB = shape.getVertice(0);
+		final Vector2[] trianglePackage = new Vector2[3];
 		trianglePackage[0] = verticeA;
 		trianglePackage[1] = verticeB;
 		trianglePackage[2] = center;
@@ -122,15 +123,15 @@ final public class ColideMath {
 	 * @return Return a triangle Area.
 	 */
 	final static public float getTriangleShapeArea(final multigear.physics.Shape triangle) {
-		multigear.general.utils.Ref2F vertice = triangle.getVertice(0);
-		float minX = vertice.XAxis;
-		float maxX = vertice.XAxis;
-		float minY = vertice.YAxis;
-		float maxY = vertice.YAxis;
+		Vector2 vertice = triangle.getVertice(0);
+		float minX = vertice.x;
+		float maxX = vertice.x;
+		float minY = vertice.y;
+		float maxY = vertice.y;
 		for(int i=1; i<3; i++) {
 			vertice = triangle.getVertice(i);
-			final float x = vertice.XAxis;
-			final float y = vertice.YAxis;
+			final float x = vertice.x;
+			final float y = vertice.y;
 			minX = Math.min(minX, x);
 			maxX = Math.max(maxX, x);
 			minY = Math.min(minY, y);
@@ -199,13 +200,13 @@ final public class ColideMath {
 	 * @param triangle Triangle.
 	 * @return Return true if Over.
 	 */
-	final static public boolean isOverTriangleShape(final multigear.general.utils.Ref2F point, final multigear.physics.Shape triangle) {
-		final multigear.general.utils.Ref2F a = triangle.getVertice(0);
-		final multigear.general.utils.Ref2F b = triangle.getVertice(1);
-		final multigear.general.utils.Ref2F c = triangle.getVertice(2);
-		final int side1 = findSide(a.XAxis, a.YAxis, b.XAxis, b.YAxis, point.XAxis, point.YAxis);
-		final int side2 = findSide(b.XAxis, b.YAxis, c.XAxis, c.YAxis, point.XAxis, point.YAxis);
-		final int side3 = findSide(c.XAxis, c.YAxis, a.XAxis, a.YAxis, point.XAxis, point.YAxis);
+	final static public boolean isOverTriangleShape(final Vector2 point, final multigear.physics.Shape triangle) {
+		final Vector2 a = triangle.getVertice(0);
+		final Vector2 b = triangle.getVertice(1);
+		final Vector2 c = triangle.getVertice(2);
+		final int side1 = findSide(a.x, a.y, b.x, b.y, point.x, point.y);
+		final int side2 = findSide(b.x, b.y, c.x, c.y, point.x, point.y);
+		final int side3 = findSide(c.x, c.y, a.x, a.y, point.x, point.y);
 		return (side1 + side2 + side3 == 3);
 	}
 	
@@ -217,23 +218,25 @@ final public class ColideMath {
 	 * @return Return normal vector.
 	 *         Return null if not is over.
 	 */
-	final static public multigear.general.utils.Vector2D getOverShapeNormal(final multigear.general.utils.Ref2F point, final multigear.physics.Shape shape) {
+	final static public Vector2 getOverShapeNormal(final Vector2 point, final multigear.physics.Shape shape) {
 		final multigear.physics.Shape[] triangles = subdivideShapeInCenteredTriangles(shape);
+		/**
 		for(int i=0; i<triangles.length; i++) {
 			if(isOverTriangleShape(point, triangles[i])) {
 				// Last Triangle
 				if(i == triangles.length - 1) {
-					final multigear.general.utils.Ref2F verticeA = shape.getVertice(i);
-					final multigear.general.utils.Ref2F verticeB = shape.getVertice(0);
-					return new multigear.general.utils.Vector2D(verticeA, verticeB);
+					final Vector2 verticeA = shape.getVertice(i);
+					final Vector2 verticeB = shape.getVertice(0);
+					return new Vector2(verticeA, verticeB);
 				// Uniform Triangles
 				} else {
-					final multigear.general.utils.Ref2F verticeA = shape.getVertice(i);
-					final multigear.general.utils.Ref2F verticeB = shape.getVertice(i+1);
-					return new multigear.general.utils.Vector2D(verticeA, verticeB);
+					final Vector2 verticeA = shape.getVertice(i);
+					final Vector2 verticeB = shape.getVertice(i+1);
+					return new Vector2(verticeA, verticeB);
 				}
 			}
 		}
+		**/
 		return null;
 	}
 	

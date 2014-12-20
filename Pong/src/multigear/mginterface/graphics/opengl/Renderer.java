@@ -1,5 +1,6 @@
 package multigear.mginterface.graphics.opengl;
 
+import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.Configuration;
 import multigear.mginterface.graphics.opengl.programs.BaseProgram;
 import multigear.mginterface.graphics.opengl.programs.ProgramsManager;
@@ -43,11 +44,11 @@ public class Renderer extends BaseRenderer {
 	 * int, int, boolean)
 	 */
 	@Override
-	final public void onCreate(final multigear.general.utils.Ref2F size) {
+	final public void onCreate(final Vector2 size) {
 		// Install all programs
 		mProgramsManager.installPrograms(size);
 	    // Projection Matrix
-	    GLES20.glViewport(0, 0, (int)size.XAxis, (int)size.YAxis);
+	    GLES20.glViewport(0, 0, (int)size.x, (int)size.y);
 		// Enable properties
 		GLES20.glEnable(GLES20.GL_BLEND);
 		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);

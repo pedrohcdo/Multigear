@@ -5,7 +5,7 @@ import java.util.List;
 
 import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
-import multigear.general.utils.Ref2F;
+import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.Renderer;
 import multigear.mginterface.graphics.opengl.programs.RepeatTextureRenderer;
 import multigear.mginterface.graphics.opengl.programs.StretchTextureRenderer;
@@ -92,7 +92,7 @@ final public class TextureContainer {
 	final private SpaceParser mSpaceParser;
 	
 	// Private Variables
-	private Ref2F mRecipientSize;
+	private Vector2 mRecipientSize;
 	private Texture mRecipientTexture;
 	private Color mBlendColor = Color.WHITE;
 	
@@ -120,7 +120,7 @@ final public class TextureContainer {
 	 * @param recipientSize Size of the recipient
 	 * @param opacity Pre opacity used for draw
 	 */
-	final protected void prepare(final Texture recipientTexture, final Ref2F recipientSize) {
+	final protected void prepare(final Texture recipientTexture, final Vector2 recipientSize) {
 		mRecipientTexture = recipientTexture;
 		mRecipientSize = recipientSize;
 		mBlendColor = Color.WHITE;
@@ -149,7 +149,7 @@ final public class TextureContainer {
 	 * Set Recipient Size
 	 * @param size
 	 */
-	final protected void setRecipientSize(final Ref2F size) {
+	final protected void setRecipientSize(final Vector2 size) {
 		mRecipientSize = size.clone();
 	}
 	
@@ -157,7 +157,7 @@ final public class TextureContainer {
 	 * Get recipient Size
 	 * @return
 	 */
-	final public Ref2F getRecipientSize() {
+	final public Vector2 getRecipientSize() {
 		return mRecipientSize.clone();
 	}
 	
@@ -186,7 +186,7 @@ final public class TextureContainer {
 	/**
 	 * Blit texture recipient to destination.
 	 */
-	final public void bltUnsized(final BltGroup bltGroup, final Ref2F textureSize) {
+	final public void bltUnsized(final BltGroup bltGroup, final Vector2 textureSize) {
 		final float[] elementsBufferPack = new float[bltGroup.mGroup.size() * 8];
 		final float[] textureBufferPack = new float[bltGroup.mGroup.size() * 8];
 		for(int i=0; i<bltGroup.mGroup.size(); i++) {
@@ -208,7 +208,7 @@ final public class TextureContainer {
 		GeneralUtils.getFloatBounds(textureBuffer, mFloatBounds);
 		RepeatTextureRenderer renderer = (RepeatTextureRenderer)mDrawer.begin(Renderer.REPEAT_TEXTURE_RENDERER, mBlendColor);
 		renderer.setBuffers(elementsBuffer, textureBuffer);
-		renderer.render(mFloatBounds, mSpaceParser.parseToBase(new Ref2F(src.width(), src.height())), horizontalRepeat, verticalRepeat);
+		renderer.render(mFloatBounds, mSpaceParser.parseToBase(new Vector2(src.width(), src.height())), horizontalRepeat, verticalRepeat);
 	}
 	
 	/**
@@ -220,7 +220,7 @@ final public class TextureContainer {
 		GeneralUtils.getFloatBounds(textureBuffer, mFloatBounds);
 		RepeatTextureRenderer renderer = (RepeatTextureRenderer)mDrawer.begin(Renderer.REPEAT_TEXTURE_RENDERER, mBlendColor);
 		renderer.setBuffers(elementsBuffer, textureBuffer);
-		renderer.render(mFloatBounds, mSpaceParser.parseToBase(new Ref2F(src.width(), src.height())), horizontalRepeat, verticalRepeat);
+		renderer.render(mFloatBounds, mSpaceParser.parseToBase(new Vector2(src.width(), src.height())), horizontalRepeat, verticalRepeat);
 	}
 	
 	/**

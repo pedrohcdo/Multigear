@@ -1,5 +1,7 @@
 package multigear.physics;
 
+import multigear.general.utils.Vector2;
+
 /**
  * 
  * Shape Object.
@@ -11,35 +13,35 @@ package multigear.physics;
 final public class Shape {
 	
 	// Private Variables
-	final private multigear.general.utils.Ref2F[] mVertices;
+	final private Vector2[] mVertices;
 	
 	/*
 	 * Construtor
 	 */
 	public Shape(final int size) {
-		mVertices = new multigear.general.utils.Ref2F[size];
+		mVertices = new Vector2[size];
 		for(int i=0; i<size; i++)
-			mVertices[i] = multigear.general.utils.KernelUtils.ref2d(0, 0);
+			mVertices[i] = new Vector2(0, 0);
 	}
 	
 	/*
 	 * Seta uma posição da forma
 	 */
-	final public void setVertice(final int index, final multigear.general.utils.Ref2F vertice) {
+	final public void setVertice(final int index, final Vector2 vertice) {
 		mVertices[index] = vertice;
 	}
 	
 	/*
 	 * Pega uma posição da forma
 	 */
-	final public multigear.general.utils.Ref2F getVertice(final int index) {
+	final public Vector2 getVertice(final int index) {
 		return mVertices[index];
 	}
 	
 	/*
 	 * Retorna o pacote de vertices
 	 */
-	final public multigear.general.utils.Ref2F[] getVertices() {
+	final public Vector2[] getVertices() {
 		return mVertices;
 	}
 	
@@ -65,8 +67,8 @@ final public class Shape {
 		if(mod != 0 || size != getSize())
 			return false;
 		for(int i=0; i<size; i++) {
-			mVertices[i].XAxis = vertices[i * 2];
-			mVertices[i].YAxis = vertices[i * 2 + 1];
+			mVertices[i].x = vertices[i * 2];
+			mVertices[i].y = vertices[i * 2 + 1];
 		}
 		return true;
 	}
@@ -77,7 +79,7 @@ final public class Shape {
 	 * @param vertices Package of Utils.Ref2D vertices
 	 * @return
 	 */
-	final public boolean copy(final multigear.general.utils.Ref2F[] vertices) {
+	final public boolean copy(final Vector2[] vertices) {
 		if(vertices.length != getSize())
 			return false;
 		for(int i=0; i<vertices.length; i++) {
@@ -102,8 +104,8 @@ final public class Shape {
 			return null;
 		final Shape shape = new Shape(size);
 		for(int i=0; i<size; i++) {
-			shape.mVertices[i].XAxis = vertices[i * 2];
-			shape.mVertices[i].YAxis = vertices[i * 2 + 1];
+			shape.mVertices[i].x = vertices[i * 2];
+			shape.mVertices[i].y = vertices[i * 2 + 1];
 		}
 		return shape;
 	}
@@ -114,7 +116,7 @@ final public class Shape {
 	 * @param vertices Package of Utils.Ref2D vertices
 	 * @return
 	 */
-	final static public Shape createShape(final multigear.general.utils.Ref2F[] vertices) {
+	final static public Shape createShape(final Vector2[] vertices) {
 		final Shape shape = new Shape(vertices.length);
 		for(int i=0; i<vertices.length; i++) {
 			shape.mVertices[i] = vertices[i].clone();
