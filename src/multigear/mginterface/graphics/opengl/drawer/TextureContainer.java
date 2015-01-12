@@ -11,6 +11,7 @@ import multigear.mginterface.graphics.opengl.programs.RepeatTextureRenderer;
 import multigear.mginterface.graphics.opengl.programs.StretchTextureRenderer;
 import multigear.mginterface.graphics.opengl.programs.TransitionTextureRenderer;
 import multigear.mginterface.graphics.opengl.texture.Texture;
+import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.SpaceParser;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -95,13 +96,15 @@ final public class TextureContainer {
 	private Vector2 mRecipientSize;
 	private Texture mRecipientTexture;
 	private Color mBlendColor = Color.WHITE;
+	private Scene mMainScene;
 	
 	/**
 	 * Conainer
 	 */
-	protected TextureContainer(final Drawer drawer) {
+	protected TextureContainer(final Drawer drawer, final Scene mainScene) {
 		mDrawer = drawer;
-		mSpaceParser = mDrawer.getMainRom().getSpaceParser();
+		mMainScene = mainScene;
+		mSpaceParser = mMainScene.getSpaceParser();
 	}
 	
 	/**

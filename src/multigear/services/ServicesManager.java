@@ -15,6 +15,7 @@ import multigear.communication.tcp.support.SupportMessage;
 import multigear.communication.tcp.support.objectmessage.ObjectMessage;
 import multigear.general.utils.SafetyLock;
 import multigear.general.utils.SafetyLock.Interception;
+import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import android.app.Activity;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -121,7 +122,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 		/**
 		 * Constructor
 		 */
-		private DelayService(final multigear.services.ServiceRunnable serviceRunnable, final long scheduleTime) {
+		private DelayService(final ServiceRunnable serviceRunnable, final long scheduleTime) {
 			mServiceRunnable = serviceRunnable;
 			mScheduleTime = scheduleTime;
 		}
@@ -261,7 +262,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 			final Iterator<DelayService> itr = mDelayServices.iterator();
 			while (itr.hasNext()) {
 				final DelayService delayService = itr.next();
-				if (mEngine.getCurrentTime() > delayService.mScheduleTime) {
+				if (GlobalClock.currentTimeMillis() > delayService.mScheduleTime) {
 					addService(delayService.mServiceRunnable);
 					itr.remove();
 				}
@@ -304,7 +305,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 * Add Service Thread with Delay
 	 */
 	final public void addService(final multigear.services.ServiceRunnable serviceRunnable, final long delay) {
-		mDelayServices.add(new DelayService(serviceRunnable, mEngine.getCurrentTime() + delay));
+		mDelayServices.add(new DelayService(serviceRunnable, GlobalClock.currentTimeMillis() + delay));
 	}
 	
 	/**
@@ -463,10 +464,9 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	final public void waitForService(final multigear.services.ServiceRunnable serviceRunnable) {
 		// if the service is waiting
 		synchronized (mDelayServices) {
-			final multigear.mginterface.engine.eventsmanager.GeneralEvents.SyncClock clock = mEngine.createSyncClock();
 			for (final DelayService delayService : mDelayServices)
 				if (delayService.mServiceRunnable == serviceRunnable) {
-					while (delayService.mScheduleTime > clock.elapseTime() && !Thread.currentThread().isInterrupted()) {
+					while (delayService.mScheduleTime > GlobalClock.currentTimeMillis() && !Thread.currentThread().isInterrupted()) {
 					}
 					addService(delayService.mServiceRunnable);
 					mDelayServices.remove(delayService);

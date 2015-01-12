@@ -46,14 +46,14 @@ public class DensityParser {
 	 * @return Proportional Reference 2D
 	 */
 	final public Vector2 smallerRef2D(final float x, final float y) {
-		final float density = mRoom.getDensity();
+		//final float density = mRoom.getDensity();
 		final Vector2 screenSize = mRoom.getScreenSize();
-		float baseDensity = mBaseDensity;
+		//float baseDensity = mBaseDensity;
 		Vector2 baseScreenSize = mBaseScreen;
 		
 		// If default value, set as default density
-		if(baseDensity == multigear.mginterface.engine.Configuration.DEFAULT_VALUE)
-			baseDensity = density;
+		 //if(baseDensity == multigear.mginterface.engine.Configuration.DEFAULT_VALUE)
+		//	baseDensity = density;
 		// If default value, set as default display
 		if(baseScreenSize == multigear.mginterface.engine.Configuration.DEFAULT_REF2D)
 			baseScreenSize = screenSize;
@@ -68,14 +68,14 @@ public class DensityParser {
 	 * @return Proportional Reference 2D
 	 */
 	final public Vector2 biggerRef2D(final float x, final float y) {
-		final float density = mRoom.getDensity();
+		//final float density = mRoom.getDensity();
 		final Vector2 screenSize = mRoom.getScreenSize();
-		float baseDensity = mBaseDensity;
+		//float baseDensity = mBaseDensity;
 		Vector2 baseScreenSize = mBaseScreen;
 		
 		// If default value, set as default density
-		if(baseDensity == multigear.mginterface.engine.Configuration.DEFAULT_VALUE)
-			baseDensity = density;
+		//if(baseDensity == multigear.mginterface.engine.Configuration.DEFAULT_VALUE)
+		//	baseDensity = density;
 		// If default value, set as default display
 		if(baseScreenSize == multigear.mginterface.engine.Configuration.DEFAULT_REF2D)
 			baseScreenSize = screenSize;

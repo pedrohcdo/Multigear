@@ -57,7 +57,7 @@ final public class MultigearSync {
 	/*
 	 * Atualiza o tempo atual
 	 */
-	final public multigear.mginterface.engine.MultigearSync time() {
+	final public MultigearSync time() {
 		if(mMultigear.isFinished())
 			return this;
 		mEventHandler.sendTime();

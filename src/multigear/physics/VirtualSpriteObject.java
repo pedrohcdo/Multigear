@@ -4,6 +4,8 @@ package multigear.physics;
 import java.util.List;
 
 import multigear.general.utils.Vector2;
+import multigear.mginterface.graphics.drawable.sprite.Sprite;
+import multigear.mginterface.scene.Scene;
 
 
 
@@ -47,9 +49,9 @@ public class VirtualSpriteObject {
 	/*
 	 * Constutor
 	 */
-	public VirtualSpriteObject(final multigear.mginterface.graphics.drawable.sprite.Sprite sprite) {
+	public VirtualSpriteObject(final Scene scene, final Sprite sprite) {
 		mSprite = sprite;
-		mRoom = mSprite.getAttachedRoom();
+		mRoom = scene;
 		mRoom.addVirtualSpriteObject(this);
 		mStarted = false;
 		mForce = new multigear.general.utils.Vector2(0, 0);
@@ -89,7 +91,7 @@ public class VirtualSpriteObject {
 		if(mStarted) {
 			mSprite.getPosition().sum(mForce);
 			mForce.div(Friction);
-			mVertices = mSprite.getDesignedVerticesPosition();
+			//mVertices = mSprite.getDesiredVerticesPosition();
 			if(mVertices == null)
 				return;
 			mShapeSquare.copy(mVertices);

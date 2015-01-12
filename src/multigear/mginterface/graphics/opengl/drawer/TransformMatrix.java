@@ -12,13 +12,13 @@ package multigear.mginterface.graphics.opengl.drawer;
 public class TransformMatrix {
 	
 	// Final Private Variables
-	final private MatrixRow mMatrixRow;
+	final private WorldMatrix mMatrixRow;
 	
 	/**
 	 * Constructor
 	 * @param matrixRow
 	 */
-	public TransformMatrix(final MatrixRow matrixRow) {
+	public TransformMatrix(final WorldMatrix matrixRow) {
 		mMatrixRow = matrixRow;
 	}
 	

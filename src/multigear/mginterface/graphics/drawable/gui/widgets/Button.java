@@ -41,8 +41,7 @@ public class Button extends BaseWidget {
 	/*
 	 * Construtor
 	 */
-	public Button(final multigear.mginterface.scene.Scene room) {
-		super(room);
+	public Button() {
 		Animation.Press = null;
 		Animation.Release = null;
 		mLayer = addSpriteLayer();

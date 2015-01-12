@@ -10,5 +10,5 @@ package multigear.mginterface.graphics.drawable.particles;
 public interface ParticlesHelper {
 	
 	/** Time to generate news particles */
-	public void onGenerate(final ParticlesGenerator particlesGenerator);
+	public void onGenerate(final ParticlesGroup particlesGenerator);
 }

@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import multigear.cache.CacheManager;
 import multigear.general.utils.SafetyLock;
 import multigear.general.utils.SafetyLock.Interception;
-import multigear.mginterface.engine.eventsmanager.GeneralEvents.SyncClock;
 import multigear.mginterface.engine.servicessuport.SupportService;
 import multigear.mginterface.graphics.opengl.font.FontManager;
 import multigear.mginterface.scene.Scene;
@@ -43,7 +42,7 @@ final public class Multigear {
 	
 	// Private Variables
 	private boolean mFinished;
-	private long mCurrentTime;
+	private long mCurrsentTime;
 	private boolean mFirstBind;
 	private SupportService mSupportService;
 	private boolean mSupportServiceResumed;
@@ -84,7 +83,6 @@ final public class Multigear {
 		mManager = new multigear.mginterface.engine.Manager(this);
 		mEventHandler = new multigear.mginterface.engine.eventsmanager.EventHandler(mManager);
 		mFinished = false;
-		mCurrentTime = 0;
 		mFirstBind = true;
 		
 		mSupportServiceResumed = false;
@@ -308,33 +306,6 @@ final public class Multigear {
 	 */
 	final protected multigear.mginterface.engine.Surface getSurface() {
 		return mSurface;
-	}
-	
-	/**
-	 * Set used Current Time
-	 * 
-	 * @return
-	 */
-	final protected void setCurrentTime(final long currentTime) {
-		mCurrentTime = currentTime;
-	}
-	
-	/**
-	 * Return used Current Time
-	 * 
-	 * @return
-	 */
-	final public long getCurrentTime() {
-		return mCurrentTime;
-	}
-	
-	/**
-	 * Creates a clock synchronized with the engine.
-	 * 
-	 * @return
-	 */
-	final public SyncClock createSyncClock() {
-		return mEventHandler.createSyncClock();
 	}
 	
 	/*

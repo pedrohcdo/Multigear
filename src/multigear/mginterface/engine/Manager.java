@@ -133,14 +133,6 @@ public class Manager {
 	}
 	
 	/**
-	 * Set used Current Time
-	 * @return
-	 */
-	final public void setEngineCurrentTime(final long currentTime) {
-		mEngine.setCurrentTime(currentTime);
-	}
-	
-	/**
 	 * Get Activity
 	 * 
 	 * @return

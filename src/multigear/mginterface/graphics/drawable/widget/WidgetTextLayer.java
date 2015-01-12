@@ -1,15 +1,13 @@
 package multigear.mginterface.graphics.drawable.widget;
 
-import multigear.general.utils.KernelUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
-import multigear.mginterface.graphics.opengl.drawer.MatrixRow;
+import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
-import multigear.mginterface.scene.Scene;
 import android.graphics.Rect;
 
 /**
@@ -57,8 +55,8 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * Constructor
 	 * @param scene
 	 */
-	public WidgetTextLayer(final Scene scene) {
-		mAnimationStack = new AnimationStack(scene);
+	public WidgetTextLayer() {
+		mAnimationStack = new AnimationStack();
 	}
 	
 	/**
@@ -399,7 +397,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 		final float sy = scale.y;
 		
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
 		// Push Matrix
 		matrixRow.push();
@@ -426,11 +424,14 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * Atualiza e Desenha
 	 */
 	protected void endDraw(final Drawer drawer) {
+		// Prepare Drawer
+		drawer.setOpacity(mPreparedOpacity);
+		
 		// Draw
-		drawer.drawText(mFontMap, mFontWriter, mText, mPreparedOpacity);
+		drawer.drawText(mFontMap, mFontWriter, mText);
 		
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
 		// Pop Matrix
 		matrixRow.pop();

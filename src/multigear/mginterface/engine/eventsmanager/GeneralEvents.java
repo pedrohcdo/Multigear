@@ -1,5 +1,7 @@
 package multigear.mginterface.engine.eventsmanager;
 
+import android.util.Log;
+
 
 /**
  * Controla os eventos gerais.
@@ -10,49 +12,12 @@ package multigear.mginterface.engine.eventsmanager;
  */
 public class GeneralEvents {
 	
-	/**
-	 * Synchronized Clock
-	 * 
-	 * @author PedroH, RaphaelB
-	 *
-	 * Property Createlier.
-	 */
-	final public class SyncClock {
-		
-		// Final Private Variables
-		private long mClockTime;
-		
-		/**
-		 * Constructor
-		 */
-		private SyncClock() {
-			mClockTime = mLastTimeMillis;
-		}
-		
-		/**
-		 * Set Clock to Engine current time
-		 */
-		final public void set() {
-			mClockTime = mLastTimeMillis;
-		}
-		
-		/**
-		 * Return Elapsed Time
-		 * @return
-		 */
-		final public long elapseTime() {
-			return System.currentTimeMillis() - mClockTime;
-		}
-	}
-	
 	// Private Variables
 	final private multigear.mginterface.engine.Manager mManager;
 	final private multigear.mginterface.scene.Scene mMainRoom;
 	
 	// Private Variables
 	private boolean mHandled;
-	private long mClockTimeMillis;
-	private long mLastTimeMillis;
 	
 	/*
 	 * Construtor
@@ -60,9 +25,8 @@ public class GeneralEvents {
 	protected GeneralEvents(final multigear.mginterface.engine.Manager manager) {
 		mManager = manager;
 		mMainRoom = mManager.getMainRoom();
-		mHandled = true;
-		mClockTimeMillis = 0;
-		mLastTimeMillis = System.currentTimeMillis();
+		mHandled = false;
+		GlobalClock.set();
 	}
 	
 	/*
@@ -71,18 +35,12 @@ public class GeneralEvents {
 	final protected void time() {
 		if(!mHandled)
 			return;
-		mClockTimeMillis += Math.min(System.currentTimeMillis() - mLastTimeMillis, 25);
-		mManager.setEngineCurrentTime(mClockTimeMillis);
-		mMainRoom.time(mClockTimeMillis);
-		mLastTimeMillis = System.currentTimeMillis();
-	}
-	
-	/**
-	 * Creates a clock synchronized with the engine.
-	 * @return
-	 */
-	final protected SyncClock createSyncClock() {
-		return new SyncClock();
+		
+		// Update global clock
+		GlobalClock.update(25);
+		
+		// Time MainRoom
+		mMainRoom.time(GlobalClock.currentTimeMillis());
 	}
 	
 	/*
@@ -107,7 +65,7 @@ public class GeneralEvents {
 		if(mHandled)
 			return;
 		mHandled = true;
-		mLastTimeMillis = System.currentTimeMillis();
+		GlobalClock.handle();
 	}
 	
 	/*
@@ -115,6 +73,7 @@ public class GeneralEvents {
 	 */
 	final protected void unhandle() {
 		mHandled = false;
+		GlobalClock.unhandle();
 	}
 	
 	/*

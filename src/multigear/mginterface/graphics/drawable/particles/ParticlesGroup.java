@@ -5,17 +5,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
-import multigear.mginterface.graphics.drawable.BaseDrawable;
+import multigear.mginterface.engine.eventsmanager.GlobalClock;
+import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
-import multigear.mginterface.graphics.opengl.texture.Loader;
+import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
-import multigear.mginterface.scene.Scene;
+import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
-import android.opengl.GLES20;
-import android.util.Log;
 
 /**
  * 
@@ -23,37 +21,42 @@ import android.util.Log;
  * 
  *         Property Createlier.
  */
-final public class ParticlesGroup extends BaseDrawable {
+final public class ParticlesGroup implements Drawable {
 	
 	// Private Variables
 	private Texture mTexture;
 	private ParticlesHelper mParticlesHelper;
-	private ParticlesGenerator mParticlesGenerator;
-	private int mHelperFrequency = 100;
+	private float mHelperFrequency = 100;
 	private int mParticlesLimit;
 	private long mLastTime;
 	private List<Particle> mParticles = new ArrayList<Particle>();
 	private Rect mViewport;
 	private Vector2 mPosition = new Vector2(0, 0);
+	private int mId = 0;
+	private int mZ = 0;
+	private float mOpacity = 1;
 	private boolean mAutoHelper = true;
+	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
 	
 	// Buffers
-	private FloatBuffer mParticlesPositionBuffer;
-	private FloatBuffer mParticlesOpacityBuffer;
-	private FloatBuffer mParticlesScaleBuffer;
-	private Color mParticlesColorBuffer[];
+	private FloatBuffer mParticlesBuffer;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param room
 	 */
-	public ParticlesGroup(Scene room) {
-		super(room);
-		mLastTime = getAttachedRoom().getThisTime();
-		mParticlesGenerator = new ParticlesGenerator(this);
-		// 
+	public ParticlesGroup() {
 		setParticlesLimit(10);
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFunc(final BlendFunc blendFunc) {
+		mBlendFunc = blendFunc;
 	}
 	
 	/**
@@ -108,7 +111,25 @@ final public class ParticlesGroup extends BaseDrawable {
 	 * @param fps
 	 */
 	final public void setHelperFrequency(final int fps) {
-		mHelperFrequency = 1000 / fps;
+		mHelperFrequency = 1000.0f / fps;
+	}
+	
+	/**
+	 * Set Depth
+	 * 
+	 * @param z [in] Depth
+	 */
+	final public void setZ(final int z) {
+		mZ = z;
+	}
+
+	/**
+	 * Set Identifier
+	 * 
+	 * @param id [in] Identifier
+	 */
+	final public void setId(final int id) {
+		mId = id;
 	}
 	
 	/**
@@ -139,10 +160,7 @@ final public class ParticlesGroup extends BaseDrawable {
 		if(limit < 0)
 			throw new IllegalArgumentException("The amount can not be negative.");
 		mParticlesLimit = limit;
-		mParticlesPositionBuffer = GeneralUtils.createFloatBuffer(limit * 2);;
-		mParticlesOpacityBuffer = GeneralUtils.createFloatBuffer(limit);;
-		mParticlesScaleBuffer = GeneralUtils.createFloatBuffer(limit);;
-		mParticlesColorBuffer = new Color[limit];
+		mParticlesBuffer = GeneralUtils.createFloatBuffer(limit * 4);
 	}
 	
 	/**
@@ -155,20 +173,21 @@ final public class ParticlesGroup extends BaseDrawable {
 	}
 	
 	/**
-	 * Get Particles Generator
-	 * @return
-	 */
-	final public ParticlesGenerator getParticlesGenerator() {
-		return mParticlesGenerator;
-	}
-	
-	/**
 	 * Return Position
 	 * 
 	 * @return {@link Vector2} Position
 	 */
 	final public Vector2 getPosition() {
 		return mPosition;
+	}
+	
+	/**
+	 * Get Blend Func
+	 * 
+	 * @return Get Blend Func
+	 */
+	final public BlendFunc getBlendFunc() {
+		return mBlendFunc;
 	}
 	
 	/**
@@ -194,7 +213,7 @@ final public class ParticlesGroup extends BaseDrawable {
 	 * 
 	 * @param fps
 	 */
-	final public int getHelperFrequency(final int fps) {
+	final public float getHelperFrequency(final int fps) {
 		return mHelperFrequency;
 	}
 	
@@ -207,50 +226,55 @@ final public class ParticlesGroup extends BaseDrawable {
 	final public int getParticlesLimit(final int limit) {
 		return mParticlesLimit;
 	}
-	
+
 	/**
-	 * Get Texture Loader
+	 * Get Depth
 	 * 
-	 * @return
+	 * @return Depth
 	 */
-	final protected Loader getTextureLoaderImpl() {
-		return getAttachedRoom().getTextureLoader();
+	@Override
+	public int getZ() {
+		return mZ;
+	}
+
+	/**
+	 * Get identifier
+	 * 
+	 * @return Identifier
+	 */
+	@Override
+	public int getId() {
+		return mId;
 	}
 	
 	/**
 	 * Update Widget
 	 */
 	@Override
-	final public void updateAndDraw(final Drawer drawer, final float preOpacity) {
+	final public void draw(final Drawer drawer) {
 		
 		// Get Opacity
-		final float opacityGroup = getOpacity() * preOpacity;
+		final float opacityGroup = mOpacity;
 		
 		// Not has draw content
 		if(opacityGroup <= 0 || mTexture == null) {
 			// Update Particles
 			updateParticles();
-			
 			return;
 		}
-
+		
 		// Disable Scissor
 		boolean disableScissor = false;
 		
-		// Set Scisor
-		if (mViewport != null) {
-			final int screenHeight = (int) getAttachedRoom().getScreenSize().y;
-			final int top = screenHeight - mViewport.bottom;
-			final int bottom = screenHeight - mViewport.top - top;
-			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-			GLES20.glScissor(mViewport.left, top, mViewport.right, bottom);
-			disableScissor = true;
-		}
+		// Get Matrix Row
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
+
+		// Push Matrix
+		//matrixRow.push();
+		
 		
 		// Clear buffers
-		mParticlesPositionBuffer.clear();
-		mParticlesOpacityBuffer.clear();
-		mParticlesScaleBuffer.clear();
+		mParticlesBuffer.clear();
 		
 		// Draw
 		for (int i=0; i<mParticles.size(); i++) {
@@ -266,42 +290,52 @@ final public class ParticlesGroup extends BaseDrawable {
 			final float scale = particle.getScale();
 			final float finalOpacity = particle.getOpacity() * opacityGroup;
 			
-			// Put to Vertex buffer
-			mParticlesPositionBuffer.put(position.x + getPosition().x);
-			mParticlesPositionBuffer.put(position.y + getPosition().y);
+			// Put Vertexes to buffer
+			mParticlesBuffer.put(position.x);
+			mParticlesBuffer.put(position.y);
 			
-			// Put to Opacity buffer
-			mParticlesOpacityBuffer.put(finalOpacity);
+			// Put Opacity to buffer
+			mParticlesBuffer.put(finalOpacity);
 			
-			// Put to Scale buffer
-			mParticlesScaleBuffer.put(mTexture.getSize().x * scale);
+			// Put Scale to buffer
+			mParticlesBuffer.put(mTexture.getSize().x * scale);
 		}
 		
 		// Set Buffers Position
-		mParticlesPositionBuffer.position(0);
-		mParticlesOpacityBuffer.position(0);
-		mParticlesScaleBuffer.position(0);
+		mParticlesBuffer.position(0);
 		
-		// draw Particles
-		drawer.drawParticles(mTexture, mParticles.size(), mParticlesPositionBuffer, mParticlesOpacityBuffer, mParticlesScaleBuffer);
+		// Prepare Drawer
+		drawer.setTexture(mTexture);
+		drawer.setOpacity(1);
+		drawer.setBlendFunc(mBlendFunc);
+		drawer.setElementVertex(mParticlesBuffer);
+		drawer.enableViewport(mViewport);
 		
-		// Disable Scissor
-		if (disableScissor)
-			GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+		// Set Begin
+		drawer.drawParticles(mParticles.size());
+		
+		// End
+		drawer.end();
 		
 		// Update Particles
 		updateParticles();
+		
+		// Pop
+		//matrixRow.pop();
 	}
 	
 	/**
 	 * Update Particles
 	 */
 	final private void updateParticles() {
-		final long time = getAttachedRoom().getThisTime();
+		final long time = GlobalClock.currentTimeMillis();
 		if (mAutoHelper) {
-			if ((time - mLastTime) > mHelperFrequency) {
-				if (mParticlesHelper != null)
-					mParticlesHelper.onGenerate(mParticlesGenerator);
+			final long timeDiff = (time - mLastTime);
+			if (timeDiff > mHelperFrequency) {
+				if (mParticlesHelper != null) {
+					for(int i=0; i<(timeDiff / mHelperFrequency); i++)
+						mParticlesHelper.onGenerate(this);
+				}
 				mLastTime = time;
 			}
 		}
@@ -320,19 +354,20 @@ final public class ParticlesGroup extends BaseDrawable {
 	 * Requeste Helper.
 	 */
 	final public void requestHelper() {
-		mParticlesHelper.onGenerate(mParticlesGenerator);
+		mParticlesHelper.onGenerate(this);
 		mLastTime = System.currentTimeMillis();
 	}
 	
 	/**
 	 * Add new Particle
 	 */
-	final protected void addParticle(final Particle particle, final boolean top) {
+	final public void addParticle(Particle particle, final boolean top) {
 		if (mParticlesLimit != -1)
-			if (mParticles.size() > mParticlesLimit + 1)
+			if (mParticles.size() >= mParticlesLimit)
 				return;
-		
-		particle.onCreated(getAttachedRoom().getThisTime());
+		particle = particle.prepareToInsert();
+		particle.onCreated(GlobalClock.currentTimeMillis());
+		particle.setPosition(Vector2.sum(particle.getPosition(), getPosition()));
 		if (top)
 			mParticles.add(particle);
 		else

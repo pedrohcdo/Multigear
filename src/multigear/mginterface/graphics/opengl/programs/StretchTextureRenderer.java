@@ -5,6 +5,7 @@ import java.nio.FloatBuffer;
 import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.opengl.Matrix;
 
 /**
@@ -43,7 +44,14 @@ final public class StretchTextureRenderer extends BaseProgram {
 	 */
 	@Override
 	final protected String onLoadVertexShader() {
-		return "uniform mat4 uProjectionMatrix;" + "attribute vec4 aElementVertices;" + "attribute vec2 aTextureVertices;" + "varying vec2 vTextureCoord;" + "void main() {" + "gl_Position = uProjectionMatrix * aElementVertices;" + "vTextureCoord = aTextureVertices;" + "}";
+		return "uniform mat4 uProjectionMatrix;" + 
+				"attribute vec4 aElementVertices;" +
+				"attribute vec2 aTextureVertices;" + 
+				"varying vec2 vTextureCoord;" +
+				"void main() {" + 
+					"gl_Position = uProjectionMatrix * aElementVertices;" +
+					"vTextureCoord = aTextureVertices;" + 
+				"}";
 	}
 	
 	/**
@@ -51,7 +59,7 @@ final public class StretchTextureRenderer extends BaseProgram {
 	 */
 	@Override
 	final protected String onLoadFragmentShader() {
-		return "precision mediump float;" + 
+		return "precision highp float;" + 
 				"varying vec2 vTextureCoord;" +
 				"uniform sampler2D uTextureSample;" +
 				"uniform vec4 uBlendColor;" +
@@ -105,6 +113,18 @@ final public class StretchTextureRenderer extends BaseProgram {
 	}
 	
 	/**
+	 * Set Attributes Buffers
+	 * 
+	 * @param elementsBuffer
+	 * @param textureBuffer
+	 */
+	final public void setBuffers(final FloatBuffer elementsBuffer, final FloatBuffer textureBuffer) {
+		// Set Attributes
+		GLES20.glVertexAttribPointer(mElementVerticesHandle, 2, GLES20.GL_FLOAT, false, 0, elementsBuffer);
+		GLES20.glVertexAttribPointer(mTextureVerticesHandle, 2, GLES20.GL_FLOAT, false, 0, textureBuffer);
+	}
+	
+	/**
 	 * Set Default Buffers
 	 */
 	final public void setDefaultBuffers() {
@@ -118,10 +138,9 @@ final public class StretchTextureRenderer extends BaseProgram {
 	 * being used.
 	 */
 	final public void render() {
-		// Enable Attributes
 		GLES20.glEnableVertexAttribArray(mElementVerticesHandle);
 		GLES20.glEnableVertexAttribArray(mTextureVerticesHandle);
-		// Initialize Uniform Locations
+		// Set Texture
 		GLES20.glUniform1i(mTextureSampleHandle, 0);
 		// Draw Triangles
 		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, 4);
@@ -144,6 +163,42 @@ final public class StretchTextureRenderer extends BaseProgram {
 		// Draw Triangles
 		for(int i=0; i<size/4; i++)
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, i*4, 4);
+		// Disable Attributes
+		GLES20.glDisableVertexAttribArray(mElementVerticesHandle);
+		GLES20.glDisableVertexAttribArray(mTextureVerticesHandle);
+	}
+	
+	/**
+	 * Render with this program.<br>
+	 * You will not be possible to render with this program while another is
+	 * being used.
+	 */
+	final public void renderLinear(int size) {
+		// Enable Attributes
+		GLES20.glEnableVertexAttribArray(mElementVerticesHandle);
+		GLES20.glEnableVertexAttribArray(mTextureVerticesHandle);
+		// Initialize Uniform Locations
+		GLES20.glUniform1i(mTextureSampleHandle, 0);
+		// Draw Triangles
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, size);
+		// Disable Attributes
+		GLES20.glDisableVertexAttribArray(mElementVerticesHandle);
+		GLES20.glDisableVertexAttribArray(mTextureVerticesHandle);
+	}
+	
+	/**
+	 * Render with this program.<br>
+	 * You will not be possible to render with this program while another is
+	 * being used.
+	 */
+	final public void renderTriangleFan(int size) {
+		// Enable Attributes
+		GLES20.glEnableVertexAttribArray(mElementVerticesHandle);
+		GLES20.glEnableVertexAttribArray(mTextureVerticesHandle);
+		// Initialize Uniform Locations
+		GLES20.glUniform1i(mTextureSampleHandle, 0);
+		// Draw Triangles
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, size);
 		// Disable Attributes
 		GLES20.glDisableVertexAttribArray(mElementVerticesHandle);
 		GLES20.glDisableVertexAttribArray(mTextureVerticesHandle);

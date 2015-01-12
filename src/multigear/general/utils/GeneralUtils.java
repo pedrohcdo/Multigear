@@ -463,7 +463,7 @@ final public class GeneralUtils {
 	}
 	
 	/**
-	 * Create FloatBuffer
+	 * Create FloatBuffer, and set position 0
 	 * <p>
 	 * @param bufferLenght
 	 * @return
@@ -472,6 +472,21 @@ final public class GeneralUtils {
 		ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferLenght * 4);
 		byteBuffer.order(ByteOrder.nativeOrder());
 		return byteBuffer.asFloatBuffer();
+	}
+	
+	/**
+	 * Create FloatBuffer from float values, and set position 0
+	 * <p>
+	 * @param bufferLenght
+	 * @return
+	 */
+	final static public FloatBuffer createFloatBuffer(final float[] values) {
+		ByteBuffer byteBuffer = ByteBuffer.allocateDirect(values.length * 4);
+		byteBuffer.order(ByteOrder.nativeOrder());
+		FloatBuffer buffer = byteBuffer.asFloatBuffer();
+		buffer.put(values);
+		buffer.position(0);
+		return buffer;
 	}
 	
 	/**
@@ -603,4 +618,5 @@ final public class GeneralUtils {
 		out[2] = element[2];
 		out[3] = element[5];
 	}
+	
 }

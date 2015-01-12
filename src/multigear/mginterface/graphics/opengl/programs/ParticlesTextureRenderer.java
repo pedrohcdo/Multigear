@@ -17,12 +17,10 @@ import android.opengl.Matrix;
 final public class ParticlesTextureRenderer extends BaseProgram {
 	
 	// Private Variables
-	private int mVertexHandle;
-	private int mOpacityHandle;
-	private int mScaleHandle;
-	
+	private int mParticleHandle;
 	private int mProjectionMatrixHandle;
-	
+	private int mScaleHandle;
+	private int mBlendColorHandle;
 	private int mTextureSampleHandle;
 	
 	// Default Buffers
@@ -36,16 +34,14 @@ final public class ParticlesTextureRenderer extends BaseProgram {
 	@Override
 	final protected String onLoadVertexShader() {
 		return "uniform mat4 uProjectionMatrix;" + 
-				"attribute vec4 aVertex;" + 
-				"attribute float aOpacity;" + 
-				"attribute float aScale;" + 
-				
+				"attribute vec4 aParticle;" + 
 				"varying float vOpacity;" +
+				"uniform float uScale;" +
 				
 				"void main() {" + 
-					"gl_PointSize = aScale;" +
-					"vOpacity = aOpacity;" +
-					"gl_Position = uProjectionMatrix * aVertex;" +
+					"vOpacity = aParticle.z;" +
+					"gl_PointSize = aParticle.w * uScale;" +
+					"gl_Position = uProjectionMatrix * vec4(aParticle.xy, 0, 1.0);" +
 				"}";
 	}
 	
@@ -57,6 +53,7 @@ final public class ParticlesTextureRenderer extends BaseProgram {
 		return "precision mediump float;" + 
 				"varying float vOpacity;" +
 				"uniform sampler2D uTextureSample;" +
+				"uniform vec4 uBlendColor;" +
 				
 				"void main() {" +
 					"gl_FragColor = texture2D(uTextureSample, gl_PointCoord) * vec4(vOpacity);" + 
@@ -68,11 +65,10 @@ final public class ParticlesTextureRenderer extends BaseProgram {
 	 */
 	@Override
 	final protected void onSetup(final Vector2 screenSize) {
-		mVertexHandle = GLES20.glGetAttribLocation(getHandle(), "aVertex");
-		mOpacityHandle = GLES20.glGetAttribLocation(getHandle(), "aOpacity");
-		mScaleHandle = GLES20.glGetAttribLocation(getHandle(), "aScale");
-		
+		mParticleHandle = GLES20.glGetAttribLocation(getHandle(), "aParticle");
 		mProjectionMatrixHandle = GLES20.glGetUniformLocation(getHandle(), "uProjectionMatrix");
+		mScaleHandle = GLES20.glGetUniformLocation(getHandle(), "uScale");
+		mBlendColorHandle = GLES20.glGetUniformLocation(getHandle(), "uBlendColor");
 		mTextureSampleHandle = GLES20.glGetUniformLocation(getHandle(), "uTextureSample");
 		
 		Matrix.orthoM(mOrthoMatrix, 0, 0.0f, (float) screenSize.x, (float) screenSize.y, 0.0f, 0.0f, 1.0f);
@@ -85,7 +81,17 @@ final public class ParticlesTextureRenderer extends BaseProgram {
 	@Override
 	public void onPrepare(float[] transformMatrix, float[] blendColor) {
 		Matrix.multiplyMM(mProjectionMatrix, 0, mOrthoMatrix, 0, transformMatrix, 0);
-		GLES20.glUniformMatrix4fv(mProjectionMatrixHandle, 1, false, mOrthoMatrix, 0);
+		GLES20.glUniformMatrix4fv(mProjectionMatrixHandle, 1, false, mProjectionMatrix, 0);
+		GLES20.glUniform4f(mBlendColorHandle, blendColor[0], blendColor[1], blendColor[2], blendColor[3]);
+	}
+	
+	/**
+	 * Set particles Scale
+	 * 
+	 * @param scale
+	 */
+	final public void setScale(final float scale) {
+		GLES20.glUniform1f(mScaleHandle, scale);
 	}
 	
 	/**
@@ -94,10 +100,8 @@ final public class ParticlesTextureRenderer extends BaseProgram {
 	 * @param elementsBuffer
 	 * @param textureBuffer
 	 */
-	final public void setBuffers(final FloatBuffer vertexBuffer, final FloatBuffer opacityBuffer, final FloatBuffer scaleBuffer) {
-		GLES20.glVertexAttribPointer(mVertexHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
-		GLES20.glVertexAttribPointer(mOpacityHandle, 1, GLES20.GL_FLOAT, false, 0, opacityBuffer);
-		GLES20.glVertexAttribPointer(mScaleHandle, 1, GLES20.GL_FLOAT, false, 0, scaleBuffer);
+	final public void setBuffers(final FloatBuffer particleBuffer) {
+		GLES20.glVertexAttribPointer(mParticleHandle, 4, GLES20.GL_FLOAT, false, 0, particleBuffer);
 	}
 	
 	/**
@@ -107,17 +111,13 @@ final public class ParticlesTextureRenderer extends BaseProgram {
 	 */
 	final public void render(final int count) {
 		// Enable Attributes
-		GLES20.glEnableVertexAttribArray(mVertexHandle);
-		GLES20.glEnableVertexAttribArray(mOpacityHandle);
-		GLES20.glEnableVertexAttribArray(mScaleHandle);
+		GLES20.glEnableVertexAttribArray(mParticleHandle);
 		// Initialize Uniform Locations
 		GLES20.glUniform1i(mTextureSampleHandle, 0);
 		// Draw Triangles
 		GLES20.glDrawArrays(GLES20.GL_POINTS, 0, count);
 		// Disable Attributes
-		GLES20.glDisableVertexAttribArray(mVertexHandle);
-		GLES20.glDisableVertexAttribArray(mOpacityHandle);
-		GLES20.glDisableVertexAttribArray(mScaleHandle);
+		GLES20.glDisableVertexAttribArray(mParticleHandle);
 	}
 	
 	/**
@@ -125,8 +125,6 @@ final public class ParticlesTextureRenderer extends BaseProgram {
 	 */
 	@Override
 	protected void onUnused() {
-		GLES20.glDisableVertexAttribArray(mVertexHandle);
-		GLES20.glDisableVertexAttribArray(mOpacityHandle);
-		GLES20.glDisableVertexAttribArray(mScaleHandle);
+		GLES20.glDisableVertexAttribArray(mParticleHandle);
 	}
 }

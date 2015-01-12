@@ -3,6 +3,8 @@ package multigear.mginterface.graphics.animations;
 import java.util.ArrayList;
 import java.util.List;
 
+import multigear.mginterface.engine.eventsmanager.GlobalClock;
+
 /**
  * 
  * Base para animação de uma Textura.
@@ -100,7 +102,6 @@ public class AnimationStack {
 	final private List<multigear.mginterface.graphics.animations.Animation> mAnimationStack;
 	final private List<AnimationStack.Handler> mStateProcedures;
 	final private multigear.mginterface.graphics.animations.Animation mNullAnimation;
-	final private multigear.mginterface.scene.Scene mRoom;
 	final private Object mLock;
 	
 	// Private VAriables
@@ -114,8 +115,8 @@ public class AnimationStack {
 	/*
 	 * Construtor
 	 */
-	public AnimationStack(final multigear.mginterface.scene.Scene room) {
-		mRoom = room;
+	public AnimationStack() {
+		
 		mLock = new Object();
 		mNullAnimation = new NullAnimation();
 		mAnimationStack = new ArrayList<Animation>();
@@ -235,7 +236,7 @@ public class AnimationStack {
 		if (id < mAnimationStack.size()) {
 			mAnimationIndex = id;
 			final multigear.mginterface.graphics.animations.Animation animation = mAnimationStack.get(mAnimationIndex);
-			animation.set(mRoom.getThisTime());
+			animation.set(GlobalClock.currentTimeMillis());
 			if (mListener != null)
 				addProc(AnimationStack.Handler.ANIMATION_START, animation);
 		}
@@ -271,7 +272,7 @@ public class AnimationStack {
 		Animation animation;
 		if (mAnimationIndex >= 0) {
 			animation = mAnimationStack.get(mAnimationIndex);
-			animation.update(mRoom.getThisTime());
+			animation.update(GlobalClock.currentTimeMillis());
 		} else {
 			animation = mNullAnimation;
 			if (mAnimationStack.size() == 0)

@@ -8,8 +8,14 @@ import java.util.List;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
-import multigear.mginterface.graphics.drawable.SimpleDrawable;
-import multigear.mginterface.graphics.opengl.drawer.MatrixRow;
+import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
+import multigear.mginterface.graphics.opengl.drawer.Drawer;
+import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
+import multigear.mginterface.scene.Scene;
+import multigear.mginterface.scene.components.receivers.Drawable;
+import multigear.mginterface.scene.components.receivers.Touchable;
+import multigear.mginterface.scene.listeners.BaseListener;
+import android.graphics.Rect;
 import android.opengl.GLES20;
 import android.view.MotionEvent;
 
@@ -22,7 +28,7 @@ import android.view.MotionEvent;
  * 
  *         Property Createlier.
  */
-public class BaseWidget extends SimpleDrawable {
+public class BaseWidget implements Drawable, Touchable {
 	
 	/**
 	 * Widget Skin
@@ -105,6 +111,39 @@ public class BaseWidget extends SimpleDrawable {
 		}
 	};
 	
+
+	// Final Private Variables
+	final private Vector2[] mVertices;
+	final private float mResultMatrixA[] = new float[2];
+	final private float mResultMatrixB[] = new float[2];
+	final private float mResultMatrixC[] = new float[2];
+	final private float mResultMatrixD[] = new float[2];
+	final private float mBaseVerticeA[] = new float[] { 0, 0 };
+	final private float mBaseVerticeB[] = new float[] { 1, 0 };
+	final private float mBaseVerticeC[] = new float[] { 1, 1 };
+	final private float mBaseVerticeD[] = new float[] { 0, 1 };
+	
+	// Private Variables
+	private BaseListener mListener;
+	private boolean mTouchHandled;
+	private Vector2 mHandledPosition;
+	protected Rect mViewport;
+		
+	// Public Variables
+	protected Vector2 mScale = new Vector2(1, 1);
+	protected Vector2 mPosition = new Vector2(0, 0);
+	protected Vector2 mSize = new Vector2(32, 32);
+	protected Vector2 mCenter = new Vector2(0, 0);
+	protected Vector2 mScroll = new Vector2(0, 0);
+	protected float mAngle = 0;
+	protected float mOpacity = 1;
+	protected boolean mTouchable = true;
+	protected boolean mFixedSpace = false;
+	protected boolean mMirror[] = { false, false };
+	protected int mZ, mId;
+	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	
+	
 	// Final Public Variables
 	final public Skin Skin = new Skin();
 	
@@ -119,17 +158,341 @@ public class BaseWidget extends SimpleDrawable {
 	private int mState;
 	private boolean mTouchHandledImpl;
 	private Vector2 mTouchLastPositionImpl;
-	private multigear.mginterface.graphics.animations.AnimationStack mAnimationStack;
+	private AnimationStack mAnimationStack;
 	
 	/**
 	 * Constructor
 	 */
-	public BaseWidget(final multigear.mginterface.scene.Scene room) {
-		super(room);
+	public BaseWidget() {
 		mState = 0;
 		mTouchHandledImpl = false;
-		mLayers = new ArrayList<multigear.mginterface.graphics.drawable.widget.WidgetLayer>();
-		mAnimationStack = new AnimationStack(room);
+		mLayers = new ArrayList<WidgetLayer>();
+		mAnimationStack = new AnimationStack();
+		
+		mListener = null;
+		mTouchHandled = false;
+		mHandledPosition = new Vector2(0, 0);
+		mVertices = new Vector2[4];
+		mViewport = null;
+		mFixedSpace = false;
+		
+		setVerticesPosition();
+	}
+
+	/**
+	 * Set Viewport
+	 * 
+	 * @param left
+	 *            Left
+	 * @param top
+	 *            Top
+	 * @param width
+	 *            Width
+	 * @param height
+	 *            Height
+	 */
+	final public void setViewport(final int left, final int top, final int width, final int height) {
+		mViewport = new Rect(left, top, width, height);
+	}
+	
+	/**
+	 * Set a listener. Listener used for send Touch Events.
+	 * 
+	 * @param listener
+	 *            Used Listener.
+	 */
+	final public void setListener(final multigear.mginterface.scene.listeners.BaseListener listener) {
+		mListener = listener;
+	}
+	
+	/**
+	 * Invert in Vertical
+	 * 
+	 * @param inverted
+	 */
+	final public void setMirrorInverted(final boolean mirrorX, final boolean mirrorY) {
+		mMirror[0] = mirrorX;
+		mMirror[1] = mirrorY;
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFunc(final BlendFunc blendFunc) {
+		mBlendFunc = blendFunc;
+	}
+	
+	/**
+	 * Set Scale
+	 * 
+	 * @param scale
+	 *            Float Scale
+	 */
+	final public void setScale(final Vector2 scale) {
+		mScale = scale.clone();
+	}
+	
+	/**
+	 * Set Scale
+	 * 
+	 * @param scale
+	 *            Float Scale
+	 */
+	final public void setScale(final float scaleX, final float scaleY) {
+		mScale = new Vector2(scaleX, scaleY);
+	}
+	
+	/**
+	 * Set Scale
+	 * 
+	 * @param scale
+	 *            Float Scale
+	 */
+	final public void setScale(final float scale) {
+		mScale = new Vector2(scale, scale);
+	}
+	
+	/**
+	 * Set Sprite Position
+	 * 
+	 * @param position
+	 *            {@link Vector2} Position
+	 */
+	final public void setPosition(final Vector2 position) {
+		mPosition = position.clone();
+	}
+	
+	/**
+	 * Set draw dest texture size.
+	 * 
+	 * @param size
+	 *            Draw texture dest Size
+	 */
+	final public void setSize(final Vector2 size) {
+		mSize = size.clone();
+	}
+	
+	/**
+	 *	Set drawable opacity
+	 * 
+	 * @param opacity [in] Opacity
+	 */
+	final public void getOpacity(final float opacity) {
+		mOpacity = opacity;
+	}
+	
+	/**
+	 * Set center .
+	 * 
+	 * @param center
+	 *            {@link Vector2} Center
+	 */
+	final public void setCenter(final Vector2 center) {
+		mCenter = center.clone();
+	}
+	
+	/**
+	 * Set Angle.
+	 * 
+	 * @param angle
+	 *            {@link Vector2} Angle
+	 */
+	final public void setAngle(final float angle) {
+		mAngle = angle;
+	}
+	
+	/**
+	 * Set Scroll.
+	 * 
+	 * @param center
+	 *            {@link Vector2} Scroll
+	 */
+	final public void setScroll(final Vector2 scroll) {
+		mScroll = scroll.clone();
+	}
+	
+	/**
+	 * Set Touchable.
+	 * 
+	 * @param touchable
+	 *            Boolean Touchable
+	 */
+	final public void setTouchable(final boolean touchable) {
+		mTouchable = touchable;
+	}
+	
+	/**
+	 * Set Fixed Space.
+	 * 
+	 * @param fixed
+	 *            Boolean Fixed
+	 */
+	final public void setFixedSpace(final boolean fixed) {
+		mFixedSpace = fixed;
+	}
+	
+	/**
+	 * Set Z
+	 * 
+	 * @param z
+	 */
+	public void setZ(final int z) {
+		mZ = z;
+	}
+
+	/**
+	 * Set Id
+	 * 
+	 * @param id
+	 */
+	public void setId(int id) {
+		mId = id;
+	}
+	
+	/**
+	 * Get Listener
+	 * @return
+	 */
+	final protected BaseListener getListener() {
+		return mListener;
+	}
+	
+	/**
+	 * Invert in Vertical
+	 * 
+	 * @param inverted
+	 */
+	final public boolean[] getMirror() {
+		return mMirror.clone();
+	}
+	
+	/**
+	 * Get Viewport
+	 */
+	final public Rect getViewport() {
+		return mViewport;
+	}
+	
+	/**
+	 * Get Blend Func
+	 * 
+	 * @return Get Blend Func
+	 */
+	final public BlendFunc getBlendFunc() {
+		return mBlendFunc;
+	}
+	
+	/**
+	 * Get Scale
+	 */
+	final public Vector2 getScale() {
+		return mScale.clone();
+	}
+	
+	/**
+	 * Return Position
+	 * 
+	 * @return {@link Vector2} Position
+	 */
+	final public Vector2 getPosition() {
+		return mPosition.clone();
+	}
+	
+	/**
+	 * Return Real Position
+	 * <p>
+	 * Get Position with animations modify.
+	 * 
+	 * @return {@link Vector2} Position
+	 */
+	final public Vector2 getRealPosition() {
+		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		Vector2 position = mPosition.clone();
+		position.sum(animationSet.getPosition());
+		return position;
+	}
+	
+	/**
+	 * Return draw dest Texture size.
+	 * 
+	 * @return {@link Vector2} Size
+	 */
+	final public Vector2 getSize() {
+		return mSize.clone();
+	}
+	
+	/**
+	 * Get drawable opacity
+	 * 
+	 * @return Return drawable opacity
+	 */
+	final public float getOpacity() {
+		return mOpacity;
+	}
+	
+	/**
+	 * Get center .
+	 * 
+	 * @return {@link Vector2} Center
+	 */
+	final public Vector2 getCenter() {
+		return mCenter.clone();
+	}
+	
+	/**
+	 * Get Angle.
+	 * 
+	 * @return {@link Vector2} Angle
+	 */
+	final public float getAngle() {
+		return mAngle;
+	}
+	
+	/**
+	 * Get Scroll.
+	 * 
+	 * @return {@link Vector2} Scroll
+	 */
+	final public Vector2 getScroll() {
+		return mScroll.clone();
+	}
+	
+	/**
+	 * Get Touchable.
+	 * 
+	 * @return Boolean Touchable
+	 */
+	final public boolean getTouchable() {
+		return mTouchable;
+	}
+	
+	/**
+	 * Get Fixed Space.
+	 * 
+	 * @param fixed
+	 *            Boolean Fixed
+	 */
+	final public boolean getFixedSpace() {
+		return mFixedSpace;
+	}
+
+	/**
+	 * Get Id
+	 */
+	@Override
+	public int getId() {
+		return mId;
+	}
+	
+	/**
+	 * Get Z
+	 */
+	@Override
+	public int getZ() {
+		// TODO Auto-generated method stub
+		return mZ;
 	}
 	
 	/**
@@ -142,11 +505,40 @@ public class BaseWidget extends SimpleDrawable {
 		return mAnimationStack;
 	}
 	
+	/*
+	 * Retorna o fator de escala
+	 */
+	final protected float getBaseScaleFacor(Scene scene) {
+		if (!scene.hasFunc(multigear.mginterface.scene.Scene.FUNC_VIRTUAL_DPI))
+			return 1f;
+		return scene.getSpaceParser().getScaleFactor();
+	}
+	
+	/*
+	 * Retorna o fator de escala
+	 */
+	final protected float getInverseBaseScaleFacor(Scene scene) {
+		if (!scene.hasFunc(multigear.mginterface.scene.Scene.FUNC_VIRTUAL_DPI))
+			return 1f;
+		return scene.getSpaceParser().getInverseScaleFactor();
+	}
+	
+	
+	
+	/**
+	 * Return Sprite pressed state.
+	 * 
+	 * @return Return true if Sprite pressed state.
+	 */
+	final public boolean isPressed() {
+		return mTouchHandled && mTouchable;
+	}
+	
 	/**
 	 * Add a new Sprite Layer. Similar to Sprite.
 	 */
 	final protected WidgetSpriteLayer addSpriteLayer() {
-		WidgetSpriteLayer layer = new WidgetSpriteLayer(getAttachedRoom());
+		WidgetSpriteLayer layer = new WidgetSpriteLayer();
 		mLayers.add(layer);
 		return layer;
 	}
@@ -155,7 +547,7 @@ public class BaseWidget extends SimpleDrawable {
 	 * Add a new Trxt Layer. Similar to Sprite.
 	 */
 	final protected WidgetTextLayer addTextLayer() {
-		WidgetTextLayer layer = new WidgetTextLayer(getAttachedRoom());
+		WidgetTextLayer layer = new WidgetTextLayer();
 		mLayers.add(layer);
 		return layer;
 	}
@@ -236,34 +628,13 @@ public class BaseWidget extends SimpleDrawable {
 	}
 	
 	/**
-	 * Not Impl
-	 */
-	@Override
-	protected AnimationStack getImplAnimationStack() {
-		return null;
-	}
-	
-	/**
 	 * Update Widget
 	 */
 	@Override
-	final public void updateAndDraw(final multigear.mginterface.graphics.opengl.drawer.Drawer drawer, final float preOpacity) {
+	final public void draw(final Drawer drawer) {
 		
 		// Prepare Animations
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
-		
-		// Scissor switch
-		boolean disableScissor = false;
-		
-		// Set Scisor
-		if (mViewport != null) {
-			final int screenHeight = (int) getAttachedRoom().getScreenSize().y;
-			final int top = screenHeight - mViewport.bottom;
-			final int bottom = screenHeight - mViewport.top - top;
-			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-			GLES20.glScissor(mViewport.left, top, mViewport.right, bottom);
-			disableScissor = true;
-		}
 		
 		// Prepare Transformations
 		// Top Level
@@ -280,7 +651,7 @@ public class BaseWidget extends SimpleDrawable {
 		final Vector2 atranslate = animationSet.getPosition();
 		
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
 		// Push Matrix
 		matrixRow.push();
@@ -289,7 +660,11 @@ public class BaseWidget extends SimpleDrawable {
 		Collections.sort(mLayers, mLayersComparatorDraw);
 		
 		// Opacity
-		final float opacity = preOpacity * animationSet.getOpacity() * getOpacity();
+		final float opacity = animationSet.getOpacity() * getOpacity();
+		
+		// Enable Viewport
+		drawer.enableViewport(mViewport);
+		drawer.setBlendFunc(mBlendFunc);
 		
 		// Draw
 		for (final multigear.mginterface.graphics.drawable.widget.WidgetLayer layer : mLayers) {
@@ -314,35 +689,90 @@ public class BaseWidget extends SimpleDrawable {
 			}
 		}
 		
-		// Disable Scissor
-		if (disableScissor)
-			GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+		// End Drawer
+		drawer.end();
 		
 		// Scale Widget
 		matrixRow.postScalef(sx, sy);
-		
+						
 		// Pre Rotate
 		matrixRow.postTranslatef(-ox, -oy);
 		matrixRow.postRotatef(mAngle);
 		matrixRow.postTranslatef(ox, oy);
-		
+						
 		// Translate Matrix
 		final float tX = (float) (mPosition.x - mScroll.x - ox);
 		final float tY = (float) (mPosition.y - mScroll.y - oy);
 		matrixRow.postTranslatef(tX, tY);
-		
+						
 		// Get Transformed Vertices
+		matrixRow.swap();
 		final float transformMatrix[] = new float[16];
 		matrixRow.copyValues(transformMatrix);
-		
+						
+		// Swap transformations
+		matrixRow.swap();
+						
 		// Prepare Vertices Position
-		refreshVerticesPosition(transformMatrix);
-		
+		refreshVerticesPosition(matrixRow);
+						
 		// Pop Matrix
 		matrixRow.pop();
-		
+						
 		//
 		onUpdate();
+	}
+	
+	/*
+	 * Seta a posição dos vertices para posição original
+	 */
+	final protected void setVerticesPosition() {
+		mVertices[0] = new Vector2(0, 0);
+		mVertices[1] = new Vector2(1, 0);
+		mVertices[2] = new Vector2(1, 1);
+		mVertices[3] = new Vector2(0, 1);
+	}
+	
+	/*
+	 * Refresh Vertices Position
+	 */
+	final protected void refreshVerticesPosition(final WorldMatrix matrixRow) {
+		// Swap transformations and project points
+		matrixRow.project(mBaseVerticeA, mResultMatrixA);
+		matrixRow.project(mBaseVerticeB, mResultMatrixB);
+		matrixRow.project(mBaseVerticeC, mResultMatrixC);
+		matrixRow.project(mBaseVerticeD, mResultMatrixD);
+		// Set Vertices
+		mVertices[0] = new Vector2(mResultMatrixA[0], mResultMatrixA[1]);
+		mVertices[1] = new Vector2(mResultMatrixB[0], mResultMatrixB[1]);
+		mVertices[2] = new Vector2(mResultMatrixC[0], mResultMatrixC[1]);
+		mVertices[3] = new Vector2(mResultMatrixD[0], mResultMatrixD[1]);
+	}
+	
+	/**
+	 * Check if point is over Sprite.
+	 * 
+	 * @param point
+	 *            Point used for check.
+	 * @return Return true if point over Sprite.
+	 */
+	final public boolean pointOver(final Vector2 point) {
+		// Get Edges
+		final float left = mVertices[0].x;
+		final float top = mVertices[0].y;
+		final float right = mVertices[2].x;
+		final float bottom = mVertices[2].y;
+		// Return result
+		return (point.x >= left && point.x < right && point.y >= top && point.y < bottom);
+	}
+	
+	/**
+	 * Returns the four vertices of the edge of the sprite.
+	 * 
+	 * @return Pack of four vertices.
+	 */
+	final public Vector2[] getDesignedVerticesPosition() {
+		return mVertices;
 	}
 	
 	/**
@@ -357,7 +787,7 @@ public class BaseWidget extends SimpleDrawable {
 			mTouchHandledImpl = false;
 			return;
 		}
-		final multigear.mginterface.graphics.drawable.BaseListener listener = getListener();
+		final multigear.mginterface.scene.listeners.BaseListener listener = getListener();
 		Vector2 point = null;
 		switch (motionEvent.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
@@ -369,10 +799,10 @@ public class BaseWidget extends SimpleDrawable {
 					onPress();
 					onTouch(motionEvent);
 					mTouchHandledImpl = true;
-					if (listener != null && listener instanceof multigear.mginterface.graphics.drawable.SimpleListener)
-						((multigear.mginterface.graphics.drawable.SimpleListener) listener).onPress(this);
-					if (listener != null && listener instanceof multigear.mginterface.graphics.drawable.TouchListener)
-						((multigear.mginterface.graphics.drawable.TouchListener) listener).onTouch(this, motionEvent);
+					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.SimpleListener)
+						((multigear.mginterface.scene.listeners.SimpleListener) listener).onPress(this);
+					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.TouchListener)
+						((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
 					
 					break;
 				}
@@ -382,8 +812,8 @@ public class BaseWidget extends SimpleDrawable {
 					mTouchHandledImpl = false;
 					onRelease();
 					onTouch(motionEvent);
-					if (listener != null && listener instanceof multigear.mginterface.graphics.drawable.TouchListener)
-						((multigear.mginterface.graphics.drawable.TouchListener) listener).onTouch(this, motionEvent);
+					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.TouchListener)
+						((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
 					
 					removeState(STATE_IN);
 				}
@@ -397,12 +827,12 @@ public class BaseWidget extends SimpleDrawable {
 					point = new Vector2(motionEvent.getX(), motionEvent.getY());
 					onTouch(motionEvent);
 					if (listener != null) {
-						if (listener instanceof multigear.mginterface.graphics.drawable.SimpleListener)
-							((multigear.mginterface.graphics.drawable.SimpleListener) listener).onRelease(this);
-						if (pointOver(point) && listener instanceof multigear.mginterface.graphics.drawable.ClickListener)
-							((multigear.mginterface.graphics.drawable.ClickListener) listener).onClick(this);
-						if (listener instanceof multigear.mginterface.graphics.drawable.TouchListener)
-							((multigear.mginterface.graphics.drawable.TouchListener) listener).onTouch(this, motionEvent);
+						if (listener instanceof multigear.mginterface.scene.listeners.SimpleListener)
+							((multigear.mginterface.scene.listeners.SimpleListener) listener).onRelease(this);
+						if (pointOver(point) && listener instanceof multigear.mginterface.scene.listeners.ClickListener)
+							((multigear.mginterface.scene.listeners.ClickListener) listener).onClick(this);
+						if (listener instanceof multigear.mginterface.scene.listeners.TouchListener)
+							((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
 					}
 					removeState(STATE_IN);
 				}
@@ -412,7 +842,7 @@ public class BaseWidget extends SimpleDrawable {
 					point = new Vector2(motionEvent.getX(), motionEvent.getY());
 					final float diffX = point.x - mTouchLastPositionImpl.x;
 					final float diffY = point.y - mTouchLastPositionImpl.y;
-					final float scaleFactor = getBaseScaleFacor();
+					final float scaleFactor = 1;//getBaseScaleFacor();
 					final Vector2 moved = new Vector2(diffX / scaleFactor, diffY / scaleFactor);
 					boolean switchFlag = false;
 					if (pointOver(point)) {
@@ -425,14 +855,23 @@ public class BaseWidget extends SimpleDrawable {
 					onTouch(motionEvent);
 					onMove(moved, switchFlag);
 					mTouchLastPositionImpl = point;
-					if (listener != null && listener instanceof multigear.mginterface.graphics.drawable.SimpleListener)
-						((multigear.mginterface.graphics.drawable.SimpleListener) listener).onMove(this, moved);
-					if (listener != null && listener instanceof multigear.mginterface.graphics.drawable.TouchListener)
-						((multigear.mginterface.graphics.drawable.TouchListener) listener).onTouch(this, motionEvent);
+					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.SimpleListener)
+						((multigear.mginterface.scene.listeners.SimpleListener) listener).onMove(this, moved);
+					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.TouchListener)
+						((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
 				}
 				break;
 		}
 		
+	}
+	
+	/**
+	 * Dispose This Drawable.
+	 * 
+	 * This method removes all of the same updates, then this drawable be
+	 * dead/frozen from the time this method is called.
+	 */
+	public void dispose() {
 	}
 	
 	/** On Refresh */
@@ -447,7 +886,7 @@ public class BaseWidget extends SimpleDrawable {
 	protected void onRelease() {
 	}
 	
-	protected void onTouch(final MotionEvent motionEvent) {
+	public void onTouch(final MotionEvent motionEvent) {
 	}
 	
 	/** On Move Event */

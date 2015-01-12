@@ -2,10 +2,10 @@ package multigear.mginterface.graphics.drawable.widget;
 
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
+import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
-import multigear.mginterface.graphics.opengl.drawer.MatrixRow;
+import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
-import android.graphics.Point;
 
 /**
  * WidgetLayer
@@ -35,8 +35,8 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	/**
 	 * Constructor
 	 */
-	protected WidgetSpriteLayer(final multigear.mginterface.scene.Scene room) {
-		mAnimationStack = new multigear.mginterface.graphics.animations.AnimationStack(room);
+	protected WidgetSpriteLayer() {
+		mAnimationStack = new AnimationStack();
 	}
 	
 	/**
@@ -236,7 +236,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 		final float sy = mSize.y * scale.y;
 		
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
 		// Push Matrix
 		matrixRow.push();
@@ -262,11 +262,15 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * Atualiza e Desenha
 	 */
 	protected void endDraw(final Drawer drawer) {
+		// Prepare Drawer
+		drawer.setOpacity(mPreparedOpacity);
+		drawer.setTexture(mPreparedTexture);
+		
 		// Draw
-		drawer.drawTexture(mPreparedTexture, mSize, mPreparedOpacity);
+		drawer.drawTexture(mSize);
 		
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
 		// Pop Matrix
 		matrixRow.pop();

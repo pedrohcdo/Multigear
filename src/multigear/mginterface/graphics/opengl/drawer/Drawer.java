@@ -3,15 +3,23 @@ package multigear.mginterface.graphics.opengl.drawer;
 import java.nio.FloatBuffer;
 
 import multigear.general.utils.Color;
+import multigear.general.utils.GeneralUtils;
+import multigear.general.utils.GlobalFloatBuffer;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.Renderer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWrapper;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
 import multigear.mginterface.graphics.opengl.programs.BaseProgram;
+import multigear.mginterface.graphics.opengl.programs.OptimizedEllipseTexturedRenderer;
+import multigear.mginterface.graphics.opengl.programs.OptimizedEllipseUniformColorRenderer;
 import multigear.mginterface.graphics.opengl.programs.ParticlesTextureRenderer;
+import multigear.mginterface.graphics.opengl.programs.StretchTextureRenderer;
+import multigear.mginterface.graphics.opengl.programs.UniformColorRenderer;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.scene.Scene;
+import multigear.mginterface.scene.SceneDrawerState;
+import android.graphics.Rect;
 import android.opengl.GLES20;
 
 /**
@@ -21,39 +29,42 @@ import android.opengl.GLES20;
  * 
  *         Property Createlier.
  */
-public class Drawer {
+final public class Drawer {
 	
 	// Private Variables
 	final private TextureContainer mTextureContainer;
-	final private MatrixRow mMatrixRow;
-	final private TransformMatrix mTransformationMatrix;
+	final private WorldMatrix mMatrixRow;
 	final private float[] mTransformMatrix;
 	final private Renderer mRenderer;
-	final private Scene mMainRoom;
+	final private Scene mMainScene;
 	
 	// Private Variables
-	private float mFinalOpacity;
+	private SceneDrawerState mSceneDrawerState;
+	private float mOpacity = 1.0f;
+	private Texture mTexture;
+	private Color mColor = Color.WHITE;
+	private FloatBuffer mElementVertex, mTextureVertex;
+	private FloatBuffer mTextureVertexFilled = GeneralUtils.createFloatBuffer(new float[] {0, 0, 1, 0, 1, 1, 0, 1});
 	
 	/*
 	 * Construtor
 	 */
 	public Drawer(final Scene room, final Renderer renderer) {
-		mMainRoom = room;
-		mTextureContainer = new TextureContainer(this);
-		mMatrixRow = new MatrixRow(10);
-		mTransformationMatrix = new TransformMatrix(mMatrixRow);
+		mMainScene = room;
+		mTextureContainer = new TextureContainer(this, mMainScene);
+		mMatrixRow = new WorldMatrix(10);
 		mTransformMatrix = new float[16];
-		mFinalOpacity = 1;
 		mRenderer = renderer;
 	}
 	
 	/**
-	 * Get Screen Size
-	 * 
-	 * @return
+	 * Prepare Scene State<br><br>
+	 * <b>Note</b>: Do not call this method
 	 */
-	final protected Scene getMainRom() {
-		return mMainRoom;
+	final public void prepareScene(final SceneDrawerState state) {
+		if(state == null)
+			throw new IllegalArgumentException("It can not be null.");
+		mSceneDrawerState = state;
 	}
 	
 	/**
@@ -61,17 +72,176 @@ public class Drawer {
 	 * 
 	 * @return
 	 */
-	final public MatrixRow getMatrixRow() {
+	final public WorldMatrix getWorldMatrix() {
 		return mMatrixRow;
 	}
 	
 	/**
-	 * Create Transform Matrix.
+	 * Set Blend Func
 	 * 
-	 * @return Return Transform Matrix
+	 * @param blendFunc
 	 */
-	final public TransformMatrix getTransformMatrix() {
-		return mTransformationMatrix;
+	final public void setBlendFunc(final BlendFunc blendFunc) {
+		GLES20.glBlendFunc(GLES20.GL_ONE, blendFunc.getConst());
+	}
+	
+	/**
+	 * Binds the texture for future drawings.
+	 * @param texture Texture, If drawing functions is null had used the color to draw.
+	 */
+	final public void setTexture(final Texture texture) {
+		if(texture == null) {
+			mTexture = null;
+			return;
+		}
+		mTexture = texture;
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getHandle());
+	}
+	
+	/**
+	 * Set Drawer color
+	 * @param color Color, if zero is set to white
+	 */
+	final public void setColor(final Color color) {
+		if(color == null) {
+			mColor = Color.WHITE;
+			return;
+		}
+		mColor = color;
+	}
+	
+	/**
+	 * Set drawer opacity
+	 * 
+	 * @param opacity
+	 */
+	final public void setOpacity(final float opacity) {
+		mOpacity = opacity;
+	}
+	
+	/**
+	 * Set Element Vertex
+	 * @param elementVertex Element Vertex
+	 */
+	final public void setElementVertex(final FloatBuffer elementVertex) {
+		mElementVertex = elementVertex;
+	}
+	
+	/**
+	 * Set Element Vertex
+	 * @param elementVertex Element Vertex
+	 */
+	final public void setElementVertex(final float[] elementVertex) {
+		final FloatBuffer vertex = GeneralUtils.createFloatBuffer(elementVertex.length);
+		vertex.put(elementVertex);
+		vertex.position(0);
+		setElementVertex(vertex);
+	}
+	
+	/**
+	 * Set Element Vertex
+	 * @param elementVertex Element Vertex
+	 */
+	final public void setElementVertex(final Vector2[] elementVertex) {
+		final FloatBuffer vertex = GeneralUtils.createFloatBuffer(elementVertex.length * 2);
+		for(final Vector2 value : elementVertex) {
+			vertex.put(value.x);
+			vertex.put(value.y);
+		}
+		vertex.position(0);
+		setElementVertex(vertex);
+	}
+	
+	/**
+	 * Set Texture Vertex
+	 * @param elementVertex Element Vertex
+	 */
+	final public void setTextureVertex(final FloatBuffer textureVertex) {
+		mTextureVertex = textureVertex;
+	}
+	
+	/**
+	 * Set Texture Vertex
+	 * @param elementVertex Element Vertex
+	 */
+	final public void setTextureVertex(final float[] textureVertex) {
+		final FloatBuffer vertex = GeneralUtils.createFloatBuffer(textureVertex.length);
+		vertex.put(textureVertex);
+		vertex.position(0);
+		setTextureVertex(vertex);
+	}
+	
+	/**
+	 * Set Texture Vertex
+	 * @param elementVertex Element Vertex
+	 */
+	final public void setTextureVertex(final Vector2[] textureVertex) {
+		final FloatBuffer vertex = GeneralUtils.createFloatBuffer(textureVertex.length * 2);
+		for(final Vector2 value : textureVertex) {
+			vertex.put(value.x);
+			vertex.put(value.y);
+		}
+		vertex.position(0);
+		setTextureVertex(vertex);
+	}
+	
+	/**
+	 * Set Filled Texture Vertex, same as:<br> 
+	 * {0, 0, 1, 0, 1, 1, 0, 1}
+	 */
+	final public void setTextureVertexFilled() {
+		mTextureVertex = mTextureVertexFilled;
+	}
+	
+	/**
+	 * Enable Viewport
+	 * @param viewport Viewport, if is null the viewport it will be disabled
+	 */
+	final public void enableViewport(final Rect viewport) {
+		if(viewport == null) {
+			disableViewport();
+			return;
+		}
+		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+		final int screenHeight = (int) mMainScene.getScreenSize().y;
+		final int top = screenHeight - viewport.bottom;
+		final int bottom = screenHeight - viewport.top - top;
+		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+		GLES20.glScissor(viewport.left, top, viewport.right, bottom);
+	}
+	
+	/**
+	 * Disable Viewport
+	 */
+	final public void disableViewport() {
+		GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+	}
+	
+	/**
+	 * Begin Draw
+	 */
+	final public void begin() {
+		mTexture = null;
+		mColor = Color.WHITE;
+		mOpacity = 1.0f;
+		mElementVertex = null;
+		mTextureVertex = null;
+		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
+		disableViewport();
+	}
+	
+	/**
+	 * End Draw
+	 */
+	final public void end() {
+		mTexture = null;
+		mColor = Color.WHITE;
+		mOpacity = 1.0f;
+		mElementVertex = null;
+		mTextureVertex = null;
+		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
+		disableViewport();
 	}
 	
 	/**
@@ -80,43 +250,188 @@ public class Drawer {
 	 * @param designedDrawInfo
 	 *            Drawer Information for GLES20 draw.
 	 */
-	public void drawTexture(final multigear.mginterface.graphics.opengl.texture.Texture texture, final Vector2 recipientSize, final float finalOpacity) {
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getHandle());
+	public void drawTexture(final Vector2 size) {
+		mMatrixRow.swap();
 		mMatrixRow.copyValues(mTransformMatrix);
+		
 		
 		// Get real recipient Size
 		final float a = mTransformMatrix[0];
 		final float b = mTransformMatrix[4];
 		final float c = mTransformMatrix[1];
 		final float d = mTransformMatrix[5];
-		Vector2 size = new Vector2((float) Math.hypot(a, c), (float) Math.hypot(b, d));
+		//Vector2 size = new Vector2((float) Math.hypot(a, c), (float) Math.hypot(b, d));
+		
+		
 		// Prepare Map
-		mFinalOpacity = finalOpacity;
-		mTextureContainer.prepare(texture, size);
-		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-		texture.getMapper().onMap(mTextureContainer);
+		mTextureContainer.prepare(mTexture, size);
+		
+		mTexture.getMapper().onMap(mTextureContainer);
 	}
 	
 	/**
 	 * Draw Particles
 	 * 
-	 * @param designedDrawInfo
-	 *            Drawer Information for GLES20 draw.
+	 * @param particlesCount Amount of particles
+	 * @param particleBuffer Information of each particle, with organizational pattern like this:<br>
+	 * <i>[x1, y1, opacity1, size1, x2, y2, opacity2, size2, etc ..</i>
 	 */
-	public void drawParticles(final Texture texture, final int particlesCount, final FloatBuffer vertexBuffer, final FloatBuffer opacityBuffer, final FloatBuffer scaleBuffer) {
-		// Prepare Texture
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getHandle());
-		
-		
-		// Set Blend Func
-		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-	
+	public void drawParticles(final int particlesCount) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// Get Scale
+		final Vector2 scale = mSceneDrawerState.getScale();
 		// Swap Buffers
 		ParticlesTextureRenderer renderer = (ParticlesTextureRenderer)begin(Renderer.PARTICLES_RENDERER, Color.TRANSPARENT);
-		renderer.setBuffers(vertexBuffer, opacityBuffer, scaleBuffer);
+		renderer.setScale(Math.min(scale.x, scale.y));
+		renderer.setBuffers(mElementVertex);
 		renderer.render(particlesCount);
+	}
+	
+	/**
+	 * Draw Colored Polygon
+	 * @param verticesCount Vertices Count
+	 * @param vertex Information of each vertices of polygon, with organizational pattern like this:<br>
+	 * <i>[x1, y1, x2, y2, x3, y3, etc ..</i>
+	 */
+	public void drawPolygon(final int verticesCount) {
+		if(mElementVertex == null)
+			throw new RuntimeException("Os vertices do elemento não podem ser nulo, é necessario definir as posições do mesmo em 'setElementVertex()'.");
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// If was textured
+		if(mTexture != null) {
+			if(mTextureContainer == null) {
+				// Uses
+				final int position = mElementVertex.position();
+				final Vector2 textureSize = mTexture.getSize();
+				// Texture Points
+				FloatBuffer texture = GlobalFloatBuffer.obtain(verticesCount * 2);
+				for(int i=0; i<verticesCount; i++) {
+					float x = mElementVertex.get() / textureSize.x;
+					float y = mElementVertex.get() / textureSize.y;
+					texture.put(x);
+					texture.put(y);
+				}
+				texture.position(0);
+				mElementVertex.position(position);
+				// Swap Buffers
+				StretchTextureRenderer renderer = (StretchTextureRenderer)begin(Renderer.STRETCH_TEXTURE_RENDERER, mColor);
+				renderer.setBuffers(mElementVertex, texture);
+				renderer.renderTriangleFan(verticesCount);
+				// Release
+				GlobalFloatBuffer.release(texture);
+			} else {
+				// Swap Buffers
+				StretchTextureRenderer renderer = (StretchTextureRenderer)begin(Renderer.STRETCH_TEXTURE_RENDERER, mColor);
+				renderer.setBuffers(mElementVertex, mTextureVertex);
+				renderer.renderTriangleFan(verticesCount);
+			}
+		} else {
+			// Swap Buffers
+			UniformColorRenderer renderer = (UniformColorRenderer)begin(Renderer.UNIFORM_COLOR_RENDERER, mColor);
+			renderer.setBuffers(mElementVertex);
+			renderer.render(verticesCount);
+		}
+	}
+	
+	/**
+	 * Draw Circle
+	 * @param radius Radius
+	 */
+	public void drawCircle(final float radius) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// if textured
+		if(mTexture != null) {
+			// If texture vertex null
+			if(mTextureVertex == null) {
+				// Get Texture Size
+				final Vector2 size = mTexture.getSize();
+				final float xw = (radius * 2) / size.x;
+				final float yh = (radius * 2) / size.y;
+				// Obtain GlobalBuffer
+				final FloatBuffer globalBuffer = GlobalFloatBuffer.obtain(new float[] {0, 0, xw, 0, xw, yh, 0, yh});
+				// Swap Buffers
+				OptimizedEllipseTexturedRenderer renderer = (OptimizedEllipseTexturedRenderer)begin(Renderer.OPTIMIZED_ELLIPSE_TEXTURED_RENDERER, mColor);
+				renderer.setRadius(radius, radius);
+				renderer.setBuffers(globalBuffer);
+				renderer.render();
+				// Release GlobalBuffer
+				GlobalFloatBuffer.release(globalBuffer);
+			} else {
+				// Swap Buffers
+				OptimizedEllipseTexturedRenderer renderer = (OptimizedEllipseTexturedRenderer)begin(Renderer.OPTIMIZED_ELLIPSE_TEXTURED_RENDERER, mColor);
+				renderer.setRadius(radius, radius);
+				renderer.setBuffers(mTextureVertex);
+				renderer.render();
+			}
+		} else {
+			// Swap Buffers
+			OptimizedEllipseUniformColorRenderer renderer = (OptimizedEllipseUniformColorRenderer)begin(Renderer.OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER, mColor);
+			renderer.setRadius(radius, radius);
+			renderer.setBuffers();
+			renderer.render();
+		}
+	}
+	
+	/**
+	 * Draw Ellipse
+	 * @param radius Radius
+	 */
+	public void drawEllipse(final Vector2 radius) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// if textured
+		if(mTexture != null) {
+			// If texture vertex null
+			if(mTextureVertex == null) {
+				// Obtain GlobalBuffer
+				final FloatBuffer globalBuffer = GlobalFloatBuffer.obtain(new float[] {0, 0, radius.x, 0, radius.x, radius.y, 0, radius.y});
+				// Swap Buffers
+				OptimizedEllipseTexturedRenderer renderer = (OptimizedEllipseTexturedRenderer)begin(Renderer.OPTIMIZED_ELLIPSE_TEXTURED_RENDERER, mColor);
+				renderer.setRadius(radius.x, radius.y);
+				renderer.setBuffers(globalBuffer);
+				renderer.render();
+				// Release GlobalBuffer
+				GlobalFloatBuffer.release(globalBuffer);
+			} else {
+				// Swap Buffers
+				OptimizedEllipseTexturedRenderer renderer = (OptimizedEllipseTexturedRenderer)begin(Renderer.OPTIMIZED_ELLIPSE_TEXTURED_RENDERER, mColor);
+				renderer.setRadius(radius.x, radius.y);
+				renderer.setBuffers(mTextureVertex);
+				renderer.render();
+			}
+		} else {
+			// Swap Buffers
+			OptimizedEllipseUniformColorRenderer renderer = (OptimizedEllipseUniformColorRenderer)begin(Renderer.OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER, mColor);
+			renderer.setRadius(radius.x, radius.y);
+			renderer.setBuffers();
+			renderer.render();
+		}
+	}
+	
+	/**
+	 * Draw TileMap
+	 * 
+	 * @param elements
+	 * @param textures
+	 */
+	public void drawTileMap(final int tileSize) {
+		// If null vertex
+		if(mElementVertex == null || mTextureVertex == null)
+			throw new RuntimeException("The vertices of the elements and vertices texture can not be null.");
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		//
+		StretchTextureRenderer renderer = (StretchTextureRenderer)begin(Renderer.STRETCH_TEXTURE_RENDERER, Color.WHITE);
+		renderer.setBuffers(mElementVertex, mTextureVertex);
+		renderer.renderLinear(tileSize);
 	}
 	
 	/**
@@ -125,21 +440,21 @@ public class Drawer {
 	 * @param designedDrawInfo
 	 *            Drawer Information for GLES20 draw.
 	 */
-	public void drawText(final FontMap fontMap, final FontWriter fontWriter, final String text, final float finalOpacity) {
+	public void drawText(final FontMap fontMap, final FontWriter fontWriter, final String text) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
 		// Active principal texture
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		
-		// 
-		mMatrixRow.copyValues(mTransformMatrix);
-
-		// Prepare Map
-		mFinalOpacity = finalOpacity;
-		
-		// Set Blend Func
-		GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-		
 		// Process Writer
 		FontWrapper.processWriter(fontMap, fontWriter, text, mTextureContainer);
+	}
+	
+	/**
+	 * Swap all transformations
+	 */
+	public void prepare() {
+		mMatrixRow.copyValues(mTransformMatrix);
 	}
 	
 	/**
@@ -151,8 +466,8 @@ public class Drawer {
 	 */
 	final public BaseProgram begin(final int rendererProgram, final Color color) {
 		final BaseProgram baseProgram = mRenderer.useRenderer(rendererProgram);
-		final float colorAlpha = color.getAlpha();
-		final float[] renderOpacity = new float[] { mFinalOpacity * color.getRed() * colorAlpha, mFinalOpacity * color.getGreen() * colorAlpha, mFinalOpacity * color.getBlue() * colorAlpha, mFinalOpacity * colorAlpha};
+		final float opacity = mOpacity * mSceneDrawerState.getOpacity() * color.getAlpha();
+		final float[] renderOpacity = new float[] { opacity * color.getRed(), opacity * color.getGreen(), opacity * color.getBlue(), opacity};
 		baseProgram.onPrepare(mTransformMatrix, renderOpacity);
 		return baseProgram;
 	}

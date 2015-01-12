@@ -41,7 +41,7 @@ final public class Configuration {
 	final static public int PROPORTION_MODE_UNSPECT = 3;
 	
 	// Densities
-	final static public float DENSITY_LDPI = 120;
+	final static public float DENSITY_LDPI = 0.75f;
 	final static public float DENSITY_MDPI = 1f;
 	final static public float DENSITY_HDPI = 1.5f;
 	final static public float DENSITY_XHDPI = 2.0f;

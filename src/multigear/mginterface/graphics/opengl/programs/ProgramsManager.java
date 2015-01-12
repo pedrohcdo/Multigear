@@ -21,6 +21,9 @@ final public class ProgramsManager {
 	final public static int REPEAT_TEXTURE_RENDERER_PROGRAM = 1;
 	final public static int TRANSITION_TEXTURE_RENDERER_PROGRAM = 2;
 	final public static int PARTICLE_RENDERER_PROGRAM = 3;
+	final public static int UNIFORM_COLOR_RENDERER = 4;
+	final public static int OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER = 5;
+	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = 6;
 	
 	// Final Private Variables
 	final private List<BaseProgram> mInstalledPrograms = new ArrayList<BaseProgram>();
@@ -28,6 +31,7 @@ final public class ProgramsManager {
 	// Private Variables
 	private int mProgramUsed = -1;
 	private BaseProgram mProgramInstance;
+	
 	
 	/**
 	 * Load Shader GLSL.
@@ -73,6 +77,9 @@ final public class ProgramsManager {
 		installProgram(RepeatTextureRenderer.class, screenSize);
 		installProgram(TransitionTextureRenderer.class, screenSize);
 		installProgram(ParticlesTextureRenderer.class, screenSize);
+		installProgram(UniformColorRenderer.class, screenSize);
+		installProgram(OptimizedEllipseUniformColorRenderer.class, screenSize);
+		installProgram(OptimizedEllipseTexturedRenderer.class, screenSize);
 	}
 	
 	/**

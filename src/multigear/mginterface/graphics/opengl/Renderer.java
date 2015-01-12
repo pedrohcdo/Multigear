@@ -22,6 +22,9 @@ public class Renderer extends BaseRenderer {
 	final public static int REPEAT_TEXTURE_RENDERER = 1;
 	final public static int TRANSITION_TEXTURE_RENDERER = 2;
 	final public static int PARTICLES_RENDERER = 3;
+	final public static int UNIFORM_COLOR_RENDERER = 4;
+	final public static int OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER = 5;
+	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = 6;
 	
 	// Final private Variables
 	final private multigear.mginterface.engine.Configuration.OptimizedKey mOptimizedKey;
@@ -76,7 +79,6 @@ public class Renderer extends BaseRenderer {
 			final float alpha = Color.alpha(color) / 255f;
 			GLES20.glClearColor(red, green, blue, alpha);
 		}
-		GLES20.glClearColor(0, 0, 0, 0);
 		// Clear Screen
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 	}

@@ -1,7 +1,6 @@
 package multigear.mginterface.engine.eventsmanager;
 
 import multigear.general.utils.Vector2;
-import multigear.mginterface.engine.eventsmanager.GeneralEvents.SyncClock;
 import android.view.MotionEvent;
 
 /**
@@ -35,14 +34,6 @@ final public class EventHandler {
 	 */
 	final public void sendTime() {
 		mGeneralEvents.time();
-	}
-	
-	/**
-	 * Creates a clock synchronized with the engine.
-	 * @return
-	 */
-	final public SyncClock createSyncClock() {
-		return mGeneralEvents.createSyncClock();
 	}
 	
 	/*

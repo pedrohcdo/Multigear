@@ -165,7 +165,9 @@ final public class Vector2 implements Cloneable
 	 * @brief Divide o vetor usando o fator
 	 * @param [in] factor O fator da divisão
 	 */
-	final public void div(float factor) { this.div( factor, factor ); }
+	final public void div(float factor) { 
+		this.div( factor, factor );
+	}
 	
 	/**
 	 * @brief Divide o vetor
@@ -213,7 +215,9 @@ final public class Vector2 implements Cloneable
 	 * @param [in] vec O outro vetor
 	 * @return O valor do produto escalar
 	 */
-	final public float dot(Vector2 vec) { return x * vec.x + y * vec.y; }
+	final public float dot(Vector2 vec) { 
+		return x * vec.x + y * vec.y; 
+	}
 	
 	/**
 	 * @brief Realiza o produto escalar entre dois vetores
@@ -230,7 +234,9 @@ final public class Vector2 implements Cloneable
 	 * @param [in] vec O outro vetor
 	 * @return O valor do eixo Z do produto vetorial
 	 */
-	final public float cross(Vector2 vec) { return x * vec.y - y * vec.x; }
+	final public float cross(Vector2 vec) { 
+		return x * vec.y - y * vec.x; 
+	}
 	
 	/**
 	 * @brief Realiza o produto vetorial entre dois vetores e retorna o
@@ -243,9 +249,33 @@ final public class Vector2 implements Cloneable
 		return vec1.x * vec2.y - vec1.y * vec2.x;
 	}
 	
-	/// Comprimento do vetor
-	final public float length() {	return (float)Math.hypot(x, y); }
+	/** 
+	 * Get Vector length
+	 * @return
+	 */
+	final public float length() {
+		return (float)Math.hypot(x, y);
+	}
 	
+	/** 
+	 * Distance until the vector
+	 * @return
+	 */
+	final public float distance(final Vector2 vec) {
+		return (float)Math.hypot(x-vec.x, y-vec.y);
+	}
+	
+	/** 
+	 * Distance between the two vectors
+	 * @return
+	 */
+	final static public float distance(final Vector2 vec1, final Vector2 vec2) {
+		return (float)Math.hypot(vec1.x-vec2.x, vec1.y-vec2.y);
+	}
+	
+	final public String toString() {
+		return "Vector2<" + x + ", " + y + ">";
+	}
 	/**
 	 * Retorna o clone desta instancia
 	 * @return Retorna uma nova instancia com os mesmos valores

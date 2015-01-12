@@ -1,18 +1,21 @@
 package multigear.mginterface.graphics.drawable.sprite;
 
-import multigear.general.utils.KernelUtils;
+import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
-import multigear.mginterface.graphics.drawable.BaseDrawable;
-import multigear.mginterface.graphics.opengl.drawer.MatrixRow;
+import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
+import multigear.mginterface.graphics.opengl.drawer.Drawer;
+import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
 import multigear.mginterface.scene.Scene;
-import android.annotation.SuppressLint;
+import multigear.mginterface.scene.components.Component;
+import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 import android.opengl.GLES20;
+import android.view.MotionEvent;
 
 /**
  * Text Sprite
@@ -21,21 +24,13 @@ import android.opengl.GLES20;
  * 
  *         Property Createlier.
  */
-public class TextSprite extends BaseDrawable {
+public class TextSprite implements Drawable {
 	
 	// Final Private Variables
-	final private Vector2[] mVertices;
-	final private float mResultMatrixA[] = new float[4];
-	final private float mResultMatrixB[] = new float[4];
-	final private float mResultMatrixC[] = new float[4];
-	final private float mResultMatrixD[] = new float[4];
-	final private float mBaseVerticeA[] = new float[] { 0, 0, 0, 1 };
-	final private float mBaseVerticeB[] = new float[] { 1, 0, 0, 1 };
-	final private float mBaseVerticeC[] = new float[] { 1, 1, 0, 1 };
-	final private float mBaseVerticeD[] = new float[] { 0, 1, 0, 1 };
+	final private float mFinalTransformation[] = new float[] { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+	final private AnimationStack mAnimationStack;
 	
 	// Private Variables
-	private AnimationStack mAnimationStack;
 	private FontMap mFontMap;
 	private String mText = "";
 	private Vector2 mScale = new Vector2(1, 1);
@@ -43,10 +38,11 @@ public class TextSprite extends BaseDrawable {
 	private Vector2 mCenter = new Vector2(0, 0);
 	private Vector2 mScroll = new Vector2(0, 0);
 	private float mAngle = 0;
-	private boolean mTouchable = true;
-	private boolean mFixedSpace = false;
-	private boolean mInverted[] = { false, false };
+	private boolean mMirror[] = { false, false };
 	private Rect mViewport;
+	private int mId, mZ;
+	private float mOpacity = 1;
+	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
 	private FontWriter mFontWriter = new FontWriter() {
 		
 		// Final private Variable
@@ -64,10 +60,32 @@ public class TextSprite extends BaseDrawable {
 	/**
 	 * Constructor
 	 */
-	public TextSprite(final Scene scene) {
-		super(scene);
-		mAnimationStack = new AnimationStack(scene);
-		mVertices = new Vector2[4];
+	public TextSprite() {
+		mAnimationStack = new AnimationStack();
+	}
+
+	/**
+	 * Set Depth
+	 * @param z Depth
+	 */
+	public void setZ(int z) {
+		mZ = z;
+	}
+
+	/**
+	 * Set Identifier
+	 * @param id Identifier
+	 */
+	public void setId(int id) {
+		mId = id;
+	}
+	
+	/**
+	 * Set Opacity
+	 * @param opacity Opacity
+	 */
+	public void setOpacity(float opacity) {
+		mOpacity = opacity;
 	}
 	
 	/**
@@ -118,17 +136,9 @@ public class TextSprite extends BaseDrawable {
 	 * 
 	 * @param inverted
 	 */
-	final public void setVerticalInverted(boolean inverted) {
-		mInverted[0] = true;
-	}
-	
-	/**
-	 * Invert in Horizontal
-	 * 
-	 * @param inverted
-	 */
-	final public void setHorizontalInverted(boolean inverted) {
-		mInverted[1] = true;
+	final public void setMirror(final boolean mirrorX, final boolean mirrorY) {
+		mMirror[0] = true;
+		mMirror[1] = true;
 	}
 	
 	/**
@@ -149,6 +159,15 @@ public class TextSprite extends BaseDrawable {
 	 */
 	final public void setScale(final float scaleX, final float scaleY) {
 		mScale = new Vector2(scaleX, scaleY);
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFunc(final BlendFunc blendFunc) {
+		mBlendFunc = blendFunc;
 	}
 	
 	/**
@@ -202,23 +221,27 @@ public class TextSprite extends BaseDrawable {
 	}
 	
 	/**
-	 * Set Touchable.
-	 * 
-	 * @param touchable
-	 *            Boolean Touchable
+	 * Get Depth
 	 */
-	final public void setTouchable(final boolean touchable) {
-		mTouchable = touchable;
+	@Override
+	public int getZ() {
+		return mZ;
+	}
+
+	/**
+	 * Get Identifier
+	 */
+	@Override
+	public int getId() {
+		return mId;
 	}
 	
 	/**
-	 * Set Fixed Space.
-	 * 
-	 * @param fixed
-	 *            Boolean Fixed
+	 * Get Opacity
+	 * @return Opacity
 	 */
-	final public void setFixedSpace(final boolean fixed) {
-		mFixedSpace = fixed;
+	public float getOpacity() {
+		return mOpacity;
 	}
 	
 	/**
@@ -243,17 +266,8 @@ public class TextSprite extends BaseDrawable {
 	 * 
 	 * @param inverted
 	 */
-	final public boolean getVerticalInverted() {
-		return mInverted[0];
-	}
-	
-	/**
-	 * Invert in Horizontal
-	 * 
-	 * @param inverted
-	 */
-	final public boolean getHorizontalInverted() {
-		return mInverted[1];
+	final public boolean[] getMirror() {
+		return mMirror.clone();
 	}
 	
 	/**
@@ -261,6 +275,15 @@ public class TextSprite extends BaseDrawable {
 	 */
 	final public Rect getViewport() {
 		return mViewport;
+	}
+	
+	/**
+	 * Get Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public BlendFunc getBlendFunc() {
+		return mBlendFunc;
 	}
 	
 	/**
@@ -321,25 +344,6 @@ public class TextSprite extends BaseDrawable {
 	}
 	
 	/**
-	 * Get Touchable.
-	 * 
-	 * @return Boolean Touchable
-	 */
-	final public boolean getTouchable() {
-		return mTouchable;
-	}
-	
-	/**
-	 * Get Fixed Space.
-	 * 
-	 * @param fixed
-	 *            Boolean Fixed
-	 */
-	final public boolean getFixedSpace() {
-		return mFixedSpace;
-	}
-	
-	/**
 	 * Get Animation Stack
 	 * 
 	 * @return animationStack {@link AnimationStack}
@@ -358,21 +362,12 @@ public class TextSprite extends BaseDrawable {
 		return mFontMap;
 	}
 	
-	/*
-	 * Retorna o fator de escala
-	 */
-	final protected float getInverseBaseScaleFacor() {
-		if (!getAttachedRoom().hasFunc(multigear.mginterface.scene.Scene.FUNC_VIRTUAL_DPI))
-			return 1f;
-		return getAttachedRoom().getSpaceParser().getInverseScaleFactor();
-	}
-	
 	/**
 	 * Update Sprite. obs(If it is created in a ROM, it will update
 	 * altomatically on onUpdate() event.)
 	 */
-	@SuppressLint("WrongCall") @Override
-	final public void updateAndDraw(final multigear.mginterface.graphics.opengl.drawer.Drawer drawer, final float preOpacity) {
+	@Override
+	final public void draw(final Drawer drawer) {
 		
 		//
 		if(mText.length() == 0)
@@ -382,7 +377,7 @@ public class TextSprite extends BaseDrawable {
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		
 		// Get final Opacity
-		final float opacity = preOpacity * animationSet.getOpacity() * getOpacity();
+		final float opacity = animationSet.getOpacity() * mOpacity;
 		
 		// Not Update
 		if (mFontMap == null || opacity <= 0)
@@ -390,103 +385,54 @@ public class TextSprite extends BaseDrawable {
 		
 		// Get Infos
 		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
+		final Vector2 translate = animationSet.getPosition();
+		final float rotate = mAngle + animationSet.getRotation();
+
+		// Calc values
 		final float ox = mCenter.x * scale.x;
 		final float oy = mCenter.y * scale.y;
 		float sx = scale.x;
 		float sy = scale.y;
-		float six = 0;
-		float siy = 0;
-		if (mInverted[0]) {
-			siy = sy;
+		final float tX = mPosition.x + translate.x;
+		final float tY = mPosition.y + translate.y;
+		float six = -ox;
+		float siy = -oy;
+
+		if (mMirror[0]) {
+			siy += sy;
 			sy *= -1;
 		}
-		if (mInverted[1]) {
-			six = sx;
+		if (mMirror[1]) {
+			six += sx;
 			sx *= -1;
 		}
-		
+
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
-		
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
+
 		// Push Matrix
 		matrixRow.push();
-		
-		// Scale Matrix
-		matrixRow.postScalef(sx, sy);
-		
-		// Correct reflect
-		matrixRow.postTranslatef(six, siy);
-		
-		// Translate and Rotate Matrix
-		matrixRow.postTranslatef(-ox, -oy);
-		matrixRow.postRotatef(mAngle + animationSet.getRotation());
-		matrixRow.postTranslatef(ox, oy);
-		
-		// Translate Matrix
-		final Vector2 translate = animationSet.getPosition();
-		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
-		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
-		matrixRow.postTranslatef(tX, tY);
-		
-		// Invert Scale Factor
-		if (mFixedSpace) {
-			final float scaleFactor = getInverseBaseScaleFacor();
-			// Scale Space
-			matrixRow.postScalef(scaleFactor, scaleFactor);
-		}
-		
-		// Get Transformation Matrix
-		final float transformMatrix[] = new float[16];
-		matrixRow.copyValues(transformMatrix);
-		
-		// Prepare Vertices Position
-		refreshVerticesPosition(transformMatrix);
-		
-		// Disable Scissor
-		boolean disableScissor = false;
-		
-		// Set Scisor
-		if (mViewport != null) {
-			final int screenHeight = (int) getAttachedRoom().getScreenSize().y;
-			final int top = screenHeight - mViewport.bottom;
-			final int bottom = screenHeight - mViewport.top - top;
-			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-			GLES20.glScissor(mViewport.left, top, mViewport.right, bottom);
-			disableScissor = true;
-		}
+				
+		// Translate and Rotate Matrix with correction
+		float rad = (float) GeneralUtils.degreeToRad(rotate);
+		float c = (float) Math.cos(-rad);
+		float s = (float) Math.sin(-rad);
+		mFinalTransformation[0] = sx * c;
+		mFinalTransformation[1] = sy * s;
+		mFinalTransformation[2] = c * six + s * siy + tX;
+		mFinalTransformation[3] = -sx * s;
+		mFinalTransformation[4] = sy * c;
+		mFinalTransformation[5] = -s * six + c * siy + tY;
+		matrixRow.postConcatf(mFinalTransformation);
 		
 		// Draw Text
-		drawer.drawText(mFontMap, mFontWriter, mText, opacity);
+		drawer.setBlendFunc(mBlendFunc);
+		drawer.setOpacity(opacity);
+		drawer.enableViewport(mViewport);
+		drawer.drawText(mFontMap, mFontWriter, mText);
+		drawer.end();
 		
-		// Disable Scissor
-		if (disableScissor)
-			GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
-		
-		// Pop Matrix
+		// Pop transformations
 		matrixRow.pop();
-		
-		onUpdate();
 	}
-	
-	/*
-	 * Refresh Vertices Position
-	 */
-	final protected void refreshVerticesPosition(final float[] transformMatrix) {
-		// Transform Vertices
-		android.opengl.Matrix.multiplyMV(mResultMatrixA, 0, transformMatrix, 0, mBaseVerticeA, 0);
-		android.opengl.Matrix.multiplyMV(mResultMatrixB, 0, transformMatrix, 0, mBaseVerticeB, 0);
-		android.opengl.Matrix.multiplyMV(mResultMatrixC, 0, transformMatrix, 0, mBaseVerticeC, 0);
-		android.opengl.Matrix.multiplyMV(mResultMatrixD, 0, transformMatrix, 0, mBaseVerticeD, 0);
-		// Set Vertices
-		mVertices[0] = new Vector2(mResultMatrixA[0], mResultMatrixA[1]);
-		mVertices[1] = new Vector2(mResultMatrixB[0], mResultMatrixB[1]);
-		mVertices[2] = new Vector2(mResultMatrixC[0], mResultMatrixC[1]);
-		mVertices[3] = new Vector2(mResultMatrixD[0], mResultMatrixD[1]);
-	}
-	
-	
-	/** Update your Objects */
-	public void onUpdate() {
-	};
-	
 }

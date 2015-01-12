@@ -1,10 +1,11 @@
 package multigear.mginterface.scene;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import multigear.cache.CacheManager;
 import multigear.communication.tcp.support.ParentAttributes;
@@ -12,12 +13,17 @@ import multigear.general.utils.Measure;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.Configuration;
 import multigear.mginterface.graphics.animations.AnimationSet;
+import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
-import multigear.mginterface.graphics.opengl.drawer.MatrixRow;
+import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.font.FontManager;
+import multigear.mginterface.scene.components.DrawableListener;
+import multigear.mginterface.scene.components.TouchableListener;
+import multigear.mginterface.scene.components.UpdatableListener;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Matrix;
 import android.os.Build;
 import android.util.Log;
@@ -32,6 +38,7 @@ import android.widget.Toast;
  * 
  *         Property Createlier.
  */
+@SuppressLint({ "WrongCall", "Recycle" })
 public abstract class Scene extends multigear.mginterface.scene.Installation {
 	
 	/**
@@ -44,8 +51,8 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	final private class Handler {
 		
 		// Consts
-		final private static int INSERT_DRAWABLE = 1;
-		final private static int REMOVE_DRAWABLE = 2;
+		final private static int ATTACH_COMPONENT = 1;
+		final private static int DETACH_COMPONENT = 2;
 		
 		// Final Private Variables
 		final private int mHandlerCode;
@@ -76,44 +83,9 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 		 */
 		final private void call() {
 			switch (mHandlerCode) {
-				case INSERT_DRAWABLE:
-					mDrawables.add((multigear.mginterface.graphics.drawable.BaseDrawable) mHandlerObject);
-					break;
-				case REMOVE_DRAWABLE:
-					mDrawables.remove(mHandlerObject);
 			}
 		}
 	}
-	
-	/**
-	 * Comparador utilisado para ordenamento de sobreposição para todos Sprites
-	 * para fins de Desenho.
-	 */
-	final private Comparator<multigear.mginterface.graphics.drawable.BaseDrawable> mDrawablesComparatorDraw = new Comparator<multigear.mginterface.graphics.drawable.BaseDrawable>() {
-		
-		/*
-		 * Comparador
-		 */
-		@Override
-		public int compare(multigear.mginterface.graphics.drawable.BaseDrawable lhs, multigear.mginterface.graphics.drawable.BaseDrawable rhs) {
-			return lhs.getZ() - rhs.getZ();
-		}
-	};
-	
-	/**
-	 * Comparador utilisado para ordenamento de sobreposição para todos Sprites
-	 * para fins de Touch.
-	 */
-	final private Comparator<multigear.mginterface.graphics.drawable.BaseDrawable> mDrawablesComparatorTouch = new Comparator<multigear.mginterface.graphics.drawable.BaseDrawable>() {
-		
-		/*
-		 * Comparador
-		 */
-		@Override
-		public int compare(multigear.mginterface.graphics.drawable.BaseDrawable lhs, multigear.mginterface.graphics.drawable.BaseDrawable rhs) {
-			return rhs.getZ() - lhs.getZ();
-		}
-	};
 	
 	// Constatns
 	final static private int ERROR_PRIVATEMETHOD_CODE = 0x5;
@@ -123,10 +95,13 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	final static public int FUNC_VIRTUAL_DPI = 0x1;
 	
 	// Final Private Variables
-	final private List<multigear.mginterface.graphics.drawable.BaseDrawable> mDrawables;
+	final private List<UpdatableListener> mUpdatableListeners = new ArrayList<UpdatableListener>();
+	final private List<DrawableListener> mDrawableListener = new ArrayList<DrawableListener>();
+	final private List<TouchableListener> mTouchableListener = new ArrayList<TouchableListener>();
 	final private List<multigear.physics.VirtualSpriteObject> mVirtualSpriteObjects;
 	final private multigear.mginterface.scene.InstallManager mInstallManager;
 	final private List<Scene.Handler> mHandler;
+	final private SceneDrawerState mSceneDrawerState = new SceneDrawerState();
 	
 	// Private Variables
 	private long mThisTime;
@@ -134,10 +109,9 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	private float mDPI, mDensity, mScaledDensity;
 	private int mWidthPixels, mHeightPixels;
 	private int mFlags;
-	// private Interface.Room.SpaceParser mSpaceConversion;
-	// private Interface.Room.ProportionParser mProportionalSupport;
-	private Vector<MotionEvent> mMotionEventList;
-	private multigear.mginterface.graphics.animations.AnimationStack mAnimationStack = new multigear.mginterface.graphics.animations.AnimationStack(this);
+	private ConcurrentLinkedQueue<MotionEvent> mMotionEventList;
+	
+	private AnimationStack mAnimationStack = new AnimationStack();
 	private Vector2 mScale = new Vector2(1, 1);
 	private Vector2 mPosition = new Vector2(0, 0);
 	private float mOpacity = 1.0f;
@@ -148,16 +122,16 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	private boolean mTouchable = true;
 	private int mID = 0;
 	
+
 	/**
 	 * Constructor
 	 */
 	public Scene() {
-		mDrawables = new ArrayList<multigear.mginterface.graphics.drawable.BaseDrawable>();
 		mHandler = new ArrayList<Scene.Handler>();
 		mVirtualSpriteObjects = new ArrayList<multigear.physics.VirtualSpriteObject>();
 		mEngine = null;
 		mFlags = 0;
-		mMotionEventList = new Vector<MotionEvent>();
+		mMotionEventList = new ConcurrentLinkedQueue<MotionEvent>();
 		mInstallManager = new multigear.mginterface.scene.InstallManager(this);
 	}
 	
@@ -252,6 +226,18 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 			multigear.general.utils.KernelUtils.error(mEngine.getActivity(), "Room Class: A mistake, because this engine null occurred when calling GetEngine ().", ERROR_MISTAKE_CODE);
 		}
 		return mEngine.getActivity();
+	}
+	
+	/**
+	 * Return Asset Manager
+	 * 
+	 * @return Activity
+	 */
+	final public AssetManager getAssetManager() {
+		if (mEngine == null) {
+			multigear.general.utils.KernelUtils.error(mEngine.getActivity(), "Room Class: A mistake, because this engine null occurred when calling GetEngine ().", ERROR_MISTAKE_CODE);
+		}
+		return mEngine.getActivity().getAssets();
 	}
 	
 	/*
@@ -360,7 +346,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * 
 	 * @return {@link multigear.mginterface.graphics.animations.AnimationStack}
 	 */
-	final public multigear.mginterface.graphics.animations.AnimationStack getAnimationStack() {
+	final public AnimationStack getAnimationStack() {
 		return mAnimationStack;
 	}
 	
@@ -645,7 +631,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 		for (final Scene.Handler handle : mHandler)
 			handle.call();
 		mHandler.clear();
-		//
+		// Update Listeners
+		for(final UpdatableListener listener : mUpdatableListeners)
+			listener.onUpdate(this);
+		// Update Touch
 		updateTouch();
 		updatePhysics();
 		onUpdate();
@@ -660,13 +649,20 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	final public void draw(final multigear.mginterface.graphics.opengl.drawer.Drawer drawer) {
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
 		
 		// Begin draw room
-		beginDrawRoom(drawer, animationSet);
+		beginDrawRoom(drawer, animationSet, scale);
 		
-		// Get Pre Opacity
-		final float preOpacity = animationSet.getOpacity() * mOpacity;
-		updateAndDrawDrawables(drawer, preOpacity);
+		// Prepare state
+		mSceneDrawerState.setOpacity(animationSet.getOpacity() * mOpacity);
+		mSceneDrawerState.setScale(scale);
+		
+		// Prepare Scene
+		drawer.prepareScene(mSceneDrawerState);
+		
+		// Send event
+		updateAndDrawSceneComponents(drawer);
 		onDraw(drawer);
 		
 		// End Draw Room
@@ -677,7 +673,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	/*
 	 * Prepara a room para desenho
 	 */
-	final private void beginDrawRoom(Drawer drawer, final AnimationSet animationSet) {
+	final private void beginDrawRoom(Drawer drawer, final AnimationSet animationSet, final Vector2 scale) {
 		// Get Infos
 		float scaleFactor;
 		if(hasFunc(FUNC_VIRTUAL_DPI))
@@ -685,15 +681,14 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 		else
 			scaleFactor = 1;
 		
-		final Vector2 scale = mScale;
+		final float ox = mCenter.x;
+		final float oy = mCenter.y;
 		
-		final float ox = mCenter.x * scale.x;
-		final float oy = mCenter.y * scale.y;
-		final float sx = (float) ((mSize.x * scale.x) / getScreenSize().x);
-		final float sy = (float) ((mSize.y * scale.y) / getScreenSize().y);
+		final float sx = (float) (mSize.x / getScreenSize().x);
+		final float sy = (float) (mSize.y / getScreenSize().y);
 		
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
 		// Push Matrix
 		matrixRow.push();
@@ -706,13 +701,13 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 		
 		// Translate and Rotate Matrix
 		postTransformations.postTranslate(-ox, -oy);
+		postTransformations.postScale(scale.x, scale.y);
 		postTransformations.postRotate(mAngle + animationSet.getRotation());
-		postTransformations.postTranslate(ox, oy);
 		
 		// Translate Matrix
 		final Vector2 translate = animationSet.getPosition();
-		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
-		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
+		final float tX = mPosition.x + translate.x;
+		final float tY = mPosition.y + translate.y;
 		postTransformations.postTranslate(tX, tY);
 		
 		// Scale Factor
@@ -728,7 +723,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 */
 	final private void endDrawRoom(final multigear.mginterface.graphics.opengl.drawer.Drawer drawer) {
 		// Get Matrix Row
-		final MatrixRow matrixRow = drawer.getMatrixRow();
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		// Pop Matrix
 		matrixRow.pop();
 	}
@@ -751,7 +746,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	final public void touchImpl(final MotionEvent motionEvent) {
 		if (!mTouchable)
 			return;
-		mMotionEventList.add(motionEvent);
+		mMotionEventList.add(MotionEvent.obtain(motionEvent));
 	}
 	
 	/*
@@ -760,8 +755,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	final private void updateTouch() {
 		if (mMotionEventList.size() <= 0)
 			return;
-		while (mMotionEventList.size() > 0) {
-			touch(mMotionEventList.remove(0));
+		MotionEvent event = null;
+		while ((event = mMotionEventList.poll()) != null) {
+			touch(event);
+			event.recycle();
 		}
 	}
 	
@@ -775,7 +772,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 		// Not Touch If Uninstalled
 		mInstallManager.touch(motionEvent);
 		onTouch(motionEvent);
-		touchDrawable(motionEvent);
+		touchSceneComponent(motionEvent);
 	}
 	
 	/*
@@ -807,25 +804,59 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	}
 	
 	/**
-	 * Add Drawable to Stack. obs(This method is automatically called by
-	 * Drawable)
+	 * Add Updatable Listener
 	 * 
-	 * @param drawable
-	 *            Drawable
+	 * @param listener Updatable Listener
 	 */
-	final public void addDrawable(final multigear.mginterface.graphics.drawable.BaseDrawable drawable) {
-		addHandle(Scene.Handler.INSERT_DRAWABLE, drawable);
+	final public void addUpdatableListener(final UpdatableListener listener) {
+		mUpdatableListeners.add(listener);
 	}
 	
 	/**
-	 * Remove an Drawable. obs(This method is automatically called by Drawable)
+	 * Add Touchable Listener
 	 * 
-	 * @param drawable
-	 *            Drawable
+	 * @param touchableListener Touchable Listener
 	 */
-	final public void disposeDrawable(final multigear.mginterface.graphics.drawable.BaseDrawable drawable) {
-		addHandle(Scene.Handler.REMOVE_DRAWABLE, drawable);
+	final public void addTouchableListener(final TouchableListener touchableListener) {
+		mTouchableListener.add(touchableListener);
 	}
+	
+	/**
+	 * Add Touchable Listener
+	 * 
+	 * @param touchableListener Touchable Listener
+	 */
+	final public void addDrawableListener(final DrawableListener drawableListener) {
+		mDrawableListener.add(drawableListener);
+	}
+	
+	/**
+	 * Remove Updatable Listener
+	 * 
+	 * @param listener Updatable Listener
+	 */
+	final public void removeUpdatableListener(final UpdatableListener listener) {
+		mUpdatableListeners.remove(listener);
+	}
+	
+	/**
+	 * Remove Touchable Listener
+	 * 
+	 * @param touchableListener Touchable Listener
+	 */
+	final public void removeTouchableListener(final TouchableListener touchableListener) {
+		mTouchableListener.remove(touchableListener);
+	}
+	
+	/**
+	 * Remove Touchable Listener
+	 * 
+	 * @param touchableListener Touchable Listener
+	 */
+	final public void removeDrawableListener(final DrawableListener drawableListener) {
+		mDrawableListener.remove(drawableListener);
+	}
+	
 	
 	/**
 	 * Add Virtual Sprite Object. obs(This method is automatically called by
@@ -847,12 +878,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	/*
 	 * Atualiza os sprites
 	 */
-	final private void updateAndDrawDrawables(final multigear.mginterface.graphics.opengl.drawer.Drawer drawer, final float preOpacity) {
-		
-		Collections.sort(mDrawables, mDrawablesComparatorDraw);
-		for (int i = 0; i < mDrawables.size(); i++) {
-			final multigear.mginterface.graphics.drawable.BaseDrawable drawable = mDrawables.get(i);
-			drawable.updateAndDraw(drawer, preOpacity);
+	final private void updateAndDrawSceneComponents(final Drawer drawer) {
+		//Collections.sort(mSceneComponents, mSceneComponentsComparatorDraw);
+		for (final DrawableListener listener : mDrawableListener) {
+			listener.onDraw(this, drawer);
 		}
 	}
 	
@@ -868,11 +897,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	/*
 	 * Desenha os sprites
 	 */
-	final private void touchDrawable(final MotionEvent motionEvent) {
-		Collections.sort(mDrawables, mDrawablesComparatorTouch);
-		for (int i = 0; i < mDrawables.size(); i++) {
-			final multigear.mginterface.graphics.drawable.BaseDrawable drawable = mDrawables.get(i);
-			drawable.touch(motionEvent);
+	final private void touchSceneComponent(final MotionEvent motionEvent) {
+		//Collections.sort(mSceneComponents, mSceneComponentsComparatorTouch);
+		for (final TouchableListener listener : mTouchableListener) {
+			listener.onTouch(this, motionEvent);
 		}
 	}
 	

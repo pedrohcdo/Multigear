@@ -2,13 +2,19 @@ package multigear.mginterface.graphics.opengl.texture;
 
 import java.util.Locale;
 
-import multigear.general.utils.KernelUtils;
 import multigear.general.utils.Vector2;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.Xfermode;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+import android.util.Log;
 
 /**
  * 
@@ -75,6 +81,91 @@ final public class Loader {
 		}
 		texture = this.load(bitmap, resourceId, size);
 		bitmap.recycle();
+		mCache.addTexture(texture);
+		return texture;
+	}
+	
+	
+	/**
+	 * Loads an existing resource in the package.
+	 * 
+	 * @param resourceId
+	 *            Id of the resource, it must be stated in R.
+	 */
+	final public Texture loadTileset(final int resourceId, final Vector2 tileSize, final int grid, final int margin) {
+		// Disable Pre Scale to get Bounds
+		BitmapFactory.Options option = new BitmapFactory.Options();
+		option.inScaled = false;
+		option.inJustDecodeBounds = true;
+		// Decode Bitmap
+		BitmapFactory.decodeResource(mResources, resourceId, option);
+		// Get Bitmap
+		option = new BitmapFactory.Options();
+		option.inScaled = false;
+		Bitmap bitmap = BitmapFactory.decodeResource(mResources, resourceId, option);
+		// If correct load Bitmap
+		if (bitmap == null) {
+			final String message = String.format(Locale.US, ERROR_RESOURCE_NOT_FOUND, resourceId);
+			multigear.general.utils.KernelUtils.error(mEngine.getActivity(), message, ERROR_RESOURCE_NOT_FOUND_CODE);
+		}
+		// Draw tileset
+		final int tileWidth = (int)tileSize.x;
+		final int tileHeight = (int)tileSize.y;
+		final int startX = Math.min(margin, option.outWidth / 2);
+		final int startY = Math.min(margin, option.outWidth / 2);
+		final int maxW = Math.max(option.outWidth - margin, option.outWidth / 2);
+		final int maxH = Math.max(option.outHeight - margin, option.outHeight / 2);
+		
+		
+		final int tilesQW = (int)Math.floor((maxW - startX + grid) / ((tileWidth + grid) * 1.0f));
+		final int tilesQH = (int)Math.floor((maxH - startY + grid) / ((tileHeight + grid) * 1.0f));
+		
+		final int newWidth = tilesQW * (tileWidth + 2) - 2;
+		final int newHeight = tilesQH * (tileHeight + 2) - 2;
+		
+		Bitmap tileset = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888);
+		tileset.eraseColor(0x00000000);
+		
+		Canvas canvas = new Canvas(tileset);
+		Paint clear = new Paint();
+		Paint paint = new Paint();
+		clear.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+		
+		Rect src = new Rect();
+		Rect dst = new Rect();
+		
+		int dx = 0;
+		int dy = 0;
+		int sx = startX;
+		int sy = startY;
+		
+		
+		for(int y=0; y<tilesQH; y++) {
+			for(int x=0; x<tilesQW; x++) {
+				
+				src.set(Math.min(sx, maxW), Math.min(sy, maxH), Math.min(sx + tileWidth, maxW), Math.min(sy + tileHeight, maxH));
+				
+				dst.set(dx-1, dy-1, dx + tileWidth+1, dy + tileHeight+1);
+				canvas.drawBitmap(bitmap, src, dst, paint);
+
+				
+				dst.set(dx, dy, dx + tileWidth, dy + tileHeight);
+				canvas.drawRect(dst, clear);
+				
+				dst.set(dx, dy, dx + tileWidth, dy + tileHeight);
+				canvas.drawBitmap(bitmap, src, dst, paint);
+				
+				dx += tileWidth + 2;
+				sx += tileWidth + grid;
+			}
+			dx = 0;
+			sx = startX;
+			dy += tileHeight + 2;
+			sy += tileHeight + grid;
+		}
+		Texture texture = this.load(tileset, resourceId, new Vector2(newWidth, newHeight));
+		bitmap.recycle();
+		tileset.recycle();
 		mCache.addTexture(texture);
 		return texture;
 	}
@@ -169,10 +260,10 @@ final public class Loader {
 		// Parametrize TExture
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureHandle);
-		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
 		// Load texture
 		GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
 		// If Hardware not suporte NPOT Textures, scale texture for POT and
