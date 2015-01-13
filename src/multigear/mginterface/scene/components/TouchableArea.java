@@ -174,8 +174,8 @@ public class TouchableArea implements Touchable {
 	@Override
 	public void touch(final MotionEvent motionEvent) {
 		if(motionEvent.getPointerCount() > 1) {
-			//mTouchHandled = false;
-			//return;
+			mTouchHandled = false;
+			return;
 		}
 		if (!mTouchable) {
 			mTouchHandled = false;

@@ -1,6 +1,5 @@
 package multigear.mginterface.touch;
 
-import multigear.general.utils.Vector2;
 
 /**
  * Scale Detector Listener
@@ -15,5 +14,5 @@ public interface ScaleDetectorListener {
 	 * 
 	 * @param scale
 	 */
-	public void onScale(Vector2 scale);
+	public void onScale(float pixels);
 }

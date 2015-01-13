@@ -190,6 +190,16 @@ final public class Vector2 implements Cloneable
 	}
 	
 	/**
+	 * @brief Realiza a divisão de um fator por um vetor
+	 * @param [in] factor O fator da divisão nos dois eixos
+	 * @param [in] vetor
+	 * @return Retorna o resultado da operação
+	 */
+	final public static Vector2 div(float factor, Vector2 vec) { 
+		return new Vector2(factor / vec.x, factor / vec.y);
+	}
+	
+	/**
 	 * @brief Realiza a divisão de um vetor
 	 * @param [in] vetor da esquerda
 	 * @param [in] factorx O fator da divisão no eixo x
@@ -198,6 +208,17 @@ final public class Vector2 implements Cloneable
 	 */
 	final public static Vector2 div(Vector2 vec, float factorx, float factory) { 
 		return new Vector2(vec.x / factorx, vec.y / factory);
+	}
+	
+	/**
+	 * @brief Realiza a divisão de um fator por um vetor
+	 * @param [in] factorx O fator da divisão no eixo x
+	 * @param [in] factory O fator da divisão no eixo y
+	 * @param [in] vetor
+	 * @return Retorna o resultado da operação
+	 */
+	final public static Vector2 div(float factorx, float factory, Vector2 vec) { 
+		return new Vector2(factorx / vec.x, factory / vec.y);
 	}
 	
 	/**
@@ -266,6 +287,22 @@ final public class Vector2 implements Cloneable
 	}
 	
 	/** 
+	 * Angle formed by this vector
+	 * @return Angle in degree (-180...180)
+	 */
+	final public float angle() {
+		return (float)GeneralUtils.radToDegree(Math.atan2(y, x));
+	}
+	
+	/** 
+	 * Angle formed by two vectors.
+	 * @return Angle in degree (-180...180)
+	 */
+	final public float angle(final Vector2 vec) {
+		return (float)GeneralUtils.radToDegree(Math.atan2(y-vec.y, x-vec.x));
+	}
+	
+	/** 
 	 * Distance between the two vectors
 	 * @return
 	 */
@@ -273,9 +310,13 @@ final public class Vector2 implements Cloneable
 		return (float)Math.hypot(vec1.x-vec2.x, vec1.y-vec2.y);
 	}
 	
+	/**
+	 * To String
+	 */
 	final public String toString() {
 		return "Vector2<" + x + ", " + y + ">";
 	}
+	
 	/**
 	 * Retorna o clone desta instancia
 	 * @return Retorna uma nova instancia com os mesmos valores

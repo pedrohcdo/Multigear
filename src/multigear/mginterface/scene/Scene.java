@@ -2,16 +2,14 @@ package multigear.mginterface.scene;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import multigear.cache.CacheManager;
 import multigear.communication.tcp.support.ParentAttributes;
 import multigear.general.utils.Measure;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.Configuration;
+import multigear.mginterface.engine.Multigear;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
@@ -26,7 +24,6 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Matrix;
 import android.os.Build;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
@@ -103,21 +100,21 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	final private List<Scene.Handler> mHandler;
 	final private SceneDrawerState mSceneDrawerState = new SceneDrawerState();
 	
+	// Final private variables
+	final private Vector2 mScale = new Vector2(1, 1);
+	final private Vector2 mPosition = new Vector2(0, 0);
+	final private Vector2 mSize = new Vector2(32, 32);
+	final private Vector2 mCenter = new Vector2(0, 0);
+	final private AnimationStack mAnimationStack = new AnimationStack();
+	
 	// Private Variables
 	private long mThisTime;
-	private multigear.mginterface.engine.Multigear mEngine;
+	private Multigear mEngine;
 	private float mDPI, mDensity, mScaledDensity;
 	private int mWidthPixels, mHeightPixels;
 	private int mFlags;
 	private ConcurrentLinkedQueue<MotionEvent> mMotionEventList;
-	
-	private AnimationStack mAnimationStack = new AnimationStack();
-	private Vector2 mScale = new Vector2(1, 1);
-	private Vector2 mPosition = new Vector2(0, 0);
 	private float mOpacity = 1.0f;
-	private Vector2 mSize = new Vector2(32, 32);
-	private Vector2 mCenter = new Vector2(0, 0);
-	private Vector2 mScroll = new Vector2(0, 0);
 	private float mAngle = 0;
 	private boolean mTouchable = true;
 	private int mID = 0;
@@ -259,12 +256,13 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	
 	/**
 	 * Set Scale
-	 * 
+	 * <b>Note:</b> If any scale axis is less than 0, it will be set to 0.
 	 * @param scale
 	 *            Float Scale
 	 */
 	final public void setScale(final Vector2 scale) {
-		mScale = scale;
+		mScale.x = Math.max(0, scale.x);
+		mScale.y = Math.max(0, scale.y);
 	}
 	
 	/**
@@ -274,7 +272,8 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 *            {@link Vector2} Position
 	 */
 	final public void setPosition(final Vector2 position) {
-		mPosition = position;
+		mPosition.x = position.x;
+		mPosition.y = position.y;
 	}
 	
 	/**
@@ -284,7 +283,8 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 *            Draw texture dest Size
 	 */
 	final public void setSize(final Vector2 size) {
-		mSize = size;
+		mSize.x = size.x;
+		mSize.y = size.y;
 	}
 	
 	/**
@@ -294,7 +294,8 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 *            {@link Vector2} Center
 	 */
 	final public void setCenter(final Vector2 center) {
-		mCenter = center;
+		mCenter.x = center.x;
+		mCenter.y = center.y;
 	}
 	
 	/**
@@ -305,16 +306,6 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 */
 	final public void setAngle(final float angle) {
 		mAngle = angle;
-	}
-	
-	/**
-	 * Set Scroll.
-	 * 
-	 * @param center
-	 *            {@link Vector2} Scroll
-	 */
-	final public void setScroll(final Vector2 scroll) {
-		mScroll = scroll;
 	}
 	
 	/**
@@ -398,15 +389,6 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 */
 	final public float getAngle() {
 		return mAngle;
-	}
-	
-	/**
-	 * Get Scroll.
-	 * 
-	 * @return {@link Vector2} Scroll
-	 */
-	final public Vector2 getScroll() {
-		return mScroll;
 	}
 	
 	/**
@@ -592,7 +574,8 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 */
 	@Override
 	final public void setup() {
-		mSize = super.getScreenSize();
+		mSize.x = super.getScreenSize().x;
+		mSize.y = super.getScreenSize().y;
 		mInstallManager.prevSetup();
 		onSetup();
 		mInstallManager.time(mThisTime);
