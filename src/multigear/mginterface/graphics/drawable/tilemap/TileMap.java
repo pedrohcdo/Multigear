@@ -123,7 +123,6 @@ public class TileMap implements Drawable {
 	// Public Variables
 	protected Vector2 mScale = new Vector2(1, 1);
 	protected Vector2 mPosition = new Vector2(0, 0);
-	protected Vector2 mSize = new Vector2(32, 32);
 	protected Vector2 mCenter = new Vector2(0, 0);
 	protected float mAngle = 0;
 	protected float mOpacity = 1;
@@ -183,13 +182,13 @@ public class TileMap implements Drawable {
 	}
 	
 	/**
-	 * Prepare buffers
+	 * Add model to TileMap
 	 */
-	final public void loadModel(final TileMapModel model) {		
+	final public void addModel(final TileMapModel model) {		
 		int mapTileWidth = (int)model.getTileSize().x;
 		int mapTileHeight = (int)model.getTileSize().y;
 		
-		for(int i=0; i<model.getLayersSize(); i++) {
+		for(int i=0; i<model.getLayersCount(); i++) {
 			
 			final TileMapLayer layer = model.getLayer(i);
 			
@@ -213,7 +212,9 @@ public class TileMap implements Drawable {
 					LayerInfo.Buffer buff = layerInfo.getBuffer(tileInfo);
 					
 					// Get Rect Area
-					RectF area = tileInfo.getTextureArect();
+					RectF textureArea = tileInfo.getTextureArea();
+					RectF textureAreaU = GeneralUtils.divideRect(textureArea, tileInfo.getTexture().getSize());
+					
 					Vector2 tileSize = tileInfo.getSize();
 					final int tileWidth = (int)tileSize.x;
 					final int tileHeight = (int)tileSize.y;
@@ -233,23 +234,30 @@ public class TileMap implements Drawable {
 					buff.mElementsVertex.put(y * mapTileHeight + tileHeight);
 					
 					// Put Texture Buffer
-					buff.mTextureVertex.put(area.left);
-					buff.mTextureVertex.put(area.top);
-					buff.mTextureVertex.put(area.right);
-					buff.mTextureVertex.put(area.top);
-					buff.mTextureVertex.put(area.right);
-					buff.mTextureVertex.put(area.bottom);
-					buff.mTextureVertex.put(area.left);
-					buff.mTextureVertex.put(area.top);
-					buff.mTextureVertex.put(area.left);
-					buff.mTextureVertex.put(area.bottom);
-					buff.mTextureVertex.put(area.right);
-					buff.mTextureVertex.put(area.bottom);
+					buff.mTextureVertex.put(textureAreaU.left);
+					buff.mTextureVertex.put(textureAreaU.top);
+					buff.mTextureVertex.put(textureAreaU.right);
+					buff.mTextureVertex.put(textureAreaU.top);
+					buff.mTextureVertex.put(textureAreaU.right);
+					buff.mTextureVertex.put(textureAreaU.bottom);
+					buff.mTextureVertex.put(textureAreaU.left);
+					buff.mTextureVertex.put(textureAreaU.top);
+					buff.mTextureVertex.put(textureAreaU.left);
+					buff.mTextureVertex.put(textureAreaU.bottom);
+					buff.mTextureVertex.put(textureAreaU.right);
+					buff.mTextureVertex.put(textureAreaU.bottom);
 				}
 			}
 			
 			layerInfo.pack();
 		}
+	}
+	
+	/**
+	 * Clear all models added to this tilemap
+	 */
+	final public void clearModels() {
+		mLayersInfo = new LayerInfo[0];
 	}
 	
 	/**
@@ -300,16 +308,6 @@ public class TileMap implements Drawable {
 	 */
 	final public void setPosition(final Vector2 position) {
 		mPosition = position.clone();
-	}
-
-	/**
-	 * Set draw dest texture size.
-	 * 
-	 * @param size
-	 *            Draw texture dest Size
-	 */
-	final public void setSize(final Vector2 size) {
-		mSize = size.clone();
 	}
 
 	/**
@@ -436,15 +434,6 @@ public class TileMap implements Drawable {
 	}
 
 	/**
-	 * Return draw dest Texture size.
-	 * 
-	 * @return {@link Vector2} Size
-	 */
-	final public Vector2 getSize() {
-		return mSize.clone();
-	}
-
-	/**
 	 * Get depth
 	 * 
 	 * @return Return Depth
@@ -541,8 +530,9 @@ public class TileMap implements Drawable {
 		// Calc values
 		final float ox = mCenter.x * scale.x;
 		final float oy = mCenter.y * scale.y;
-		float sx = mSize.x * scale.x;
-		float sy = mSize.y * scale.y;
+		float sx = scale.x;
+		float sy = scale.y;
+		
 		final float tX = mPosition.x + translate.x;
 		final float tY = mPosition.y + translate.y;
 		float six = -ox;

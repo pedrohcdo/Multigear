@@ -429,7 +429,7 @@ public class TextSprite implements Drawable {
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.setOpacity(opacity);
 		drawer.enableViewport(mViewport);
-		drawer.drawText(mFontMap, mFontWriter, mText);
+		drawer.drawText(mFontMap, mText, mFontWriter);
 		drawer.end();
 		
 		// Pop transformations

@@ -4,7 +4,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import multigear.mginterface.engine.Multigear;
+
 import android.annotation.SuppressLint;
+import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -619,4 +622,89 @@ final public class GeneralUtils {
 		out[3] = element[5];
 	}
 	
+	/**
+	 * Divide RectF per Vector2
+	 * @param rect
+	 * @param size
+	 * @return
+	 */
+	final static public RectF divideRect(final RectF rect, final Vector2 size) {
+		return new RectF(rect.left / size.x, rect.top / size.y, rect.right / size.x, rect.bottom / size.y);
+	}
+	
+	/**
+	 * Returns the equivalent size in this device, 
+	 * the values are calculated around the set options in the engine.
+	 * @param size Size
+	 * @param engine Engine
+	 * @return Calculed Size
+	 */
+	final static public Vector2 calculateEquivalentSizeOption(final Vector2 size, final Multigear engine) {
+		
+		//
+		Vector2 screenSize = engine.getMainRoom().getScreenSize();
+		Resources res = engine.getActivity().getResources();
+		
+		// If Texture proportion Enabled
+		if (engine.getConfiguration().hasFunc(multigear.mginterface.engine.Configuration.FUNC_TEXTURE_PROPORTION)) {
+			// Get Attributes
+			final float selfDensity = res.getDisplayMetrics().density;
+			final Vector2 selfScreenSize = screenSize;
+			// Get Base Attributes
+			float baseDensity = engine.getConfiguration().getFloatAttr(multigear.mginterface.engine.Configuration.ATTR_BASE_DENSITY);
+			Vector2 baseScreenSize = engine.getConfiguration().getRef2DAttr(multigear.mginterface.engine.Configuration.ATTR_BASE_SCREEN);
+			// If not set, set as default display
+			if (baseScreenSize == multigear.mginterface.engine.Configuration.DEFAULT_REF2D)
+				baseScreenSize = selfScreenSize;
+			// If not set, set as default density
+			if (baseDensity == multigear.mginterface.engine.Configuration.DEFAULT_VALUE)
+				baseDensity = selfDensity;
+			// Get mode
+			final int from = (int) engine.getConfiguration().getFloatAttr(multigear.mginterface.engine.Configuration.ATTR_PROPORTION_FROM);
+			final int mode = (int) engine.getConfiguration().getFloatAttr(multigear.mginterface.engine.Configuration.ATTR_PROPORTION_MODE);
+			// Check From
+			switch (from) {
+				case multigear.mginterface.engine.Configuration.PROPORTION_FROM_INDIVIDUAL:
+					// Check Func
+					switch (mode) {
+					// If Mode Smaller
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_SMALLER:
+							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeSmaller(size, baseScreenSize, selfScreenSize);
+							// If Mode Bigger
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_BIGGER:
+							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeBigger(size, baseScreenSize, selfScreenSize);
+							// If Mode Diagonal
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_DIAGONAL:
+							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeDiagonal(size, baseScreenSize, selfScreenSize);
+							// If Default
+						default:
+						case multigear.mginterface.engine.Configuration.DEFAULT_VALUE:
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_UNSPECT:
+							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeUnspect(size, baseScreenSize, selfScreenSize);
+					}
+					// If default or General
+				default:
+				case multigear.mginterface.engine.Configuration.DEFAULT_VALUE:
+				case multigear.mginterface.engine.Configuration.PROPORTION_FROM_GENERAL:
+					// Check Mode
+					switch (mode) {
+					// If Mode Smaller
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_SMALLER:
+							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeSmaller(size, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
+							// If Mode Bigger
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_BIGGER:
+							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeBigger(size, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
+							// If Mode Diagonal
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_DIAGONAL:
+							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeDiagonal(size, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
+							// If Default
+						default:
+						case multigear.mginterface.engine.Configuration.DEFAULT_VALUE:
+						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_UNSPECT:
+							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeUnspect(size, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
+					}
+			}
+		}
+		return size;
+	}
 }

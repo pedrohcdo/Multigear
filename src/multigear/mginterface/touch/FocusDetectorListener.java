@@ -4,17 +4,17 @@ import multigear.general.utils.Vector2;
 
 
 /**
- * Drag Detector Listener
+ * Focus Detector Listener
  * 
  * @author user
  *
  */
-public interface DragDetectorListener {
+public interface FocusDetectorListener {
 	
 	/**
-	 * On Drag
+	 * On Focus
 	 * 
 	 * @param scale
 	 */
-	public void onDrag(final Vector2 draged);
+	public void onFocus(final Vector2 focused);
 }

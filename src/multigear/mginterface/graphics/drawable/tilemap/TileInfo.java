@@ -48,10 +48,10 @@ final public class TileInfo {
 	}
 	
 	/**
-	 * Get Tileset
+	 * Get Tile Texture
 	 * @return
 	 */
-	final public Texture getTileset() {
+	final public Texture getTexture() {
 		return mTileset.mTexture;
 	}
 	
@@ -59,9 +59,8 @@ final public class TileInfo {
 	 * Get Tile rect area
 	 * @return
 	 */
-	final public RectF getTextureArect() {
+	final public RectF getTextureArea() {
 		final float tilesetWidth = mTileset.mTexture.getSize().x;
-		final float tilesetHeight = mTileset.mTexture.getSize().y;
 		final float tileWidth = mTileset.mTileSize.x;
 		final float tileHeight = mTileset.mTileSize.y;
 		final int tileQW = (int)((tilesetWidth+2) / (tileWidth+2));
@@ -69,7 +68,7 @@ final public class TileInfo {
 		final int y = mId / tileQW;
 		final float dx = x * (tileWidth + 2);
 		final float dy = y * (tileHeight + 2);
-		return new RectF(dx / tilesetWidth, dy / tilesetHeight, (dx + tileWidth) / tilesetWidth, (dy + tileHeight) / tilesetHeight);
+		return new RectF(dx, dy, (dx + tileWidth), (dy + tileHeight));
 	}
 	
 	/**

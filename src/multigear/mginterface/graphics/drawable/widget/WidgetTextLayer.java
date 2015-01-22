@@ -428,7 +428,7 @@ final public class WidgetTextLayer extends WidgetLayer {
 		drawer.setOpacity(mPreparedOpacity);
 		
 		// Draw
-		drawer.drawText(mFontMap, mFontWriter, mText);
+		drawer.drawText(mFontMap, mText, mFontWriter);
 		
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();

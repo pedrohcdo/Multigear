@@ -303,7 +303,7 @@ final public class Drawer {
 		mMatrixRow.copyValues(mTransformMatrix);
 		// If was textured
 		if(mTexture != null) {
-			if(mTextureContainer == null) {
+			if(mTextureVertex == null) {
 				// Uses
 				final int position = mElementVertex.position();
 				final Vector2 textureSize = mTexture.getSize();
@@ -335,6 +335,65 @@ final public class Drawer {
 			renderer.setBuffers(mElementVertex);
 			renderer.render(verticesCount);
 		}
+	}
+	
+	/**
+	 * Draw Rectangle<br>
+	 * <b>Note:</b> This method does not use the element vertex. 
+	 * For texturing, will be necessary 4 vertices to texture vertex.
+	 * 
+	 * @param size Rectangle size
+	 */
+	public void drawRectangle(final Vector2 size) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// If was textured
+		if(mTexture != null) {
+			if(mTextureVertex == null) {
+				// Uses
+				final Vector2 textureSize = mTexture.getSize();
+				// Obtain Buffers
+				FloatBuffer elementsBuffer = GlobalFloatBuffer.obtain(new float[] {0, 0, size.x, 0, size.x, size.y, 0, size.y});
+				FloatBuffer textureBuffer = GlobalFloatBuffer.obtain(new float[] {0, 0, size.x / textureSize.x, 0, size.x / textureSize.x, size.y / textureSize.y, 0, size.y / textureSize.y});
+				// Swap Buffers
+				StretchTextureRenderer renderer = (StretchTextureRenderer)begin(Renderer.STRETCH_TEXTURE_RENDERER, mColor);
+				renderer.setBuffers(elementsBuffer, textureBuffer);
+				renderer.renderTriangleFan(4);
+				// Release
+				GlobalFloatBuffer.release(elementsBuffer);
+				GlobalFloatBuffer.release(textureBuffer);
+			} else {
+				// Obtain buffers
+				FloatBuffer buffer = GlobalFloatBuffer.obtain(new float[] {0, 0, size.x, 0, size.x, size.y, 0, size.y});
+				// Swap Buffers
+				StretchTextureRenderer renderer = (StretchTextureRenderer)begin(Renderer.STRETCH_TEXTURE_RENDERER, mColor);
+				renderer.setBuffers(buffer, mTextureVertex);
+				renderer.renderTriangleFan(4);
+				// Release Buffer
+				GlobalFloatBuffer.release(buffer);
+			}
+		} else {
+			// Obtain buffers
+			FloatBuffer buffer = GlobalFloatBuffer.obtain(new float[] {0, 0, size.x, 0, size.x, size.y, 0, size.y});
+			// Swap Buffers
+			UniformColorRenderer renderer = (UniformColorRenderer)begin(Renderer.UNIFORM_COLOR_RENDERER, mColor);
+			renderer.setBuffers(buffer);
+			renderer.render(4);
+			// Release Buffer
+			GlobalFloatBuffer.release(buffer);
+		}
+	}
+	
+	/**
+	 * Draw Square<br>
+	 * <b>Note:</b> This method does not use the element vertex. 
+	 * For texturing, will be necessary 4 vertices to texture vertex.
+	 * 
+	 * @param size Rectangle size
+	 */
+	public void drawSquare(final float sides) {
+		drawRectangle(new Vector2(sides, sides));
 	}
 	
 	/**
@@ -440,7 +499,7 @@ final public class Drawer {
 	 * @param designedDrawInfo
 	 *            Drawer Information for GLES20 draw.
 	 */
-	public void drawText(final FontMap fontMap, final FontWriter fontWriter, final String text) {
+	public void drawText(final FontMap fontMap, final String text, final FontWriter fontWriter) {
 		// Copy matrix
 		mMatrixRow.swap();
 		mMatrixRow.copyValues(mTransformMatrix);
@@ -448,6 +507,22 @@ final public class Drawer {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		// Process Writer
 		FontWrapper.processWriter(fontMap, fontWriter, text, mTextureContainer);
+	}
+	
+	/**
+	 * Draw Text
+	 * 
+	 * @param designedDrawInfo
+	 *            Drawer Information for GLES20 draw.
+	 */
+	public void drawText(final FontMap fontMap, final String text) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// Active principal texture
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		// Process Writer
+		FontWrapper.processWriter(fontMap, text, mTextureContainer);
 	}
 	
 	/**

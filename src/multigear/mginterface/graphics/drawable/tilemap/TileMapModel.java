@@ -19,7 +19,7 @@ public interface TileMapModel {
 	public TileMapLayer getLayer(final int layerId);
 	
 	/** Get Layers Size */
-	public int getLayersSize();
+	public int getLayersCount();
 	
 	/** Get tilesize */
 	public Vector2 getTileSize();

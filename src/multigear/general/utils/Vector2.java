@@ -287,6 +287,14 @@ final public class Vector2 implements Cloneable
 	}
 	
 	/** 
+	 * Distance between the two vectors
+	 * @return
+	 */
+	final static public float distance(final Vector2 vec1, final Vector2 vec2) {
+		return (float)Math.hypot(vec1.x-vec2.x, vec1.y-vec2.y);
+	}
+	
+	/** 
 	 * Angle formed by this vector
 	 * @return Angle in degree (-180...180)
 	 */
@@ -303,11 +311,42 @@ final public class Vector2 implements Cloneable
 	}
 	
 	/** 
-	 * Distance between the two vectors
+	 * Angle formed by two vectors.
+	 * @return Angle in degree (-180...180)
+	 */
+	final static public float angle(final Vector2 vec1, final Vector2 vec2) {
+		return (float)GeneralUtils.radToDegree(Math.atan2(vec1.x-vec2.y, vec1.y-vec2.x));
+	}
+	
+	/** 
+	 * Position within the line formed by the two vectors.
 	 * @return
 	 */
-	final static public float distance(final Vector2 vec1, final Vector2 vec2) {
-		return (float)Math.hypot(vec1.x-vec2.x, vec1.y-vec2.y);
+	final public Vector2 position(final Vector2 vec, final float control) {
+		return Vector2.sum(Vector2.scale(Vector2.sub(vec, this), control), this);
+	}
+	
+	/** 
+	 * Position within the line formed by the two vectors.
+	 * @return
+	 */
+	final public static Vector2 position(final Vector2 vec1, final Vector2 vec2, final float control) {
+		return Vector2.sum(Vector2.scale(Vector2.sub(vec2, vec1), control), vec2);
+	}
+	
+	/** 
+	 * Rotate Vector.
+	 * @param vec Vector to rotate
+	 * @param angle Angle to rotate
+	 * @param Direction to rotate vector
+	 * @return
+	 */
+	final public static Vector2 rotate(final Vector2 vec, final float angle) {
+		final float length = vec.length();
+		double newAng = GeneralUtils.degreeToRad(vec.angle() + angle);
+		final float newX = (float)(Math.cos(newAng) * length);
+		final float newY = (float)(Math.sin(newAng) * length);
+		return new Vector2(newX, newY);
 	}
 	
 	/**

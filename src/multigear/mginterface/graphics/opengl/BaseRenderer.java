@@ -5,6 +5,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
+import multigear.mginterface.graphics.opengl.texture.Loader;
 import android.annotation.SuppressLint;
 import android.opengl.GLSurfaceView.Renderer;
 
@@ -69,7 +70,7 @@ public abstract class BaseRenderer implements Renderer {
         // Send Message to extended Object
         onCreate(mScreenSize); 
         // Instantiate Texture Loader
-        final multigear.mginterface.graphics.opengl.texture.Loader textureLoader = new multigear.mginterface.graphics.opengl.texture.Loader(mEngine, mScreenSize);
+        final Loader textureLoader = new Loader(mEngine);
         mDrawer = new Drawer(mEngine.getMainRoom(), (multigear.mginterface.graphics.opengl.Renderer)this);
         // Synchronize and Setup
         mEngine.sync()

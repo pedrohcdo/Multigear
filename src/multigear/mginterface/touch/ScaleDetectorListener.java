@@ -1,5 +1,7 @@
 package multigear.mginterface.touch;
 
+import multigear.general.utils.Vector2;
+
 
 /**
  * Scale Detector Listener

@@ -132,4 +132,60 @@ final public class FontDrawer {
 			}
 		}
 	}
+	
+	/**
+	 * Draw Text
+	 * @param text
+	 */
+	final public void drawText(final String text) {
+		
+		// Swap buffers if switched style
+		if(mActivedStyle != mFontMap.mStyle) {
+			end();
+			prepareSource();
+		}
+		
+		//
+		final FontMap.Layer layer = mFontMap.getActiveLayer();
+		
+		
+		char chars[] = new char[text.length()];
+		text.getChars(0, text.length(), chars, 0);
+		
+		Vector2 padd = mFontMap.getAttributes().getPadd();
+		float scale = layer.mScale;
+		
+		float x = padd.x;
+		float y = padd.y;
+		
+		if(mFontMap.getAttributes().isUseMetrics())
+			y += mFontMap.getMetrics().getAscent() * scale;
+			
+		Vector2 textureSize = mActivedTexture.getSize();
+		int maxTextX = (int)textureSize.x / (int)layer.mMaxBoundedWidth;
+		float maxBoundedWidth2 = (layer.mMaxBoundedWidth / 2.0f);
+		
+		for(char c : chars) {
+			if(mFontMap.mCharMap.mCharacters[c]) {
+				int index = mFontMap.mCharMap.mCharactersIndexes[c];
+				float tX = (index % maxTextX) * layer.mMaxBoundedWidth + maxBoundedWidth2; // centered;
+				int tY = (index / maxTextX) * layer.mMaxBoundedHeight;
+				
+				final Vector2 bounds = layer.mCharactersBounds[index];
+				final float center = (int)(bounds.y - bounds.x) / 2.0f;
+				
+				RectF src = new RectF((tX - center) - 1, tY, tX + center + 1, tY + layer.mMaxBoundedHeight);
+				RectF dst = new RectF(x + bounds.x * scale, y, x + bounds.y * scale, y + layer.mMaxHeight);
+				
+				mBltGorup.blt(src, dst);
+				
+				if(mFontMap.mAttributes.isLinear())
+					x += layer.mMaxWidth;
+				else
+					x += layer.mCharactersWidths[index];
+				
+				x += padd.x;
+			}
+		}
+	}
 }

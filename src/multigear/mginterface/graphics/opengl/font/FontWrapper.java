@@ -24,4 +24,17 @@ public class FontWrapper {
 			fontMap.endFontDrawer();
 		}
 	}
+	
+	/**
+	 * Process Writer to Draw
+	 * 
+	 * @param text
+	 *            Text to draw
+	 */
+	@SuppressLint("WrongCall")
+	final static public void processWriter(final FontMap fontMap, final String text, final TextureContainer container) {
+		FontDrawer drawer = fontMap.beginFontDrawer(container);
+		drawer.drawText(text);
+		fontMap.endFontDrawer();
+	}
 }

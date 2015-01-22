@@ -615,11 +615,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 			handle.call();
 		mHandler.clear();
 		// Update Listeners
-		for(final UpdatableListener listener : mUpdatableListeners)
-			listener.onUpdate(this);
+		for(int i=0; i<mUpdatableListeners.size(); i++)
+			mUpdatableListeners.get(i).onUpdate(this);
 		// Update Touch
 		updateTouch();
-		updatePhysics();
 		onUpdate();
 		mInstallManager.updateManager();
 	}
@@ -862,29 +861,16 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * Atualiza os sprites
 	 */
 	final private void updateAndDrawSceneComponents(final Drawer drawer) {
-		//Collections.sort(mSceneComponents, mSceneComponentsComparatorDraw);
-		for (final DrawableListener listener : mDrawableListener) {
-			listener.onDraw(this, drawer);
-		}
-	}
-	
-	/*
-	 * Atualiza os objetos que utilizam fisica
-	 */
-	final private void updatePhysics() {
-		for (final multigear.physics.VirtualSpriteObject virtualSpriteObject : mVirtualSpriteObjects) {
-			virtualSpriteObject.update();
-		}
+		for(int i=0; i<mDrawableListener.size(); i++)
+			mDrawableListener.get(i).onDraw(this, drawer);
 	}
 	
 	/*
 	 * Desenha os sprites
 	 */
 	final private void touchSceneComponent(final MotionEvent motionEvent) {
-		//Collections.sort(mSceneComponents, mSceneComponentsComparatorTouch);
-		for (final TouchableListener listener : mTouchableListener) {
-			listener.onTouch(this, motionEvent);
-		}
+		for(int i=0; i<mTouchableListener.size(); i++)
+			mTouchableListener.get(i).onTouch(this, motionEvent);
 	}
 	
 	/**

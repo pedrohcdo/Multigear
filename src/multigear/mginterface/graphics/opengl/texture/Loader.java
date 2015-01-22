@@ -1,8 +1,11 @@
 package multigear.mginterface.graphics.opengl.texture;
 
+import java.io.InputStream;
 import java.util.Locale;
 
+import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,10 +14,8 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Xfermode;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
-import android.util.Log;
 
 /**
  * 
@@ -37,16 +38,16 @@ final public class Loader {
 	final private multigear.mginterface.engine.Multigear mEngine;
 	final private multigear.mginterface.graphics.opengl.texture.Cache mCache;
 	final private Resources mResources;
-	final private Vector2 mScreenSize;
+	final private AssetManager mAssetManager;
 	
 	/*
 	 * Construtor
 	 */
-	public Loader(final multigear.mginterface.engine.Multigear engine, final Vector2 screenSize) {
+	public Loader(final multigear.mginterface.engine.Multigear engine) {
 		mEngine = engine;
 		mResources = mEngine.getActivity().getResources();
+		mAssetManager = mEngine.getActivity().getAssets();
 		mCache = new Cache();
-		mScreenSize = screenSize;
 	}
 	
 	/**
@@ -59,7 +60,7 @@ final public class Loader {
 		// If pre loaded texture
 		multigear.mginterface.graphics.opengl.texture.Texture texture = mCache.getTexture(resourceId);
 		if (texture != null) {
-			texture.stretch(correctSize(texture.getResourceSize()));
+			texture.stretch(GeneralUtils.calculateEquivalentSizeOption(texture.getResourceSize(), mEngine));
 			return texture;
 		}
 		// Disable Pre Scale to get Bounds
@@ -87,25 +88,26 @@ final public class Loader {
 	
 	
 	/**
-	 * Loads an existing resource in the package.
+	 * Loads an existing resource in the package. Textures read from the asset have original size.
 	 * 
 	 * @param resourceId
 	 *            Id of the resource, it must be stated in R.
 	 */
-	final public Texture loadTileset(final int resourceId, final Vector2 tileSize, final int grid, final int margin) {
-		// Disable Pre Scale to get Bounds
+	final public Texture loadTilesetFromAsset(final String filename, final Vector2 tileSize, final int grid, final int margin) {
+		// Open file
+		InputStream is = null;
+		try {
+			is = mAssetManager.open(filename);
+		} catch (Exception e) {
+			throw new RuntimeException("Could not load the image.");
+		}
+		// Get Bitmap
 		BitmapFactory.Options option = new BitmapFactory.Options();
 		option.inScaled = false;
-		option.inJustDecodeBounds = true;
-		// Decode Bitmap
-		BitmapFactory.decodeResource(mResources, resourceId, option);
-		// Get Bitmap
-		option = new BitmapFactory.Options();
-		option.inScaled = false;
-		Bitmap bitmap = BitmapFactory.decodeResource(mResources, resourceId, option);
+		Bitmap bitmap = BitmapFactory.decodeStream(is, null, option);
 		// If correct load Bitmap
 		if (bitmap == null) {
-			final String message = String.format(Locale.US, ERROR_RESOURCE_NOT_FOUND, resourceId);
+			final String message = String.format(Locale.US, ERROR_RESOURCE_NOT_FOUND, 0);
 			multigear.general.utils.KernelUtils.error(mEngine.getActivity(), message, ERROR_RESOURCE_NOT_FOUND_CODE);
 		}
 		// Draw tileset
@@ -163,9 +165,16 @@ final public class Loader {
 			dy += tileHeight + 2;
 			sy += tileHeight + grid;
 		}
-		Texture texture = this.load(tileset, resourceId, new Vector2(newWidth, newHeight));
+		
+		Vector2 size = new Vector2(newWidth, newHeight);
+		// Load Texture
+		Texture texture = this.load(tileset, 0, size);
+		// Recycle unused bitmaps
 		bitmap.recycle();
 		tileset.recycle();
+		// Correct size, textures read from the asset have original size
+		texture.stretch(size);
+		// Add texture to pack
 		mCache.addTexture(texture);
 		return texture;
 	}
@@ -180,73 +189,6 @@ final public class Loader {
 		Texture texture = this.createTexture(bitmap);
 		// mCache.addTexture(texture);
 		return texture;
-	}
-	
-	/*
-	 * Correct Texture Size
-	 */
-	final private Vector2 correctSize(final Vector2 textureSize) {
-		// If Texture proportion Enabled
-		if (mEngine.getConfiguration().hasFunc(multigear.mginterface.engine.Configuration.FUNC_TEXTURE_PROPORTION)) {
-			// Get Attributes
-			final float selfDensity = mResources.getDisplayMetrics().density;
-			final Vector2 selfScreenSize = mScreenSize;
-			// Get Base Attributes
-			float baseDensity = mEngine.getConfiguration().getFloatAttr(multigear.mginterface.engine.Configuration.ATTR_BASE_DENSITY);
-			Vector2 baseScreenSize = mEngine.getConfiguration().getRef2DAttr(multigear.mginterface.engine.Configuration.ATTR_BASE_SCREEN);
-			// If not set, set as default display
-			if (baseScreenSize == multigear.mginterface.engine.Configuration.DEFAULT_REF2D)
-				baseScreenSize = selfScreenSize;
-			// If not set, set as default density
-			if (baseDensity == multigear.mginterface.engine.Configuration.DEFAULT_VALUE)
-				baseDensity = selfDensity;
-			// Get mode
-			final int from = (int) mEngine.getConfiguration().getFloatAttr(multigear.mginterface.engine.Configuration.ATTR_PROPORTION_FROM);
-			final int mode = (int) mEngine.getConfiguration().getFloatAttr(multigear.mginterface.engine.Configuration.ATTR_PROPORTION_MODE);
-			// Check From
-			switch (from) {
-				case multigear.mginterface.engine.Configuration.PROPORTION_FROM_INDIVIDUAL:
-					// Check Func
-					switch (mode) {
-					// If Mode Smaller
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_SMALLER:
-							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeSmaller(textureSize, baseScreenSize, selfScreenSize);
-							// If Mode Bigger
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_BIGGER:
-							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeBigger(textureSize, baseScreenSize, selfScreenSize);
-							// If Mode Diagonal
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_DIAGONAL:
-							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeDiagonal(textureSize, baseScreenSize, selfScreenSize);
-							// If Default
-						default:
-						case multigear.mginterface.engine.Configuration.DEFAULT_VALUE:
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_UNSPECT:
-							return multigear.general.utils.GeneralUtils.calculateIndividualTextureSizeUnspect(textureSize, baseScreenSize, selfScreenSize);
-					}
-					// If default or General
-				default:
-				case multigear.mginterface.engine.Configuration.DEFAULT_VALUE:
-				case multigear.mginterface.engine.Configuration.PROPORTION_FROM_GENERAL:
-					// Check Mode
-					switch (mode) {
-					// If Mode Smaller
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_SMALLER:
-							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeSmaller(textureSize, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
-							// If Mode Bigger
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_BIGGER:
-							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeBigger(textureSize, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
-							// If Mode Diagonal
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_DIAGONAL:
-							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeDiagonal(textureSize, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
-							// If Default
-						default:
-						case multigear.mginterface.engine.Configuration.DEFAULT_VALUE:
-						case multigear.mginterface.engine.Configuration.PROPORTION_MODE_UNSPECT:
-							return multigear.general.utils.GeneralUtils.calculateGeneralTextureSizeUnspect(textureSize, baseScreenSize, baseDensity, selfScreenSize, selfDensity);
-					}
-			}
-		}
-		return textureSize;
 	}
 	
 	/*
@@ -292,7 +234,7 @@ final public class Loader {
 		// Create Updater
 		final Updater updater = new Updater(mEngine);
 		// Create Texture
-		final Texture texture = new Texture(mTextureHandle, id, correctSize(size), size, updater);
+		final Texture texture = new Texture(mTextureHandle, id, GeneralUtils.calculateEquivalentSizeOption(size, mEngine), size, updater);
 		// Return Texture
 		return texture;
 	}

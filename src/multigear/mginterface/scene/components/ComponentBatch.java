@@ -159,9 +159,9 @@ public class ComponentBatch {
 	}
 	
 	/**
-	 * Detach from the scene and recycle
+	 * Detach this Object from the scene
 	 */
-	final public void recycle() {
+	final public void destroy() {
 		if(mAttachedScene == null)
 			throw new RuntimeException("This object has already been recycled.");
 		mAttachedScene.removeUpdatableListener(mUpdatableHandler);

@@ -1,7 +1,10 @@
 package multigear.exts.tmx;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.xml.XMLConstants;
 
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.drawable.tilemap.TileInfo;
@@ -15,6 +18,9 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.res.AssetManager;
+import android.graphics.Path;
+import android.provider.MediaStore.Files;
+import android.util.Log;
 import android.util.Xml;
 
 /**
@@ -23,25 +29,11 @@ import android.util.Xml;
  *
  */
 final public class TMXTileMapModel implements TileMapModel {
-	
-	/**
-	 * Tileset Temp
-	 * @author user
-	 *
-	 */
-	final static private class TilesetTemp {
-
-		// Private Variables
-		protected int mStartId;
-		protected Vector2 mTileSize = new Vector2(0, 0);
-		protected Vector2 mSpaceMargin = new Vector2(0, 0);
-		protected Tileset mTileset = null;
-	}
 
 	// Private Variables
 	protected Vector2 mMapSize;
 	protected Vector2 mTileSize;
-	protected TilesetTemp[] mTempTilesets = new TilesetTemp[0];
+	protected Tileset[] mTilesets = new Tileset[0];
 	protected TileMapLayer[] mLayers = new TileMapLayer[0];
 	
 	/**
@@ -101,7 +93,7 @@ final public class TMXTileMapModel implements TileMapModel {
 	 * Get Layers size
 	 */
 	@Override
-	final public int getLayersSize() {
+	final public int getLayersCount() {
 		return mLayers.length;
 	}
 	
@@ -115,8 +107,7 @@ final public class TMXTileMapModel implements TileMapModel {
 	final public TileInfo getTileInfo(final int tileId) {
 		TileInfo info = null;
 		int count = 0;
-		for(final TilesetTemp tilesetTemp : mTempTilesets) {
-			Tileset tileset = tilesetTemp.mTileset;
+		for(final Tileset tileset : mTilesets) {
 			if(tileset == null)
 				throw new IllegalArgumentException("This tile does not prepared.");
 			if(tileId >= tileset.getStartId()) {
@@ -127,20 +118,6 @@ final public class TMXTileMapModel implements TileMapModel {
 		if(info == null)
 			throw new IllegalArgumentException("This tile does not exist.");
 		return info;
-	}
-	
-	/**
-	 * Prepare Tileset
-	 * 
-	 * @param tilesetId
-	 * @param resId
-	 */
-	final public void prepareTileset(final int tilesetId, final int resId, final Loader loader) {
-		if(tilesetId >= mTempTilesets.length)
-			throw new ArrayIndexOutOfBoundsException();
-		TilesetTemp tilesetTemp = mTempTilesets[tilesetId];
-		Texture texture =  loader.loadTileset(resId, tilesetTemp.mTileSize, (int)tilesetTemp.mSpaceMargin.x, (int)tilesetTemp.mSpaceMargin.y);
-		tilesetTemp.mTileset  = new Tileset(texture, tilesetTemp.mStartId, tilesetTemp.mTileSize, (int)tilesetTemp.mSpaceMargin.x, (int)tilesetTemp.mSpaceMargin.y);
 	}
 
 	/**
@@ -168,10 +145,10 @@ final public class TMXTileMapModel implements TileMapModel {
 	 * @param format
 	 * @return
 	 */
-	final static public TMXTileMapModel readFromAsset(AssetManager assetManager, final String fileName) {
+	final static public TMXTileMapModel readFromAsset(AssetManager assetManager, final String fileName, final Loader loader) {
 		try {
 			InputStream stream = openStream(assetManager, fileName);
-			TMXTileMapModel model = TmxXmlReader.reader(stream);
+			TMXTileMapModel model = TmxXmlReader.reader(stream, assetManager, loader);
 			closeStream(stream);
 			return model;
 		} catch (Exception e) {
@@ -192,7 +169,7 @@ final public class TMXTileMapModel implements TileMapModel {
 		 * 
 		 * @param input
 		 */
-		final static private TMXTileMapModel reader(final InputStream input) throws XmlPullParserException, IOException {
+		final static private TMXTileMapModel reader(final InputStream input, final AssetManager asset, final Loader loader) throws XmlPullParserException, IOException {
 			TMXTileMapModel tile = new TMXTileMapModel();
 			XmlPullParser parser = Xml.newPullParser();
 			parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -207,7 +184,7 @@ final public class TMXTileMapModel implements TileMapModel {
 				if (event == XmlPullParser.START_TAG) {
 					String name = parser.getName();
 					if (name.equalsIgnoreCase("tileset")) {
-						readTileset(parser, tile);
+						readTileset(parser, tile, asset, loader);
 					} else if (name.equalsIgnoreCase("layer")) {
 						readLayer(parser, tile);
 					}
@@ -258,7 +235,7 @@ final public class TMXTileMapModel implements TileMapModel {
 		 * @param pasrer
 		 * @param tile
 		 */
-		final static private void readTileset(final XmlPullParser parser, final TMXTileMapModel tile) {
+		final static private void readTileset(final XmlPullParser parser, final TMXTileMapModel tile, final AssetManager asset, final Loader loader) throws XmlPullParserException, IOException  {
 			int firstId = Integer.parseInt(parser.getAttributeValue(null,"firstgid"));
 			int tileWidth = Integer.parseInt(parser.getAttributeValue(null, "tilewidth"));
 			int tileHeight = Integer.parseInt(parser.getAttributeValue(null, "tileheight"));
@@ -270,15 +247,35 @@ final public class TMXTileMapModel implements TileMapModel {
 				space = Integer.parseInt(spacingAttr);
 			if(marginAttr != null)
 				margin = Integer.parseInt(marginAttr);
-			final TilesetTemp tileset = new TilesetTemp();
-			tileset.mStartId = firstId;
-			tileset.mTileSize = new Vector2(tileWidth, tileHeight);
-			tileset.mSpaceMargin = new Vector2(space, margin);
-			// Add new Layer
-			final TilesetTemp[] layers = tile.mTempTilesets;
-			tile.mTempTilesets = new TilesetTemp[layers.length + 1];
-			System.arraycopy(layers, 0, tile.mTempTilesets, 0, layers.length);
-			tile.mTempTilesets[tile.mTempTilesets.length - 1] = tileset;
+			// Get filename
+			String filename = null;
+			int depth = parser.getDepth();
+			
+			while(true) {
+				parser.next();
+				
+				if(parser.getDepth() == depth && parser.getEventType() == XmlPullParser.END_TAG)
+					break;
+				
+				if(parser.getEventType() == XmlPullParser.START_TAG && parser.getName().equalsIgnoreCase("image")) {
+					String path = parser.getAttributeValue(null, "source");
+					File file = new File(path);
+					filename = file.getName();
+				}
+			}
+			// Get Texture
+			if(filename == null) 
+				throw new RuntimeException("It was not indicated a texture for the tileset.");
+			//
+			asset.open(filename).close();
+			// Load Tileset
+			Texture texture = loader.loadTilesetFromAsset(filename, new Vector2(tileWidth, tileHeight), space, margin);
+			Tileset tileset = new Tileset(texture, firstId, new Vector2(tileWidth, tileHeight), space, margin);
+			// Set Tileset
+			final Tileset[] tilesets = tile.mTilesets;
+			tile.mTilesets = new Tileset[tilesets.length + 1];
+			System.arraycopy(tilesets, 0, tile.mTilesets, 0, tilesets.length);
+			tile.mTilesets[tilesets.length] = tileset;
 		}
 
 		/**
@@ -297,8 +294,7 @@ final public class TMXTileMapModel implements TileMapModel {
 			boolean data = false;
 			int count = 0;
 			// Read tilemap
-			while (!(((event = parser.getEventType()) == XmlPullParser.END_TAG) && (parser
-					.getDepth() == depth))) {
+			while (!(((event = parser.getEventType()) == XmlPullParser.END_TAG) && (parser.getDepth() == depth))) {
 				if (event == XmlPullParser.START_TAG) {
 					String name = parser.getName();
 					if (name.equalsIgnoreCase("data")) {
