@@ -57,7 +57,7 @@ final public class InstallManager {
 				case INSTALL:
 					// Install
 					mInstallationList.add(mInstallation);
-					prepare(mInstallation, mExtra);
+					finalPreparation(mInstallation, mExtra);
 					break;
 				case UNINSTALL:
 					// Log.d("LogTest", "Size: " + mInstallationList.size());
@@ -70,10 +70,11 @@ final public class InstallManager {
 						// Call Uninstalled
 						mInstallation.onUninstalled();
 					} else {
-					} // multigear.general.utils.KernelUtils.error(mRoom.getEngine().getActivity(),
-						// "InstallSupport: An error occurred while removing an object. Informed instance was not previously installed.",
-						// 0xF);
-						// Remove Prevents
+					  multigear.general.utils.KernelUtils.error(mRoom.getEngine().getActivity(),
+						 "InstallSupport: An error occurred while removing an object. Informed instance was not previously installed.",
+						 0xF);
+					//	 Remove Prevents
+					}
 					mUninstallingInstances.remove(mInstallation);
 			}
 		}
@@ -127,7 +128,10 @@ final public class InstallManager {
 	}
 	
 	/**
-	 * Prepare to install
+	 * Prepare installation and return last event called for 
+	 * continue preparing after final installation.<br>
+	 * <b>Note:</b> Final installation is when the installation inserted in installation list
+	 * in next frame.
 	 * 
 	 * @param installation
 	 */
@@ -155,6 +159,26 @@ final public class InstallManager {
 			installation.cache();
 		return mLifeStep;
 		
+	}
+	
+	/**
+	 * Final Preparation of installation, ending of call events.
+	 * As the scene is inserted after a frame, it may be that some 
+	 * events have been called.
+	 * 
+	 * @param installation
+	 * @param steps
+	 */
+	final private void finalPreparation(final Installation installation, int steped) {
+		installation.time(mThisTime);
+		if (mLifeStep >= 1 && 1 > steped)
+			installation.setup();
+		if (mLifeStep >= 2 && 2 > steped)
+			installation.screen();
+		if (mLifeStep >= 3 && 3 > steped)
+			installation.cache();
+		if (mLifeStep == 4 && 4 > steped)
+			installation.finish();
 	}
 	
 	/**
@@ -217,21 +241,6 @@ final public class InstallManager {
 	}
 	
 	/*
-	 * Prepare Installation
-	 */
-	final private void prepare(final multigear.mginterface.scene.Installation installation, int steps) {
-		installation.time(mThisTime);
-		if (mLifeStep >= 1 && 1 > steps)
-			installation.setup();
-		if (mLifeStep >= 2 && 2 > steps)
-			installation.screen();
-		if (mLifeStep >= 3 && 3 > steps)
-			installation.cache();
-		if (mLifeStep == 4 && 4 > steps)
-			installation.finish();
-	}
-	
-	/*
 	 * Atualiza o tempo
 	 */
 	final protected void time(final long time) {
@@ -240,8 +249,10 @@ final public class InstallManager {
 			mInstallationList.get(index).time(time);
 	}
 	
-	/*
-	 * Configuração dos objetos
+	/**
+	 * The very first scene consumes the event and then passes 
+	 * to his children, so the scene can install something that period, 
+	 * then these methods are used to make the event counter a step forward.
 	 */
 	final protected void prevSetup() {
 		mLifeStep = 1;
@@ -256,8 +267,10 @@ final public class InstallManager {
 			mInstallationList.get(index).setup();
 	}
 	
-	/*
-	 * Redimensiona a tela
+	/**
+	 * The very first scene consumes the event and then passes 
+	 * to his children, so the scene can install something that period, 
+	 * then these methods are used to make the event counter a step forward.
 	 */
 	final protected void prevScreen() {
 		mLifeStep = 2;
@@ -272,8 +285,10 @@ final public class InstallManager {
 			mInstallationList.get(index).screen();
 	}
 	
-	/*
-	 * Arquiva as texturas
+	/**
+	 * The very first scene consumes the event and then passes 
+	 * to his children, so the scene can install something that period, 
+	 * then these methods are used to make the event counter a step forward.
 	 */
 	final protected void prevCache() {
 		mLifeStep = 3;

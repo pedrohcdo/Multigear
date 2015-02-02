@@ -4,7 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import multigear.communication.tcp.base.BaseConnected;
+import multigear.communication.tcp.base.Message;
+import multigear.communication.tcp.base.Utils;
+import multigear.communication.tcp.support.listener.Listener;
+import multigear.communication.tcp.support.objectmessage.ObjectMessage;
+import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilt;
 import multigear.general.utils.Vector2;
+import multigear.mginterface.engine.Manager;
 
 /**
  * Connection Support
@@ -21,12 +28,12 @@ final public class ComManager {
 	final static public int OBJECT_CODE_PARENTCALIBRATEDATTRIBUTES = -3;
 	
 	// Final Private Variables
-	final private List<multigear.communication.tcp.base.BaseConnected> mSupportList;
-	final private List<multigear.communication.tcp.support.ServerSupport> mServerSupportList;
-	final private List<multigear.communication.tcp.support.ClientSupport> mClientSupportList;
-	final private multigear.mginterface.engine.Manager mManager;
-	final private Vector<multigear.communication.tcp.support.SupportMessage> mSupportMessages;
-	final private Vector<multigear.communication.tcp.support.MessageInfo> mMessagesInfo;
+	final private List<BaseConnected> mSupportList;
+	final private List<ServerSupport> mServerSupportList;
+	final private List<ClientSupport> mClientSupportList;
+	final private Manager mManager;
+	final private Vector<SupportMessage> mSupportMessages;
+	final private Vector<MessageInfo> mMessagesInfo;
 	
 	// Private Variables
 	private multigear.communication.tcp.support.listener.Listener mListener;
@@ -36,13 +43,13 @@ final public class ComManager {
 	/*
 	 * Construtor
 	 */
-	public ComManager(final multigear.mginterface.engine.Manager manager) {
+	public ComManager(final Manager manager) {
 		mManager = manager;
-		mSupportList = new ArrayList<multigear.communication.tcp.base.BaseConnected>();
-		mServerSupportList = new ArrayList<multigear.communication.tcp.support.ServerSupport>();
-		mClientSupportList = new ArrayList<multigear.communication.tcp.support.ClientSupport>();
-		mSupportMessages = new Vector<multigear.communication.tcp.support.SupportMessage>();
-		mMessagesInfo = new Vector<multigear.communication.tcp.support.MessageInfo>();
+		mSupportList = new ArrayList<BaseConnected>();
+		mServerSupportList = new ArrayList<ServerSupport>();
+		mClientSupportList = new ArrayList<ClientSupport>();
+		mSupportMessages = new Vector<SupportMessage>();
+		mMessagesInfo = new Vector<MessageInfo>();
 		mListener = null;
 		mConnectionPort = 4545;
 		mOpenedFlow = false;
@@ -61,19 +68,24 @@ final public class ComManager {
 	/*
 	 * Altera o listener
 	 */
-	final public void setListener(final multigear.communication.tcp.support.listener.Listener listener) {
+	final public void setListener(final Listener listener) {
 		mListener = listener;
 	}
 	
 	/**
-	 * Open Dataflow
+	 * Opens the flow of communication between clients. 
+	 * When a stream is open all communication will be made 
+	 * with a control interface, so there is no loss of data 
+	 * is recommended to close the flow when not in use.
 	 */
 	final public void openDataflow() {
 		mOpenedFlow = true;
 	}
 	
 	/**
-	 * Close Dataflow
+	 * Closes the flow of communication between clients.
+	 * When a stream is closed, it will not be treated and had 
+	 * been in waiting, so preventing data loss.
 	 */
 	final public void closeDataflow() {
 		mOpenedFlow = false;
@@ -82,7 +94,7 @@ final public class ComManager {
 	/*
 	 * Adciona um suporte
 	 */
-	final public void addSupport(final multigear.communication.tcp.base.BaseConnected baseConnected) {
+	final public void addSupport(final BaseConnected baseConnected) {
 		mSupportList.add(baseConnected);
 	}
 	
@@ -97,7 +109,7 @@ final public class ComManager {
 	 * Atualiza o suporte
 	 */
 	final public void update() {
-		for (final multigear.communication.tcp.base.BaseConnected connection : mSupportList) {
+		for (final BaseConnected connection : mSupportList) {
 			updateConnection(connection);
 		}
 		// Safe Messages Read
@@ -106,17 +118,20 @@ final public class ComManager {
 				mListener.onComMessage(mSupportMessages.remove(0));
 			}
 			while(mMessagesInfo.size() > 0 && mOpenedFlow) {
-				multigear.communication.tcp.support.MessageInfo messageInfo = mMessagesInfo.remove(0);
+				MessageInfo messageInfo = mMessagesInfo.remove(0);
 				mListener.onMessage(messageInfo.getConnectionInfo(), messageInfo.getObjectMessage());
 			}
 		}
 		
 	}
 	
-	/*
-	 * Atualiza uma conexão
+	/**
+	 * Read Messages.
+	 * Nota: Esta lendo 10 mensagens por frame.
+	 * 
+	 * @param connection
 	 */
-	final private void updateConnection(final multigear.communication.tcp.base.BaseConnected connection) {
+	final private void updateConnection(final BaseConnected connection) {
 		
 		multigear.communication.tcp.base.Message message;
 		//long time = System.currentTimeMillis();
@@ -132,29 +147,35 @@ final public class ComManager {
 		//Log.d("LogTest2", "Messages Read: " + messages);
 	}
 	
-	/*
-	 * Envia um objeto para todos
+	/**
+	 * Send message for all clients
+	 * @param object
 	 */
-	final public void sendForAll(final multigear.communication.tcp.support.objectmessage.ObjectMessageBuilt object) {
-		for (final multigear.communication.tcp.base.BaseConnected connection : mSupportList) {
-			connection.sendMessage(multigear.communication.tcp.base.Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
+	final public void sendForAll(final ObjectMessageBuilt object) {
+		for (final BaseConnected connection : mSupportList) {
+			connection.sendMessage(Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
 		}
 	}
 	
-	/*
-	 * Cria um Servidor
+	/**
+	 * Cria um Server
+	 * @param name
+	 * @return
 	 */
-	final public multigear.communication.tcp.support.ServerSupport createServer(final String name) {
-		final multigear.communication.tcp.support.ServerSupport serverSupport = new multigear.communication.tcp.support.ServerSupport(this, mManager, name, mConnectionPort);
+	final public ServerSupport createServer(final String name) {
+		final ServerSupport serverSupport = new ServerSupport(this, mManager, name, mConnectionPort);
 		mServerSupportList.add(serverSupport);
 		return serverSupport;
 	}
 	
-	/*
-	 * Cria um Client
+	/**
+	 * Cria um Cliente
+	 * 
+	 * @param name
+	 * @return
 	 */
-	final public multigear.communication.tcp.support.ClientSupport createClient(final String name) {
-		final multigear.communication.tcp.support.ClientSupport clientSupport = new multigear.communication.tcp.support.ClientSupport(this, mManager, name, mConnectionPort);
+	final public ClientSupport createClient(final String name) {
+		final ClientSupport clientSupport = new ClientSupport(this, mManager, name, mConnectionPort);
 		mClientSupportList.add(clientSupport);
 		return clientSupport;
 	}
@@ -162,7 +183,7 @@ final public class ComManager {
 	/*
 	 * Recebe mensagem dos suportes
 	 */
-	final protected void recvMessageForSupport(final multigear.communication.tcp.support.SupportMessage supportMessage) {
+	final protected void recvMessageForSupport(final SupportMessage supportMessage) {
 		//mListener.onComSupportMessage(supportMessage);
 		mSupportMessages.add(supportMessage);
 	}
@@ -172,7 +193,7 @@ final public class ComManager {
 	 * Prepared attributes will be informed after the finish.
 	 */
 	final public void prepareParentsAttributes() {
-		sendForAll(multigear.communication.tcp.support.objectmessage.ObjectMessage.create(OBJECT_CODE_PREPAREPARENTATTRIBUTES).build());
+		sendForAll(ObjectMessage.create(OBJECT_CODE_PREPAREPARENTATTRIBUTES).build());
 	}
 	
 	/**
@@ -183,16 +204,16 @@ final public class ComManager {
 		final float sendDpi = mManager.getMainRoom().getDPI();
 		final int sendWidth = (int) mManager.getMainRoom().getScreenSize().x;
 		final int sendHeight = (int) mManager.getMainRoom().getScreenSize().y;
-		sendForAll(multigear.communication.tcp.support.objectmessage.ObjectMessage.create(OBJECT_CODE_PARENTCALIBRATEDATTRIBUTES).add(sendDpi).add(sendWidth).add(sendHeight).build());
+		sendForAll(ObjectMessage.create(OBJECT_CODE_PARENTCALIBRATEDATTRIBUTES).add(sendDpi).add(sendWidth).add(sendHeight).build());
 	}
 	
 	/*
 	 * Recebe uma mensagem do suporte
 	 */
-	final protected void recvSupportMessage(final multigear.communication.tcp.base.BaseConnected connection, final multigear.communication.tcp.base.Message message) {
+	final protected void recvSupportMessage(final BaseConnected connection, final Message message) {
 		// Translate Object Message
-		if (message.getCode() == multigear.communication.tcp.base.Utils.CODE_INTERFACE_OBJECTMESSAGE) {
-			final multigear.communication.tcp.support.objectmessage.ObjectMessage objectMessage = multigear.communication.tcp.support.objectmessage.ObjectMessage.read(message.getMessage());
+		if (message.getCode() == Utils.CODE_INTERFACE_OBJECTMESSAGE) {
+			final ObjectMessage objectMessage = ObjectMessage.read(message.getMessage());
 			final int code = objectMessage.getCode();
 			// If system message
 			if (code < 0) {
@@ -200,29 +221,29 @@ final public class ComManager {
 					final float sendDpi = mManager.getMainRoom().getDPI();
 					final int sendWidth = (int) mManager.getMainRoom().getScreenSize().x;
 					final int sendHeight = (int) mManager.getMainRoom().getScreenSize().y;
-					sendForAll(multigear.communication.tcp.support.objectmessage.ObjectMessage.create(OBJECT_CODE_PARENTATTRIBUTESPREPARED).add(sendDpi).add(sendWidth).add(sendHeight).build());
+					sendForAll(ObjectMessage.create(OBJECT_CODE_PARENTATTRIBUTESPREPARED).add(sendDpi).add(sendWidth).add(sendHeight).build());
 				} else if (code == OBJECT_CODE_PARENTATTRIBUTESPREPARED) {
 					final float dpi = (Float) objectMessage.getValue(0);
 					final int width = (Integer) objectMessage.getValue(1);
 					final int height = (Integer) objectMessage.getValue(2);
 					final Vector2 size = new Vector2(width, height);
-					final multigear.communication.tcp.support.ParentAttributes clientAttributes = new multigear.communication.tcp.support.ParentAttributes(dpi, size, mManager.getMainRoom().getScreenSize());
-					final multigear.communication.tcp.support.SupportMessage recvMessage = new multigear.communication.tcp.support.SupportMessage(multigear.communication.tcp.support.SupportMessage.PARENT_PREPAREDATTRIBUTES, clientAttributes);
+					final ParentAttributes clientAttributes = new ParentAttributes(dpi, size);
+					final SupportMessage recvMessage = new SupportMessage(multigear.communication.tcp.support.SupportMessage.PARENT_PREPAREDATTRIBUTES, clientAttributes);
 					recvMessageForSupport(recvMessage);
 				} else if (code == OBJECT_CODE_PARENTCALIBRATEDATTRIBUTES) {
 					final float dpi = (Float) objectMessage.getValue(0);
 					final int width = (Integer) objectMessage.getValue(1);
 					final int height = (Integer) objectMessage.getValue(2);
 					final Vector2 size = new Vector2(width, height);
-					final multigear.communication.tcp.support.ParentAttributes clientAttributes = new multigear.communication.tcp.support.ParentAttributes(dpi, size, mManager.getMainRoom().getScreenSize());
-					final multigear.communication.tcp.support.SupportMessage recvMessage = new multigear.communication.tcp.support.SupportMessage(multigear.communication.tcp.support.SupportMessage.PARENT_CALIBRATEDATTRIBUTES, clientAttributes);
+					final ParentAttributes clientAttributes = new ParentAttributes(dpi, size);
+					final SupportMessage recvMessage = new SupportMessage(SupportMessage.PARENT_CALIBRATEDATTRIBUTES, clientAttributes);
 					recvMessageForSupport(recvMessage);
 				}
 				return;
 			} else {
 				// Add Message Info to Safe Stack
-				final multigear.communication.tcp.support.ConnectionInfo connectionInfo = new multigear.communication.tcp.support.ConnectionInfo(connection.getName(), connection.getAddress());
-				mMessagesInfo.add(new multigear.communication.tcp.support.MessageInfo(connectionInfo, objectMessage));
+				final ConnectionInfo connectionInfo = new ConnectionInfo(connection.getName(), connection.getAddress());
+				mMessagesInfo.add(new MessageInfo(connectionInfo, objectMessage));
 			}
 			return;
 		}
@@ -233,15 +254,15 @@ final public class ComManager {
 	 */
 	final public void finish() {
 		// Finish Servers
-		for (multigear.communication.tcp.support.ServerSupport serverSupport : mServerSupportList) {
+		for (ServerSupport serverSupport : mServerSupportList) {
 			serverSupport.finish();
 		}
 		// Finish Clients
-		for (multigear.communication.tcp.support.ClientSupport clientSupport : mClientSupportList) {
+		for (ClientSupport clientSupport : mClientSupportList) {
 			clientSupport.finish();
 		}
 		// Finish Supports
-		for (final multigear.communication.tcp.base.BaseConnected connected : mSupportList) {
+		for (final BaseConnected connected : mSupportList) {
 			connected.close();
 		}
 	}

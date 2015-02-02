@@ -344,7 +344,7 @@ public class TileMap implements Drawable {
 	 *            [in] Opacity
 	 */
 	final public void setOpacity(final float opacity) {
-		mOpacity = opacity;
+		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
 	}
 
 	/**

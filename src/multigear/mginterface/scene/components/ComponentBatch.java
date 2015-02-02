@@ -53,7 +53,8 @@ public class ComponentBatch {
 		@Override
 		public void onUpdate(Scene scene) {
 			Collections.sort(mComponents, mComponentsComparatorDraw);
-			for(final Component component : mComponents) {
+			for(int i=0; i<mComponents.size(); i++) {
+				final Component component = mComponents.get(i);
 				if(component instanceof Updatable) {
 					Updatable updatable = (Updatable) component;
 					updatable.update();
@@ -74,7 +75,8 @@ public class ComponentBatch {
 		 */
 		@Override
 		public void onDraw(Scene scene, Drawer drawer) {
-			for(final Component component : mComponents) {
+			for(int i=0; i<mComponents.size(); i++) {
+				final Component component = mComponents.get(i);
 				if(component instanceof Drawable) {
 					Drawable drawable = (Drawable) component;
 					drawable.draw(drawer);

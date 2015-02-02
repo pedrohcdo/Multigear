@@ -3,6 +3,7 @@ package multigear.mginterface.graphics.drawable.widget;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
+import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
@@ -35,8 +36,9 @@ final public class WidgetTextLayer extends WidgetLayer {
 	private float mAngle = 0;
 	private boolean mTouchable = true;
 	private boolean mFixedSpace = false;
-	private boolean mInverted[] = { false, false };
+	private boolean mMirror[] = { false, false };
 	private Rect mViewport;
+	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
 	private FontWriter mFontWriter = new FontWriter() {
 		
 		// Final private Variable
@@ -104,21 +106,22 @@ final public class WidgetTextLayer extends WidgetLayer {
 	}
 	
 	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFunc(final BlendFunc blendFunc) {
+		mBlendFunc = blendFunc;
+	}
+	
+	/**
 	 * Invert in Vertical
 	 * 
 	 * @param inverted
 	 */
-	final public void setVerticalInverted(boolean inverted) {
-		mInverted[0] = true;
-	}
-	
-	/**
-	 * Invert in Horizontal
-	 * 
-	 * @param inverted
-	 */
-	final public void setHorizontalInverted(boolean inverted) {
-		mInverted[1] = true;
+	final public void setMirror(final boolean mirrorX, final boolean mirrorY) {
+		mMirror[0] = true;
+		mMirror[1] = true;
 	}
 	
 	/**
@@ -239,21 +242,21 @@ final public class WidgetTextLayer extends WidgetLayer {
 	}
 	
 	/**
+	 * Get Blend Func
+	 * 
+	 * @return Get Blend Func
+	 */
+	final public BlendFunc getBlendFunc() {
+		return mBlendFunc;
+	}
+	
+	/**
 	 * Invert in Vertical
 	 * 
 	 * @param inverted
 	 */
-	final public boolean getVerticalInverted() {
-		return mInverted[0];
-	}
-	
-	/**
-	 * Invert in Horizontal
-	 * 
-	 * @param inverted
-	 */
-	final public boolean getHorizontalInverted() {
-		return mInverted[1];
+	final public boolean[] getMirror() {
+		return mMirror.clone();
 	}
 	
 	/**
@@ -375,10 +378,6 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * @return True if need Draw
 	 */
 	final protected boolean beginDraw(final float preOpacity, final Drawer drawer) {
-		//
-		if(mText.length() == 0)
-			return false;
-		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		
@@ -424,10 +423,11 @@ final public class WidgetTextLayer extends WidgetLayer {
 	 * Atualiza e Desenha
 	 */
 	protected void endDraw(final Drawer drawer) {
-		// Prepare Drawer
-		drawer.setOpacity(mPreparedOpacity);
-		
+	
 		// Draw
+		drawer.setOpacity(mPreparedOpacity);
+		drawer.enableViewport(mViewport);
+		drawer.setBlendFunc(mBlendFunc);
 		drawer.drawText(mFontMap, mText, mFontWriter);
 		
 		// Get Matrix Row

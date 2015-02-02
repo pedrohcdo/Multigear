@@ -1,4 +1,4 @@
-package multigear.mginterface.touch;
+package multigear.mginterface.tools.touch;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,11 +11,11 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 /**
- * Untouch Detector
+ * Pull Detector
  * @author user
  *
  */
-final public class TouchEventsDetector {
+final public class PullDetector {
 
 	/**
 	 * Pointer
@@ -26,7 +26,7 @@ final public class TouchEventsDetector {
 	final private class Pointer {
 		
 		int id;
-		Vector2 lastPosition;
+		Vector2 startPosition;
 		Vector2 framePosition;
 	}
 	
@@ -34,22 +34,35 @@ final public class TouchEventsDetector {
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	
 	// Private Variables
-	private TouchEventsDetectorListener mUntouchDetectorListener;
+	private PullDetectorListener mPullDetectorListener;
 	
 	/**
-	 * Set Untouch Detector Listener
-	 * @param listener Untouch Detector Listener
+	 * Default Constructor
 	 */
-	final public void setListener(final TouchEventsDetectorListener listener) {
-		mUntouchDetectorListener = listener;
+	public PullDetector() {}
+	
+	/**
+	 * Constructor
+	 * @param listener Pull Detector Listener
+	 */
+	public PullDetector(final PullDetectorListener listener) {
+		mPullDetectorListener = listener;
 	}
 	
 	/**
-	 * Get Untouch Detector Listener
+	 * Set Pull Detector Listener
+	 * @param listener Pull Detector Listener
+	 */
+	final public void setListener(final PullDetectorListener listener) {
+		mPullDetectorListener = listener;
+	}
+	
+	/**
+	 * Get Pull Detector Listener
 	 * @return
 	 */
-	final public TouchEventsDetectorListener getUntouchDetectorListener() {
-		return mUntouchDetectorListener;
+	final public PullDetectorListener getPullDetectorListener() {
+		return mPullDetectorListener;
 	}
 	
 	/**
@@ -65,8 +78,7 @@ final public class TouchEventsDetector {
 		removePointer(id);
 		final Pointer pointer = new Pointer();
 		pointer.id = id;
-		pointer.lastPosition = position;
-		pointer.framePosition = position;
+		pointer.startPosition = position;
 		mPointers.add(pointer);
 	}
 	
@@ -95,6 +107,37 @@ final public class TouchEventsDetector {
 	}
 	
 	/**
+	 * Move Pointers
+	 * @param touch
+	 */
+	final private void movePointers(final MotionEvent touch) {
+		for(int index=0; index<MotionEventCompat.getPointerCount(touch); index++) {
+			final Vector2 position = new Vector2(MotionEventCompat.getX(touch, index), MotionEventCompat.getY(touch, index));
+			final int id = MotionEventCompat.getPointerId(touch, index);
+			for(final Pointer pointer : mPointers) {
+				if(pointer.id == id) {
+					pointer.framePosition = position;
+					break;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Update Move
+	 */
+	final private void updateMove() {
+		if(mPointers.size() == 1) {
+			final Pointer a = mPointers.get(0);
+			final Vector2 startPosition = a.startPosition;
+			final Vector2 framePosition = a.framePosition;
+			
+			if(mPullDetectorListener != null)
+				mPullDetectorListener.onPull(startPosition, framePosition);
+		}
+	}
+	
+	/**
 	 * Process touch event
 	 */
 	final public void touch(final MotionEvent touch) {
@@ -102,19 +145,17 @@ final public class TouchEventsDetector {
 		case MotionEvent.ACTION_DOWN:
 		case MotionEvent.ACTION_POINTER_DOWN:
 			addPointer(touch);
-			if(mUntouchDetectorListener != null)
-				mUntouchDetectorListener.onTouch(touch.getPointerCount());
 			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 			removePointer(touch);
-			if(mUntouchDetectorListener != null)
-				mUntouchDetectorListener.onUntouch(touch.getPointerCount() - 1);
 			break;
 		case MotionEvent.ACTION_CANCEL:
 			mPointers.clear();
-			if(mUntouchDetectorListener != null)
-				mUntouchDetectorListener.onUntouch(0);
+			break;
+		case MotionEvent.ACTION_MOVE:
+			movePointers(touch);
+			updateMove();
 			break;
 		}
 	}

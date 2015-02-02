@@ -1,4 +1,4 @@
-package multigear.mginterface.touch;
+package multigear.mginterface.tools.touch;
 
 import multigear.general.utils.Vector2;
 

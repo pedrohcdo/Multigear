@@ -1,4 +1,4 @@
-package multigear.mginterface.touch;
+package multigear.mginterface.tools.touch;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,11 +11,11 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 /**
- * Rotate Detector
+ * Drag Detector
  * @author user
  *
  */
-final public class RotateDetector {
+final public class DragDetector {
 
 	/**
 	 * Pointer
@@ -34,22 +34,35 @@ final public class RotateDetector {
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	
 	// Private Variables
-	private RotateDetectorListener mRotateDetectorListener;
+	private DragDetectorListener mDragDetectorListener;
 	
 	/**
-	 * Set Rotate Detector Listener
-	 * @param listener Rotate Detector Listener
+	 * Default Constructor
 	 */
-	final public void setListener(final RotateDetectorListener listener) {
-		mRotateDetectorListener = listener;
+	public DragDetector() {}
+	
+	/**
+	 * Constructor
+	 * @param listener Drag Detector Listener
+	 */
+	public DragDetector(final DragDetectorListener listener) {
+		mDragDetectorListener = listener;
 	}
 	
 	/**
-	 * Get Rotate Detector Listener
+	 * Set Drag Detector Listener
+	 * @param listener Drag Detector Listener
+	 */
+	final public void setListener(final DragDetectorListener listener) {
+		mDragDetectorListener = listener;
+	}
+	
+	/**
+	 * Get Drag Detector Listener
 	 * @return
 	 */
-	final public RotateDetectorListener getRotateDetectorListener() {
-		return mRotateDetectorListener;
+	final public DragDetectorListener getDragDetectorListener() {
+		return mDragDetectorListener;
 	}
 	
 	/**
@@ -116,21 +129,25 @@ final public class RotateDetector {
 	 * Update Move
 	 */
 	final private void updateMove() {
-		if(mPointers.size() >= 2) {
+		if(mPointers.size() == 1) {
+			final Pointer a = mPointers.get(0);
+			final Vector2 aLastPosition = a.lastPosition;
+			final Vector2 aFramePosition = a.framePosition;
+			final Vector2 aDraged = Vector2.sub(aFramePosition, aLastPosition);
+			if(mDragDetectorListener != null && aDraged.length() != 0)
+				mDragDetectorListener.onDrag(aDraged);
+		} else if(mPointers.size() >= 2) {
 			final Pointer a = mPointers.get(0);
 			final Pointer b = mPointers.get(1);
 			final Vector2 aLastPosition = a.lastPosition;
 			final Vector2 bLastPosition = b.lastPosition;
 			final Vector2 aFramePosition = a.framePosition;
 			final Vector2 bFramePosition = b.framePosition;
-			
-			final float lastAngle = bLastPosition.angle(aLastPosition);
-			final float frameAngle = bFramePosition.angle(aFramePosition);
-			
-			
-			final float rotated = frameAngle - lastAngle;
-			if(mRotateDetectorListener != null && rotated != 0)
-				mRotateDetectorListener.onRotate(rotated);
+			final Vector2 aDraged = Vector2.sub(aFramePosition, aLastPosition);
+			final Vector2 bDraged = Vector2.sub(bFramePosition, bLastPosition);
+			final Vector2 finalDraged = Vector2.div(Vector2.sum(aDraged, bDraged), 2);
+			if(mDragDetectorListener != null && finalDraged.length() != 0)
+				mDragDetectorListener.onDrag(finalDraged);
 		}
 		for(final Pointer pointer : mPointers)
 			pointer.lastPosition = pointer.framePosition;

@@ -1,7 +1,6 @@
 package multigear.mginterface.graphics.opengl.font.writerstyles;
 
 import multigear.general.utils.Color;
-import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
@@ -26,10 +25,7 @@ public class FontWriterStyleShadow implements FontWriter {
 	 * @param distance Distance from the text until the shadow
 	 */
 	public FontWriterStyleShadow(final float angle, final float distance) {
-		final double rad = GeneralUtils.degreeToRad(angle);
-		final float x = (float)Math.cos(rad) * distance;
-		final float y = (float)Math.sin(rad) * distance;
-		mProjection = new Vector2(x, y);
+		mProjection = Vector2.rotate(new Vector2(distance, distance), angle);
 		mShadowColor = Color.BLACK;
 	}
 	
@@ -41,10 +37,7 @@ public class FontWriterStyleShadow implements FontWriter {
 	 * @param shadowColor Shadow Color
 	 */
 	public FontWriterStyleShadow(final float angle, final float distance, final Color shadowColor) {
-		final double rad = GeneralUtils.degreeToRad(angle);
-		final float x = (float)Math.cos(rad) * distance;
-		final float y = (float)Math.sin(rad) * distance;
-		mProjection = new Vector2(x, y);
+		mProjection = Vector2.rotate(new Vector2(distance, distance), angle);
 		mShadowColor = shadowColor;
 	}
 	

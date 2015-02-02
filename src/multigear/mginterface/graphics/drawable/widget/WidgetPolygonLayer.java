@@ -1,4 +1,4 @@
-package multigear.mginterface.graphics.drawable.polygon;
+package multigear.mginterface.graphics.drawable.widget;
 
 import java.nio.FloatBuffer;
 
@@ -7,38 +7,43 @@ import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
+import multigear.mginterface.graphics.drawable.polygon.Polygon;
 import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
+import multigear.mginterface.graphics.opengl.font.FontDrawer;
+import multigear.mginterface.graphics.opengl.font.FontMap;
+import multigear.mginterface.graphics.opengl.font.FontWriter;
 import multigear.mginterface.graphics.opengl.texture.Texture;
-import multigear.mginterface.scene.Scene;
-import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
-import android.opengl.GLES20;
-import android.util.Log;
 
 /**
- * Polygon<br><br>
- * <b>Note:</b> This class do not support texture animation in AnimationStack animations.
- * @author user
- *
+ * WidgetLayer
+ * 
+ * @author PedroH, RaphaelB
+ * 
+ *         Property Createlier.
  */
-public class Polygon implements Drawable {
+final public class WidgetPolygonLayer extends WidgetLayer {
+	
 
+	// For Draw
+	private float mPreparedOpacity;
+	
 	// Final Private Static
 	final private static int POLYGON_MODE_NORMAL = 0;
 	final private static int POLYGON_MODE_OPTIMIZED_CIRCLE = 1;
 	final private static int POLYGON_MODE_OPTIMIZED_ELLIPSE = 2;
-	
+		
 	// Final Private Variables
 	final private float mFinalTransformation[] = new float[] { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 	final private AnimationStack mAnimationStack;
-	
+		
 	// Private Variables
 	protected Rect mViewport;
 	private Texture mTexture;
 	private Color mColor = Color.WHITE;
-	
+		
 	// Public Variables
 	protected Vector2 mScale = new Vector2(1, 1);
 	protected Vector2 mPosition = new Vector2(0, 0);
@@ -61,8 +66,9 @@ public class Polygon implements Drawable {
 	
 	/**
 	 * Constructor
+	 * @param scene
 	 */
-	public Polygon() {
+	public WidgetPolygonLayer() {	
 		mTexture = null;
 		mAnimationStack = new AnimationStack();
 		mViewport = null;
@@ -74,11 +80,11 @@ public class Polygon implements Drawable {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createRoundedSquare(final float sides, final float radius) {
+	final public static WidgetPolygonLayer createRoundedSquare(final float sides, final float radius) {
 		if(radius > (sides / 2.0f))
 			throw new IllegalArgumentException("Radius can not be greate than sides / 2.");
 		final double detail = Math.PI / 180.0f;
-		final Polygon roundedSquare = new Polygon();
+		final WidgetPolygonLayer roundedSquare = new WidgetPolygonLayer();
 		for(double i=0; i<Math.PI/2; i+=detail) {
 			final float x = (float)(Math.cos(i) * radius) + (sides - radius);
 			final float y = (float)(((Math.sin(i) * -1) + 1) * radius);
@@ -107,11 +113,11 @@ public class Polygon implements Drawable {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createRoundedRectangle(final Vector2 size, final float radius) {
+	final public static WidgetPolygonLayer createRoundedRectangle(final Vector2 size, final float radius) {
 		if(radius > (size.x / 2.0f) || radius > (size.y / 2))
 			throw new IllegalArgumentException("Radius can not be greate than size / 2.");
 		final double detail = Math.PI / 180.0f;
-		final Polygon roundedRectangle = new Polygon();
+		final WidgetPolygonLayer roundedRectangle = new WidgetPolygonLayer();
 		for(double i=0; i<Math.PI/2; i+=detail) {
 			final float x = (float)(Math.cos(i) * radius) + (size.x - radius);
 			final float y = (float)(((Math.sin(i) * -1) + 1) * radius);
@@ -140,8 +146,8 @@ public class Polygon implements Drawable {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createSquare(final float sides) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createSquare(final float sides) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		circle.addVertice(0, 0);
 		circle.addVertice(sides, 0);
 		circle.addVertice(sides, sides);
@@ -154,8 +160,8 @@ public class Polygon implements Drawable {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createRectangle(final Vector2 size) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createRectangle(final Vector2 size) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		circle.addVertice(0, 0);
 		circle.addVertice(size.x, 0);
 		circle.addVertice(size.x, size.y);
@@ -168,8 +174,8 @@ public class Polygon implements Drawable {
 	 * @param radius Radius
 	 * @return
 	 */
-	final public static Polygon createCircle(final float radius, final float detail) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createCircle(final float radius, final float detail) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		final double rad = GeneralUtils.degreeToRad(detail);
 		for(double i=0; i<Math.PI*2; i+=rad) {
 			float x = (float)(Math.cos(i) * radius) + radius;
@@ -188,8 +194,8 @@ public class Polygon implements Drawable {
 	 * @param radius Radius
 	 * @return Returns the polygon containing the vertices to a circle.
 	 */
-	final public static Polygon createCircle(final float radius) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createCircle(final float radius) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		circle.mPolygonMode = POLYGON_MODE_OPTIMIZED_CIRCLE;
 		circle.mPolygonFloatExtra = radius;
 		return circle;
@@ -202,8 +208,8 @@ public class Polygon implements Drawable {
 	 * @param detail Step of the ellipse of vertices in degree.
 	 * @return Returns the polygon containing the vertices to a circle.
 	 */
-	final public static Polygon createEllipse(final Vector2 radius, final float detail) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createEllipse(final Vector2 radius, final float detail) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		final double rad = GeneralUtils.degreeToRad(detail);
 		for(double i=0; i<Math.PI*2; i+=rad) {
 			float x = (float)(Math.cos(i) * radius.x) + radius.x;
@@ -222,8 +228,8 @@ public class Polygon implements Drawable {
 	 * @param radius Radius
 	 * @return Returns the polygon containing the vertices to a circle.
 	 */
-	final public static Polygon createEllipse(final Vector2 radius) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createEllipse(final Vector2 radius) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		circle.mPolygonMode = POLYGON_MODE_OPTIMIZED_ELLIPSE;
 		circle.mPolygonVectorExtra.set(radius);
 		return circle;
@@ -236,8 +242,8 @@ public class Polygon implements Drawable {
 	 * @param detail Step of the ellipse of vertices in degree.
 	 * @return Returns the polygon containing the vertices to a circle.
 	 */
-	final public static Polygon createNgon(final float radius, final float sides) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createNgon(final float radius, final float sides) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		final double rad = (Math.PI * 2) / sides;
 		final double align = -Math.PI / 2;
 		for(int i=0; i<sides; i++) {
@@ -255,8 +261,8 @@ public class Polygon implements Drawable {
 	 * @param detail Step of the ellipse of vertices in degree.
 	 * @return Returns the polygon containing the vertices to a circle.
 	 */
-	final public static Polygon createNgon(final Vector2 radius, final float sides) {
-		final Polygon circle = new Polygon();
+	final public static WidgetPolygonLayer createNgon(final Vector2 radius, final float sides) {
+		final WidgetPolygonLayer circle = new WidgetPolygonLayer();
 		final double rad = (Math.PI * 2) / sides;
 		final double align = -Math.PI / 2;
 		for(int i=0; i<sides; i++) {
@@ -484,15 +490,6 @@ public class Polygon implements Drawable {
 	final public void setPosition(final Vector2 position) {
 		mPosition = position.clone();
 	}
-
-	/**
-	 * Set depth
-	 * 
-	 * @param z Depth
-	 */
-	public void setZ(final int z) {
-		mZ = z;
-	}
 	
 	/**
 	 * Set Blend Func
@@ -615,15 +612,6 @@ public class Polygon implements Drawable {
 		position.sum(animationSet.getPosition());
 		return position;
 	}
-	
-	/**
-	 * Get depth
-	 * 
-	 * @return Return Depth
-	 */
-	public int getZ() {
-		return mZ;
-	}
 
 	/**
 	 * Get Blend Func
@@ -689,16 +677,21 @@ public class Polygon implements Drawable {
 		return mFixedSpace;
 	}
 	
-	/*
-	 * Prepara para desenho. Utiliza AnimationStack.
+	/**
+	 * Set Matrix Transformations for this Layer
+	 * <p>
+	 * 
+	 * @param matrixRow
+	 *            MatrixRow
+	 * @return True if need Draw
 	 */
-	@Override
-	public void draw(final Drawer drawer) {
+	final protected boolean beginDraw(final float preOpacity, final Drawer drawer) {
+		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		
 		// Get final Opacity
-		final float opacity = animationSet.getOpacity() * getOpacity();
+		mPreparedOpacity = preOpacity * animationSet.getOpacity() * mOpacity;
 		
 		// Get Infos
 		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
@@ -729,7 +722,6 @@ public class Polygon implements Drawable {
 
 		// Push Matrix
 		matrixRow.push();
-
 		
 		// Translate and Rotate Matrix with correction
 		float rad = (float) GeneralUtils.degreeToRad(rotate);
@@ -743,19 +735,28 @@ public class Polygon implements Drawable {
 		mFinalTransformation[5] = -s * six + c * siy + tY;
 		matrixRow.postConcatf(mFinalTransformation);
 		
+		return true;
+		
+	}
+	
+	/*
+	 * Atualiza e Desenha
+	 */
+	protected void endDraw(final Drawer drawer) {
+		
 		// Prepare Vertex
 		// note: TextureVertex always already in the position 0
 		mVertices.position(0);
-		
+				
 		// Set Texture
-		drawer.setOpacity(opacity);
+		drawer.setOpacity(mPreparedOpacity);
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.setColor(mColor);
 		drawer.setTexture(mTexture);
 		drawer.enableViewport(mViewport);
 		drawer.setElementVertex(mVertices);
 		drawer.setTextureVertex(mTextureVertex);
-		
+				
 		// Draw
 		switch(mPolygonMode) {
 		case POLYGON_MODE_NORMAL:
@@ -768,11 +769,14 @@ public class Polygon implements Drawable {
 			drawer.drawEllipse(mPolygonVectorExtra);
 			break;
 		}
-		
+				
 		// End Drawer
 		drawer.end();
 		
-		// pop
+		// Get Matrix Row
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
+		
+		// Pop Matrix
 		matrixRow.pop();
 	}
 }

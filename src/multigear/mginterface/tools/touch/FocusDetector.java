@@ -1,4 +1,4 @@
-package multigear.mginterface.touch;
+package multigear.mginterface.tools.touch;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,6 +36,19 @@ final public class FocusDetector {
 	
 	// Private Variables
 	private FocusDetectorListener mFocusDetectorListener;
+	
+	/**
+	 * Default Constructor
+	 */
+	public FocusDetector() {}
+	
+	/**
+	 * Constructor
+	 * @param listener Focus Detector Listener
+	 */
+	public FocusDetector(final FocusDetectorListener listener) {
+		mFocusDetectorListener = listener;
+	}
 	
 	/**
 	 * Set Focus Detector Listener

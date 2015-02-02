@@ -52,7 +52,6 @@ public class VirtualSpriteObject {
 	public VirtualSpriteObject(final Scene scene, final Sprite sprite) {
 		mSprite = sprite;
 		mRoom = scene;
-		mRoom.addVirtualSpriteObject(this);
 		mStarted = false;
 		mForce = new multigear.general.utils.Vector2(0, 0);
 		ScreenSize = mRoom.getScreenSize();
@@ -163,6 +162,7 @@ public class VirtualSpriteObject {
 	 */
 	final private void updateWorldObjects() {
 
+		/**
 		final List<VirtualSpriteObject> virtualSpriteObjects = mRoom.getVirtualSpriteObjects();
 		final multigear.physics.Shape[] shapes = new multigear.physics.Shape[virtualSpriteObjects.size()];
 		int i = 0;
@@ -176,6 +176,7 @@ public class VirtualSpriteObject {
 			mForce.div(1.4f);
 			//mWait = 5;
 		}
+		*/
 	}
 	
 	/**

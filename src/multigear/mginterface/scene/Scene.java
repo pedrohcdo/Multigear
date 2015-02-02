@@ -36,53 +36,7 @@ import android.widget.Toast;
  *         Property Createlier.
  */
 @SuppressLint({ "WrongCall", "Recycle" })
-public abstract class Scene extends multigear.mginterface.scene.Installation {
-	
-	/**
-	 * Handler for Control Procedures
-	 * 
-	 * @author PedroH, RaphaelB
-	 * 
-	 *         Property Createlier.
-	 */
-	final private class Handler {
-		
-		// Consts
-		final private static int ATTACH_COMPONENT = 1;
-		final private static int DETACH_COMPONENT = 2;
-		
-		// Final Private Variables
-		final private int mHandlerCode;
-		final private Object mHandlerObject;
-		
-		/**
-		 * Constructor
-		 * 
-		 * @param code
-		 */
-		private Handler(final int code) {
-			mHandlerCode = code;
-			mHandlerObject = null;
-		}
-		
-		/**
-		 * Constructor
-		 * 
-		 * @param code
-		 */
-		private Handler(final int code, final Object object) {
-			mHandlerCode = code;
-			mHandlerObject = object;
-		}
-		
-		/**
-		 * Call Proc
-		 */
-		final private void call() {
-			switch (mHandlerCode) {
-			}
-		}
-	}
+public class Scene extends multigear.mginterface.scene.Installation {
 	
 	// Constatns
 	final static private int ERROR_PRIVATEMETHOD_CODE = 0x5;
@@ -95,9 +49,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	final private List<UpdatableListener> mUpdatableListeners = new ArrayList<UpdatableListener>();
 	final private List<DrawableListener> mDrawableListener = new ArrayList<DrawableListener>();
 	final private List<TouchableListener> mTouchableListener = new ArrayList<TouchableListener>();
-	final private List<multigear.physics.VirtualSpriteObject> mVirtualSpriteObjects;
-	final private multigear.mginterface.scene.InstallManager mInstallManager;
-	final private List<Scene.Handler> mHandler;
+	final private InstallManager mInstallManager;
 	final private SceneDrawerState mSceneDrawerState = new SceneDrawerState();
 	
 	// Final private variables
@@ -124,22 +76,10 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 * Constructor
 	 */
 	public Scene() {
-		mHandler = new ArrayList<Scene.Handler>();
-		mVirtualSpriteObjects = new ArrayList<multigear.physics.VirtualSpriteObject>();
 		mEngine = null;
 		mFlags = 0;
 		mMotionEventList = new ConcurrentLinkedQueue<MotionEvent>();
 		mInstallManager = new multigear.mginterface.scene.InstallManager(this);
-	}
-	
-	/**
-	 * Add new Handle
-	 * 
-	 * @param code
-	 * @param object
-	 */
-	final private void addHandle(final int code, final Object object) {
-		mHandler.add(new Scene.Handler(code, object));
 	}
 	
 	/**
@@ -610,10 +550,6 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	@Override
 	final public void update() {
 		mInstallManager.update();
-		// Call Handler
-		for (final Scene.Handler handle : mHandler)
-			handle.call();
-		mHandler.clear();
 		// Update Listeners
 		for(int i=0; i<mUpdatableListeners.size(); i++)
 			mUpdatableListeners.get(i).onUpdate(this);
@@ -713,7 +649,7 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	/*
 	 * Return true if uninstalling
 	 */
-	final private boolean hasUninstalling() {
+	final public boolean hasUninstalling() {
 		final Scene father = getFatherRoom();
 		if (father != null) {
 			final multigear.mginterface.scene.InstallManager installSupport = father.getInstallManager();
@@ -837,24 +773,6 @@ public abstract class Scene extends multigear.mginterface.scene.Installation {
 	 */
 	final public void removeDrawableListener(final DrawableListener drawableListener) {
 		mDrawableListener.remove(drawableListener);
-	}
-	
-	
-	/**
-	 * Add Virtual Sprite Object. obs(This method is automatically called by
-	 * VirtualSpriteObject).
-	 */
-	final public void addVirtualSpriteObject(final multigear.physics.VirtualSpriteObject virtualSpriteObject) {
-		mVirtualSpriteObjects.add(virtualSpriteObject);
-	}
-	
-	/**
-	 * Return all registered Virtual Sprite Objects.
-	 * 
-	 * @return Pack of registered Virtual Sprite Objects.
-	 */
-	final public List<multigear.physics.VirtualSpriteObject> getVirtualSpriteObjects() {
-		return mVirtualSpriteObjects;
 	}
 	
 	/*

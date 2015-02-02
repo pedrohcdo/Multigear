@@ -181,7 +181,7 @@ public class Sprite implements Drawable {
 	 *            [in] Opacity
 	 */
 	final public void setOpacity(final float opacity) {
-		mOpacity = opacity;
+		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
 	}
 
 	/**
@@ -202,6 +202,13 @@ public class Sprite implements Drawable {
 	 */
 	final public void setAngle(final float angle) {
 		mAngle = angle;
+	}
+	
+	/**
+	 * Get Texture
+	 */
+	final public Texture getTexture() {
+		return mTexture;
 	}
 	
 	/**

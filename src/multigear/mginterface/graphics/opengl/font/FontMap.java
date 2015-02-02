@@ -294,6 +294,7 @@ final public class FontMap extends CacheComponent {
 	protected Style mStyle = Style.Normal;
 	protected CharMap mCharMap;
 	protected FontAttributes mAttributes = new FontAttributes(new Vector2(0, 0), true, false);
+	protected float mFontSize;
 	
 	/**
 	 * Metrics
@@ -431,8 +432,9 @@ final public class FontMap extends CacheComponent {
 		// Get Asset Manager
 		AssetManager assetManager = scene.getActivity().getAssets();
 		
-		// Set CharMap
+		// Set CharMap and Font Size
 		fontMap.mCharMap = map;
+		fontMap.mFontSize = fontSize;
 		
 		// Create All Layers
 		for(final Style styleLayer : Style.values()) {
@@ -569,6 +571,14 @@ final public class FontMap extends CacheComponent {
 	}
 	
 	/**
+	 * Get Font Size
+	 * @return Font Size
+	 */
+	final public float getFontSize() {
+		return mFontSize;
+	}
+	
+	/**
 	 * Return Text Size
 	 * 
 	 * @return
@@ -581,6 +591,9 @@ final public class FontMap extends CacheComponent {
 		final Layer layer = getActiveLayer();
 		// Get Padd distance
 		Vector2 padd = mAttributes.getPadd();
+		// If empty
+		if(text.length() == 0)
+			return new Vector2(0, layer.mMaxHeight + padd.y * 2);
 		// Measure text
 		if (mAttributes.isLinear()) {
 			final float textWidth = layer.mMaxWidth * size + padd.x * (size + 1);
@@ -622,6 +635,9 @@ final public class FontMap extends CacheComponent {
 		final Layer layer = getActiveLayer();
 		// Get padd distance		
 		Vector2 padd = mAttributes.getPadd();
+		// If empty
+		if(text.length == 0)
+			return new Vector2(0, layer.mMaxHeight + padd.y * 2);
 		// Measure text
 		if (mAttributes.isLinear()) {
 			final float textWidth = layer.mMaxWidth * size + padd.x * (size + 1);

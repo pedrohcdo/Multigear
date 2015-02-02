@@ -28,7 +28,7 @@ import android.view.MotionEvent;
  * 
  *         Property Createlier.
  */
-public class BaseWidget implements Drawable, Touchable {
+public class Widget implements Drawable, Touchable {
 	
 	/**
 	 * Widget Skin
@@ -163,7 +163,7 @@ public class BaseWidget implements Drawable, Touchable {
 	/**
 	 * Constructor
 	 */
-	public BaseWidget() {
+	public Widget() {
 		mState = 0;
 		mTouchHandledImpl = false;
 		mLayers = new ArrayList<WidgetLayer>();
@@ -334,6 +334,14 @@ public class BaseWidget implements Drawable, Touchable {
 	}
 	
 	/**
+	 * Set Opacity
+	 * @param opacity Opacity
+	 */
+	public void setOpacity(final float opacity) {
+		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
+	}
+	
+	/**
 	 * Set Z
 	 * 
 	 * @param z
@@ -477,7 +485,7 @@ public class BaseWidget implements Drawable, Touchable {
 	final public boolean getFixedSpace() {
 		return mFixedSpace;
 	}
-
+	
 	/**
 	 * Get Id
 	 */
@@ -531,25 +539,16 @@ public class BaseWidget implements Drawable, Touchable {
 	 * @return Return true if Sprite pressed state.
 	 */
 	final public boolean isPressed() {
-		return mTouchHandled && mTouchable;
+		return mTouchHandledImpl && hasState(Widget.STATE_PRESSED);
 	}
 	
 	/**
 	 * Add a new Sprite Layer. Similar to Sprite.
 	 */
-	final protected WidgetSpriteLayer addSpriteLayer() {
-		WidgetSpriteLayer layer = new WidgetSpriteLayer();
+	final public void addLayer(final WidgetLayer layer) {
+		if(mLayers.contains(layer))
+			throw new RuntimeException("This layer has already been added.");
 		mLayers.add(layer);
-		return layer;
-	}
-	
-	/**
-	 * Add a new Trxt Layer. Similar to Sprite.
-	 */
-	final protected WidgetTextLayer addTextLayer() {
-		WidgetTextLayer layer = new WidgetTextLayer();
-		mLayers.add(layer);
-		return layer;
 	}
 	
 	/**
@@ -557,7 +556,7 @@ public class BaseWidget implements Drawable, Touchable {
 	 * 
 	 * @param layer
 	 */
-	final protected void removeLayer(multigear.mginterface.graphics.drawable.widget.WidgetLayer layer) {
+	final public void removeLayer(multigear.mginterface.graphics.drawable.widget.WidgetLayer layer) {
 		mLayers.remove(layer);
 	}
 	

@@ -1,7 +1,7 @@
 package multigear.mginterface.graphics.drawable.gui.widgets;
 
 import multigear.general.utils.Vector2;
-import multigear.mginterface.graphics.drawable.widget.BaseWidget;
+import multigear.mginterface.graphics.drawable.widget.Widget;
 import multigear.mginterface.graphics.drawable.widget.WidgetSpriteLayer;
 
 /**
@@ -11,7 +11,7 @@ import multigear.mginterface.graphics.drawable.widget.WidgetSpriteLayer;
  * 
  *         Property Createlier.
  */
-public class Button extends BaseWidget {
+public class Button extends Widget {
 	
 	/**
 	 * Animation effects.
@@ -44,7 +44,8 @@ public class Button extends BaseWidget {
 	public Button() {
 		Animation.Press = null;
 		Animation.Release = null;
-		mLayer = addSpriteLayer();
+		mLayer = new WidgetSpriteLayer();
+		addLayer(mLayer);
 	}
 	
 	/*

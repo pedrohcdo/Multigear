@@ -1,21 +1,20 @@
-package multigear.mginterface.touch;
+package multigear.mginterface.tools.touch;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.MotionEvent;
 
 /**
- * Drag Detector
+ * Scale Detector
  * @author user
  *
  */
-final public class DragDetector {
+final public class ScaleDetector {
 
 	/**
 	 * Pointer
@@ -34,22 +33,35 @@ final public class DragDetector {
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	
 	// Private Variables
-	private DragDetectorListener mDragDetectorListener;
+	private ScaleDetectorListener mScaleDetectorListener;
 	
 	/**
-	 * Set Drag Detector Listener
-	 * @param listener Drag Detector Listener
+	 * Default Constructor
 	 */
-	final public void setListener(final DragDetectorListener listener) {
-		mDragDetectorListener = listener;
+	public ScaleDetector() {}
+	
+	/**
+	 * Constructor
+	 * @param listener Scale Detector Listener
+	 */
+	public ScaleDetector(final ScaleDetectorListener listener) {
+		mScaleDetectorListener = listener;
 	}
 	
 	/**
-	 * Get Drag Detector Listener
+	 * Set Scale Detector Listener
+	 * @param listener Scale Detector Listener
+	 */
+	final public void setListener(final ScaleDetectorListener listener) {
+		mScaleDetectorListener = listener;
+	}
+	
+	/**
+	 * Get Scale Detector Listener
 	 * @return
 	 */
-	final public DragDetectorListener getDragDetectorListener() {
-		return mDragDetectorListener;
+	final public ScaleDetectorListener getScaleDetectorListener() {
+		return mScaleDetectorListener;
 	}
 	
 	/**
@@ -116,25 +128,18 @@ final public class DragDetector {
 	 * Update Move
 	 */
 	final private void updateMove() {
-		if(mPointers.size() == 1) {
-			final Pointer a = mPointers.get(0);
-			final Vector2 aLastPosition = a.lastPosition;
-			final Vector2 aFramePosition = a.framePosition;
-			final Vector2 aDraged = Vector2.sub(aFramePosition, aLastPosition);
-			if(mDragDetectorListener != null && aDraged.length() != 0)
-				mDragDetectorListener.onDrag(aDraged);
-		} else if(mPointers.size() >= 2) {
+		if(mPointers.size() >= 2) {
 			final Pointer a = mPointers.get(0);
 			final Pointer b = mPointers.get(1);
 			final Vector2 aLastPosition = a.lastPosition;
 			final Vector2 bLastPosition = b.lastPosition;
 			final Vector2 aFramePosition = a.framePosition;
 			final Vector2 bFramePosition = b.framePosition;
-			final Vector2 aDraged = Vector2.sub(aFramePosition, aLastPosition);
-			final Vector2 bDraged = Vector2.sub(bFramePosition, bLastPosition);
-			final Vector2 finalDraged = Vector2.div(Vector2.sum(aDraged, bDraged), 2);
-			if(mDragDetectorListener != null && finalDraged.length() != 0)
-				mDragDetectorListener.onDrag(finalDraged);
+			final float lastDistance = bLastPosition.distance(aLastPosition);
+			final float frameDistance = bFramePosition.distance(aFramePosition);
+			final float scaledPixles = frameDistance - lastDistance;
+			if(mScaleDetectorListener != null && scaledPixles != 0)
+				mScaleDetectorListener.onScale(scaledPixles);
 		}
 		for(final Pointer pointer : mPointers)
 			pointer.lastPosition = pointer.framePosition;

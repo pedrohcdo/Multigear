@@ -132,6 +132,15 @@ final public class Vector2 implements Cloneable
 	}
 	
 	/**
+	 * @brief Escala o vetor
+	 * @param [in] Fatores do eixo x e y
+	 */
+	final public void scale(Vector2 factor) {
+		x *= factor.x;
+		y *= factor.y;
+	}
+	
+	/**
 	 * @brief Realiza a escala de um vetor
 	 * @param [in] vetor da esquerda
 	 * @param [in] factor fator da escala dos dois eixos
@@ -347,6 +356,15 @@ final public class Vector2 implements Cloneable
 		final float newX = (float)(Math.cos(newAng) * length);
 		final float newY = (float)(Math.sin(newAng) * length);
 		return new Vector2(newX, newY);
+	}
+	
+	/**
+	 * Return Aspect Ratio x/y.<br>
+	 * Same as obj.x / obj.y.
+	 * @return
+	 */
+	final public float aspectRatio() {
+		return x / y;
 	}
 	
 	/**

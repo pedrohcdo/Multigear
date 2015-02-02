@@ -28,7 +28,7 @@ final public class ParticlesGroup implements Drawable {
 	private ParticlesHelper mParticlesHelper;
 	private float mHelperFrequency = 100;
 	private int mParticlesLimit;
-	private long mLastTime;
+	private long mLastTime = GlobalClock.currentTimeMillis();
 	private List<Particle> mParticles = new ArrayList<Particle>();
 	private Rect mViewport;
 	private Vector2 mPosition = new Vector2(0, 0);
@@ -130,6 +130,15 @@ final public class ParticlesGroup implements Drawable {
 	 */
 	final public void setId(final int id) {
 		mId = id;
+	}
+	
+	/**
+	 * Set Opacity
+	 * 
+	 * @param opacity Opacity
+	 */
+	final public void setOpacity(final float opacity) {
+		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
 	}
 	
 	/**
@@ -245,6 +254,15 @@ final public class ParticlesGroup implements Drawable {
 	@Override
 	public int getId() {
 		return mId;
+	}
+	
+	/**
+	 * Get Opacity
+	 * 
+	 * @return Opacity
+	 */
+	final public float getOpacity() {
+		return mOpacity;
 	}
 	
 	/**

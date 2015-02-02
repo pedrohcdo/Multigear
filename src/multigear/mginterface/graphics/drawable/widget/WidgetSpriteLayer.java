@@ -35,7 +35,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	/**
 	 * Constructor
 	 */
-	protected WidgetSpriteLayer() {
+	public WidgetSpriteLayer() {
 		mAnimationStack = new AnimationStack();
 	}
 	

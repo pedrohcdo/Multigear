@@ -85,7 +85,7 @@ public class TextSprite implements Drawable {
 	 * @param opacity Opacity
 	 */
 	public void setOpacity(float opacity) {
-		mOpacity = opacity;
+		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
 	}
 	
 	/**
@@ -368,10 +368,6 @@ public class TextSprite implements Drawable {
 	 */
 	@Override
 	final public void draw(final Drawer drawer) {
-		
-		//
-		if(mText.length() == 0)
-			return;
 		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();

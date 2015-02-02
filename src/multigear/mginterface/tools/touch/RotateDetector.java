@@ -1,20 +1,21 @@
-package multigear.mginterface.touch;
+package multigear.mginterface.tools.touch;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.MotionEvent;
 
 /**
- * Scale Detector
+ * Rotate Detector
  * @author user
  *
  */
-final public class ScaleDetector {
+final public class RotateDetector {
 
 	/**
 	 * Pointer
@@ -33,22 +34,35 @@ final public class ScaleDetector {
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	
 	// Private Variables
-	private ScaleDetectorListener mScaleDetectorListener;
+	private RotateDetectorListener mRotateDetectorListener;
 	
 	/**
-	 * Set Scale Detector Listener
-	 * @param listener Scale Detector Listener
+	 * Default Constructor
 	 */
-	final public void setListener(final ScaleDetectorListener listener) {
-		mScaleDetectorListener = listener;
+	public RotateDetector() {}
+	
+	/**
+	 * Constructor
+	 * @param listener Rotate Detector Listener
+	 */
+	public RotateDetector(final RotateDetectorListener listener) {
+		mRotateDetectorListener = listener;
 	}
 	
 	/**
-	 * Get Scale Detector Listener
+	 * Set Rotate Detector Listener
+	 * @param listener Rotate Detector Listener
+	 */
+	final public void setListener(final RotateDetectorListener listener) {
+		mRotateDetectorListener = listener;
+	}
+	
+	/**
+	 * Get Rotate Detector Listener
 	 * @return
 	 */
-	final public ScaleDetectorListener getScaleDetectorListener() {
-		return mScaleDetectorListener;
+	final public RotateDetectorListener getRotateDetectorListener() {
+		return mRotateDetectorListener;
 	}
 	
 	/**
@@ -122,11 +136,14 @@ final public class ScaleDetector {
 			final Vector2 bLastPosition = b.lastPosition;
 			final Vector2 aFramePosition = a.framePosition;
 			final Vector2 bFramePosition = b.framePosition;
-			final float lastDistance = bLastPosition.distance(aLastPosition);
-			final float frameDistance = bFramePosition.distance(aFramePosition);
-			final float scaledPixles = frameDistance - lastDistance;
-			if(mScaleDetectorListener != null && scaledPixles != 0)
-				mScaleDetectorListener.onScale(scaledPixles);
+			
+			final float lastAngle = bLastPosition.angle(aLastPosition);
+			final float frameAngle = bFramePosition.angle(aFramePosition);
+			
+			
+			final float rotated = frameAngle - lastAngle;
+			if(mRotateDetectorListener != null && rotated != 0)
+				mRotateDetectorListener.onRotate(rotated);
 		}
 		for(final Pointer pointer : mPointers)
 			pointer.lastPosition = pointer.framePosition;
