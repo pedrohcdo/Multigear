@@ -1079,7 +1079,9 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				mScanFilter = filter;
 				mScanFilterLock = new Object();
 			}
+			mWifiManager.disconnect();
 			mWifiManager.startScan();
+			mWifiManager.reassociate();
 		}
 	}
 	

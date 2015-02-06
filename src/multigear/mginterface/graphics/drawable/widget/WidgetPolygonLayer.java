@@ -274,54 +274,6 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	}
 	
 	/**
-	 * Get Vertices Count
-	 * @return
-	 */
-	final public int getVerticesCount() {
-		return mVerticesCount;
-	}
-	
-	/**
-	 * Get Vertices
-	 * @param start First Vertice
-	 * @param count Vertices count
-	 * @param out Out of Vertices with null values or instances
-	 * @param offset Offset of array
-	 */
-	final public void getVertices(final int start, final int count, final Vector2[] out, final int offset) {
-		if(start < 0 || (start + count) > mVerticesCount)
-			throw new IndexOutOfBoundsException();
-		if(offset < 0 || (offset + count) > out.length)
-			throw new ArrayIndexOutOfBoundsException();
-		mVertices.position(offset * 2);
-		for(int i=start; i<(start+count); i++) {
-			float x = mVertices.get();
-			float y = mVertices.get();
-			if(out[i] == null)
-				out[i] = new Vector2(x, y);
-			else
-				out[i].set(x, y);
-		}
-		mVertices.position(mVerticesCount * 2);
-	}
-	
-	/**
-	 * Remove Vertice
-	 * @param index
-	 */
-	final public void removeVertices(final int start, final int count) {
-		if(start < 0 || (start + count) > mVerticesCount)
-			throw new IndexOutOfBoundsException();
-		mVertices.position(start * 2);
-		for(int i=(start+count); i<mVerticesCount; i++) {
-			mVertices.put(mVertices.get(i * 2));
-			mVertices.put(mVertices.get(i * 2 + 1));
-		}
-		mVerticesCount -= count;
-		mapTexture();
-	}
-	
-	/**
 	 * Add Vertice
 	 * 
 	 * @param vector
@@ -354,6 +306,111 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 		mapTexture();
 	}
 	
+	/**
+	 * Add Vertices of polygon
+	 * @param polygon
+	 */
+	final public void addVertices(final WidgetPolygonLayer polygon) {
+		mVertices.position(mVerticesCount * 2);
+		mTextureVertex.position(mVerticesCount * 2);
+		
+		final int verticesCount = polygon.mVerticesCount * 2;
+		
+		if((mVertices.position() + verticesCount) > mVertices.limit()) {
+			FloatBuffer last = mVertices;
+			FloatBuffer lastTextureVertex = mTextureVertex;
+			
+			last.position(0);
+			lastTextureVertex.position(0);
+			
+			// 10 is an extra size
+			final int newLimit = (int)((mVertices.limit() + verticesCount) * 1.2f + 10);
+			mVertices = GeneralUtils.createFloatBuffer(newLimit);
+			mTextureVertex = GeneralUtils.createFloatBuffer(newLimit);
+			
+			for(int i=0; i<mVerticesCount; i++) {
+				mVertices.put(last.get());
+				mVertices.put(last.get());
+				mTextureVertex.put(lastTextureVertex.get());
+				mTextureVertex.put(lastTextureVertex.get());
+			}
+		}
+		polygon.mVertices.position(0);
+		for(int i=0; i<polygon.mVerticesCount; i++) {
+			mVertices.put(polygon.mVertices.get());
+			mVertices.put(polygon.mVertices.get());
+		}
+		mVerticesCount += polygon.mVerticesCount;
+		mapTexture();
+	}
+
+	
+	/**
+	 * Get Vertices Count
+	 * @return
+	 */
+	final public int getVerticesCount() {
+		return mVerticesCount;
+	}
+	
+	/**
+	 * Get Vertices
+	 * @param start First Vertice
+	 * @param count Vertices count
+	 * @param out Out of Vertices with null values or instances
+	 * @param offset Offset of array
+	 */
+	final public void getVertices(final int start, final int count, final Vector2[] out, final int offset) {
+		if(start < 0 || (start + count) > mVerticesCount)
+			throw new IndexOutOfBoundsException();
+		if(offset < 0 || (offset + count) > out.length)
+			throw new ArrayIndexOutOfBoundsException();
+		mVertices.position(offset * 2);
+		for(int i=start; i<(start+count); i++) {
+			float x = mVertices.get();
+			float y = mVertices.get();
+			if(out[i] == null)
+				out[i] = new Vector2(x, y);
+			else
+				out[i].set(x, y);
+		}
+		mVertices.position(mVerticesCount * 2);
+	}
+	
+	/**
+	 * Get Vertice
+	 * 
+	 */
+	final public Vector2 getVertice(final int index) {
+		Vector2[] out = new Vector2[1];
+		getVertices(index, 1, out, 0);
+		return out[0];
+	}
+	
+	/**
+	 * Remove Vertice
+	 * @param index
+	 */
+	final public void removeVertices(final int start, final int count) {
+		if(start < 0 || (start + count) > mVerticesCount)
+			throw new IndexOutOfBoundsException();
+		mVertices.position(start * 2);
+		for(int i=(start+count); i<mVerticesCount; i++) {
+			mVertices.put(mVertices.get(i * 2));
+			mVertices.put(mVertices.get(i * 2 + 1));
+		}
+		mVerticesCount -= count;
+		mapTexture();
+	}
+	
+	/**
+	 * Remove All Vertices
+	 */
+	final public void clearVertices() {
+		mVertices.position(0);
+		mVerticesCount = 0;
+	}
+		
 	/**
 	 * Add Vertice
 	 * @param x Position X

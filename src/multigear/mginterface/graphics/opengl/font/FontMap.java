@@ -240,7 +240,7 @@ final public class FontMap extends CacheComponent {
 		
 		// Private Variables
 		protected FontMapMetrics mFontMetrics;
-		private Texture mTextureFont;
+		protected Texture mTextureFont;
 		protected float[] mCharactersWidths;
 		protected Vector2[] mCharactersBounds;
 		protected int mMaxWidth;
@@ -248,6 +248,7 @@ final public class FontMap extends CacheComponent {
 		protected int mMaxBoundedWidth;
 		protected int mMaxBoundedHeight;
 		protected float mScale;
+		protected int mId;
 	}
 	
 	/**
@@ -436,6 +437,9 @@ final public class FontMap extends CacheComponent {
 		fontMap.mCharMap = map;
 		fontMap.mFontSize = fontSize;
 		
+		// Id counter
+		int id = 0;
+		
 		// Create All Layers
 		for(final Style styleLayer : Style.values()) {
 			
@@ -445,6 +449,7 @@ final public class FontMap extends CacheComponent {
 			
 			// Create Layer
 			Layer layer = new Layer();
+			layer.mId = id++;
 			
 			// get Compatibility Font Size
 			final float compatibilityFontSize = Math.min(fontSize, getMaxFontSizeSupport(typefaceFamily, styleLayer, map));
@@ -768,10 +773,24 @@ final public class FontMap extends CacheComponent {
 	 * 
 	 * @return
 	 */
-	final protected Texture getTexture() {
+	final public Texture getTexture() {
 		return getActiveLayer().mTextureFont;
 	}
 
+	/**
+	 * Get Textures
+	 * 
+	 * @return
+	 */
+	final public Texture[] getTextures() {
+		Texture[] textures = new Texture[mLayers.length];
+		for(int i=0; i<mLayers.length; i++) {
+			textures[i] = mLayers[i].mTextureFont;
+		}
+		return textures;
+	}
+
+	
 	/**
 	 * Get Font Attributes
 	 * 

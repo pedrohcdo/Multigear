@@ -3,9 +3,9 @@ package multigear.general.utils;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import multigear.mginterface.engine.Multigear;
-
 import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.graphics.Point;
@@ -478,6 +478,18 @@ final public class GeneralUtils {
 	}
 	
 	/**
+	 * Create IntBuffer, and set position 0
+	 * <p>
+	 * @param bufferLenght
+	 * @return
+	 */
+	final static public IntBuffer createIntBuffer(final int bufferLength) {
+		ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferLength* 4);
+		byteBuffer.order(ByteOrder.nativeOrder());
+		return byteBuffer.asIntBuffer();
+	}
+	
+	/**
 	 * Create FloatBuffer from float values, and set position 0
 	 * <p>
 	 * @param bufferLenght
@@ -487,6 +499,21 @@ final public class GeneralUtils {
 		ByteBuffer byteBuffer = ByteBuffer.allocateDirect(values.length * 4);
 		byteBuffer.order(ByteOrder.nativeOrder());
 		FloatBuffer buffer = byteBuffer.asFloatBuffer();
+		buffer.put(values);
+		buffer.position(0);
+		return buffer;
+	}
+	
+	/**
+	 * Create IntBuffer from int values, and set position 0
+	 * <p>
+	 * @param bufferLenght
+	 * @return
+	 */
+	final static public IntBuffer createIntBuffer(final int[] values) {
+		ByteBuffer byteBuffer = ByteBuffer.allocateDirect(values.length * 4);
+		byteBuffer.order(ByteOrder.nativeOrder());
+		IntBuffer buffer = byteBuffer.asIntBuffer();
 		buffer.put(values);
 		buffer.position(0);
 		return buffer;

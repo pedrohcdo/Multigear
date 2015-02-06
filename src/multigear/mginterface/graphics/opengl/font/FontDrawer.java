@@ -7,6 +7,7 @@ import multigear.mginterface.graphics.opengl.drawer.TextureContainer.BltGroup;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 import android.graphics.RectF;
 import android.opengl.GLES20;
+import android.util.Log;
 
 final public class FontDrawer {
 	

@@ -25,6 +25,7 @@ public class Renderer extends BaseRenderer {
 	final public static int UNIFORM_COLOR_RENDERER = 4;
 	final public static int OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER = 5;
 	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = 6;
+	final public static int LETTER_RENDERER = 7;
 	
 	// Final private Variables
 	final private multigear.mginterface.engine.Configuration.OptimizedKey mOptimizedKey;

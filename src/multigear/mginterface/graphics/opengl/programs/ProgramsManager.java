@@ -5,6 +5,7 @@ import java.util.List;
 
 import multigear.general.utils.Vector2;
 import android.opengl.GLES20;
+import android.opengl.GLU;
 import android.util.Log;
 
 /**
@@ -24,6 +25,7 @@ final public class ProgramsManager {
 	final public static int UNIFORM_COLOR_RENDERER = 4;
 	final public static int OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER = 5;
 	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = 6;
+	final public static int LETTER_RENDERER = 7;
 	
 	// Final Private Variables
 	final private List<BaseProgram> mInstalledPrograms = new ArrayList<BaseProgram>();
@@ -80,6 +82,7 @@ final public class ProgramsManager {
 		installProgram(UniformColorRenderer.class, screenSize);
 		installProgram(OptimizedEllipseUniformColorRenderer.class, screenSize);
 		installProgram(OptimizedEllipseTexturedRenderer.class, screenSize);
+		installProgram(LetterRenderer.class, screenSize);
 	}
 	
 	/**

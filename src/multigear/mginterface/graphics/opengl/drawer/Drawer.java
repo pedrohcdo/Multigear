@@ -4,13 +4,16 @@ import java.nio.FloatBuffer;
 
 import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
-import multigear.general.utils.GlobalFloatBuffer;
 import multigear.general.utils.Vector2;
+import multigear.general.utils.buffers.GlobalFloatBuffer;
 import multigear.mginterface.graphics.opengl.Renderer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWrapper;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
+import multigear.mginterface.graphics.opengl.font.Letter;
+import multigear.mginterface.graphics.opengl.font.LetterWrapper;
 import multigear.mginterface.graphics.opengl.programs.BaseProgram;
+import multigear.mginterface.graphics.opengl.programs.LetterRenderer;
 import multigear.mginterface.graphics.opengl.programs.OptimizedEllipseTexturedRenderer;
 import multigear.mginterface.graphics.opengl.programs.OptimizedEllipseUniformColorRenderer;
 import multigear.mginterface.graphics.opengl.programs.ParticlesTextureRenderer;
@@ -523,6 +526,29 @@ final public class Drawer {
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 		// Process Writer
 		FontWrapper.processWriter(fontMap, text, mTextureContainer);
+	}
+	
+	/**
+	 * Draw Letter<br>
+	 * Draw the contents of the letter. 
+	 * This method is highly recommended for optimizations.
+	 * 
+	 * @param letter Letter
+	 */
+	public void drawLetter(final Letter letter) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// 
+		Texture[] textures = letter.getFontMap().getTextures();
+		for(int i=0; i<textures.length; i++) {
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[i].getHandle());
+		}
+		
+		// Process Drawer
+		LetterRenderer renderer = (LetterRenderer)begin(Renderer.LETTER_RENDERER, Color.WHITE);
+		LetterWrapper.processDrawer(letter, renderer);
 	}
 	
 	/**

@@ -4,6 +4,7 @@ import java.nio.FloatBuffer;
 
 import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
+import multigear.general.utils.buffers.GlobalFloatBuffer;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
@@ -28,10 +29,11 @@ final public class StretchTextureRenderer extends BaseProgram {
 	final private float[] mOrthoMatrix = new float[16];
 	final private float[] mProjectionMatrix = new float[16];
 	final private float[] mIdentityMatrix = new float[] { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
-	final private FloatBuffer mElementsBuffer = GeneralUtils.createFloatBuffer(10000);
-	final private FloatBuffer mTextureBuffer = GeneralUtils.createFloatBuffer(10000);
 	final private FloatBuffer mDefaultElementsBuffer = GeneralUtils.createFloatBuffer(8);
 	final private FloatBuffer mDefaultTextureBuffer = GeneralUtils.createFloatBuffer(8);
+	
+	private FloatBuffer mElementsBuffer;// = GeneralUtils.createFloatBuffer(10000);
+	private FloatBuffer mTextureBuffer;// = GeneralUtils.createFloatBuffer(10000);
 	
 	// Set Buffers
 	{
@@ -104,12 +106,15 @@ final public class StretchTextureRenderer extends BaseProgram {
 	 * @param textureBuffer
 	 */
 	final public void setBuffers(final float[] elementsBuffer, final float[] textureBuffer) {
-		// Set Buffers
-		GeneralUtils.putFloatBuffer(mElementsBuffer, elementsBuffer);
-		GeneralUtils.putFloatBuffer(mTextureBuffer, textureBuffer);
+		// Obtain Buffers
+		mElementsBuffer = GlobalFloatBuffer.obtain(elementsBuffer);
+		mTextureBuffer = GlobalFloatBuffer.obtain(textureBuffer);
 		// Set Attributes
 		GLES20.glVertexAttribPointer(mElementVerticesHandle, 2, GLES20.GL_FLOAT, false, 0, mElementsBuffer);
 		GLES20.glVertexAttribPointer(mTextureVerticesHandle, 2, GLES20.GL_FLOAT, false, 0, mTextureBuffer);
+		// Release Buffers
+		GlobalFloatBuffer.release(mElementsBuffer);
+		GlobalFloatBuffer.release(mTextureBuffer);
 	}
 	
 	/**

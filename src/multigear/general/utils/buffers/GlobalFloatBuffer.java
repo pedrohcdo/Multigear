@@ -1,8 +1,11 @@
-package multigear.general.utils;
+package multigear.general.utils.buffers;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
+import multigear.general.utils.GeneralUtils;
+import multigear.general.utils.Vector2;
 
 /**
  * Global FloatBuffer.<br><br>
@@ -71,16 +74,17 @@ final public class GlobalFloatBuffer {
 	}
 	
 	/**
-	 * Obtain FloatBuffer with FloatBuffer and set position 0, 
-	 * the limit is greater than or equal <b>buffer.position()</b>
+	 * Obtain FloatBuffer with all the remaining floats of 
+	 * the src float buffer to this buffer's current position.
+	 * The position of the src is not changed.
 	 * 
 	 * @return Global FloatBuffer
 	 */
 	final public static FloatBuffer obtain(final FloatBuffer buffer) {
-		final FloatBuffer newBuffer = obtain(buffer.position());
-		for(int i=0; i<buffer.position(); i++) {
-			newBuffer.put(buffer.get(i));
-		}
+		final FloatBuffer newBuffer = obtain(buffer.remaining());
+		final int lastPosition = buffer.position();
+		newBuffer.put(buffer);
+		buffer.position(lastPosition);
 		newBuffer.position(0);
 		return newBuffer;
 	}
@@ -93,9 +97,7 @@ final public class GlobalFloatBuffer {
 	 */
 	final public static FloatBuffer obtain(final float[] values) {
 		final FloatBuffer buffer = obtain(values.length);
-		for(final float value : values) {
-			buffer.put(value);
-		}
+		buffer.put(values);
 		buffer.position(0);
 		return buffer;
 	}
@@ -120,12 +122,8 @@ final public class GlobalFloatBuffer {
 	 * @param length Length of item buffer
 	 */
 	final private static void realloc(final Item item, final int length) {
-		if(length > item.mBuffer.limit()) {
-			final FloatBuffer buffer = item.mBuffer;
-			item.mBuffer = GeneralUtils.createFloatBuffer((int)(length * 0.1f));
-			buffer.position(0);
-			item.mBuffer.put(buffer);
-		}
+		if(length > item.mBuffer.limit())
+			item.mBuffer = GeneralUtils.createFloatBuffer((int)(length * 1.1f));
 		item.mBuffer.position(0);
 	}
 }
