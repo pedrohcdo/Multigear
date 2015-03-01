@@ -3,28 +3,33 @@ package multigear.mginterface.scene.components;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.scene.components.receivers.Touchable;
 import multigear.mginterface.scene.listeners.BaseListener;
+import multigear.mginterface.scene.listeners.ClickListener;
+import multigear.mginterface.scene.listeners.SimpleListener;
+import multigear.mginterface.scene.listeners.TouchListener;
+import android.graphics.RectF;
+import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
 
 /**
  * Touchable Area
  * 
  * @author user
- *
+ * 
  */
 public class TouchableArea implements Touchable {
-	
+
 	// Private Variables
 	private BaseListener mListener;
 	private boolean mTouchHandled;
+	private int mTouchHandledId;
 	private Vector2 mHandledPosition;
-	
+
 	// Public Variables
 	protected int mZ = 0;
 	protected int mId = 0;
-	final protected Vector2 mPosition = new Vector2(0, 0);
-	final protected Vector2 mSize = new Vector2(32, 32);
+	final protected RectF mRect = new RectF(0, 0, 0, 0);
 	protected boolean mTouchable = true;
-	
+
 	/**
 	 * Constructor
 	 */
@@ -33,15 +38,14 @@ public class TouchableArea implements Touchable {
 		mTouchHandled = false;
 		mHandledPosition = new Vector2(0, 0);
 	}
-	
+
 	/**
 	 * Set a listener. Listener used for send Touch Events.
 	 * 
 	 * @param listener
 	 *            Used Listener.
 	 */
-	final public void setListener(
-			final multigear.mginterface.scene.listeners.BaseListener listener) {
+	final public void setListener(final BaseListener listener) {
 		mListener = listener;
 	}
 
@@ -53,29 +57,21 @@ public class TouchableArea implements Touchable {
 	}
 
 	/**
-	 * Set Sprite Position
-	 * 
-	 * @param position
-	 *            {@link Vector2} Position
-	 */
-	final public void setPosition(final Vector2 position) {
-		mPosition.set(position);
-	}
-
-	/**
-	 * Set draw dest texture size.
+	 * Set Area
 	 * 
 	 * @param size
 	 *            Draw texture dest Size
 	 */
-	final public void setSize(final Vector2 size) {
-		mSize.set(size);
+	final public void setArea(final float left, final float top,
+			final float right, final float bottom) {
+		mRect.set(left, top, right, bottom);
 	}
 
 	/**
 	 * Set depth
 	 * 
-	 * @param z Depth
+	 * @param z
+	 *            Depth
 	 */
 	public void setZ(final int z) {
 		mZ = z;
@@ -84,12 +80,13 @@ public class TouchableArea implements Touchable {
 	/**
 	 * Set identifier
 	 * 
-	 * @param z Depth
+	 * @param z
+	 *            Depth
 	 */
 	public void setId(final int id) {
 		mId = id;
 	}
-	
+
 	/**
 	 * Set Touchable.
 	 * 
@@ -99,26 +96,16 @@ public class TouchableArea implements Touchable {
 	final public void setTouchable(final boolean touchable) {
 		mTouchable = touchable;
 	}
-	
+
 	/**
-	 * Return Position
+	 * Return RectF Area
 	 * 
-	 * @return {@link Vector2} Position
+	 * @return {@link RectF} Area
 	 */
-	final public Vector2 getPosition() {
-		return mPosition.clone();
+	final public RectF getSize() {
+		return new RectF(mRect);
 	}
 
-	
-	/**
-	 * Return draw dest Texture size.
-	 * 
-	 * @return {@link Vector2} Size
-	 */
-	final public Vector2 getSize() {
-		return mSize.clone();
-	}
-	
 	/**
 	 * Get depth
 	 * 
@@ -127,7 +114,7 @@ public class TouchableArea implements Touchable {
 	public int getZ() {
 		return mZ;
 	}
-	
+
 	/**
 	 * Get indentifier
 	 */
@@ -144,8 +131,7 @@ public class TouchableArea implements Touchable {
 	final public boolean getTouchable() {
 		return mTouchable;
 	}
-	
-	
+
 	/**
 	 * Check if point is over Sprite.
 	 * 
@@ -154,16 +140,10 @@ public class TouchableArea implements Touchable {
 	 * @return Return true if point over Sprite.
 	 */
 	final public boolean pointOver(final Vector2 point) {
-		// Get Edges
-		final float left = mPosition.x;
-		final float top = mPosition.y;
-		final float right = mPosition.x + mSize.x;
-		final float bottom = mPosition.y + mSize.y;
-		// Return result
-		return (point.x >= left && point.x < right && point.y >= top && point.y < bottom);
+		return (point.x >= mRect.left && point.x < mRect.right
+				&& point.y >= mRect.top && point.y < mRect.bottom);
 	}
 
-	
 	/**
 	 * Get Touch Event.
 	 * 
@@ -173,73 +153,78 @@ public class TouchableArea implements Touchable {
 	 */
 	@Override
 	public void touch(final MotionEvent motionEvent) {
-		if(motionEvent.getPointerCount() > 1) {
-			mTouchHandled = false;
-			return;
-		}
 		if (!mTouchable) {
 			mTouchHandled = false;
 			return;
 		}
-		if (mListener != null) {
-			Vector2 point = null;
-			switch (motionEvent.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
-				point = new Vector2(motionEvent.getX(), motionEvent.getY());
+		Vector2 point = null;
+		int id = 0;
+		int index = 0;
+		switch (motionEvent.getActionMasked()) {
+		case MotionEvent.ACTION_DOWN:
+		case MotionEvent.ACTION_POINTER_DOWN:
+			if(!mTouchHandled) {
+				index = MotionEventCompat.getActionIndex(motionEvent);
+				point = new Vector2(MotionEventCompat.getX(motionEvent, index), MotionEventCompat.getY(motionEvent, index));
 				if (pointOver(point)) {
 					mTouchHandled = true;
-					if (mListener instanceof multigear.mginterface.scene.listeners.SimpleListener)
-						((multigear.mginterface.scene.listeners.SimpleListener) mListener).onPress(this);
+					mTouchHandledId = MotionEventCompat.getPointerId(motionEvent, index);
+					if (mListener != null && mListener instanceof SimpleListener)
+						((SimpleListener) mListener).onPress(this);
 					mHandledPosition = point;
-					if (mListener instanceof multigear.mginterface.scene.listeners.TouchListener)
-						((multigear.mginterface.scene.listeners.TouchListener) mListener).onTouch(this, motionEvent);
+					if (mListener != null && mListener instanceof TouchListener)
+						((TouchListener) mListener).onTouch(this, motionEvent);
 					return;
 				}
-				break;
-			case MotionEvent.ACTION_CANCEL:
-				if (mTouchHandled) {
-					mTouchHandled = false;
-					if (mListener instanceof multigear.mginterface.scene.listeners.TouchListener)
-						((multigear.mginterface.scene.listeners.TouchListener) mListener)
-								.onTouch(this, motionEvent);
-				}
-				break;
-			case MotionEvent.ACTION_UP:
-				if (mTouchHandled) {
-					if (mListener instanceof multigear.mginterface.scene.listeners.SimpleListener)
-						((multigear.mginterface.scene.listeners.SimpleListener) mListener)
-								.onRelease(this);
-					mTouchHandled = false;
-					point = new Vector2(motionEvent.getX(), motionEvent.getY());
-					if (pointOver(point)
-							&& mListener instanceof multigear.mginterface.scene.listeners.ClickListener)
-						((multigear.mginterface.scene.listeners.ClickListener) mListener)
-								.onClick(this);
-					if (mListener instanceof multigear.mginterface.scene.listeners.TouchListener)
-						((multigear.mginterface.scene.listeners.TouchListener) mListener)
-								.onTouch(this, motionEvent);
-					return;
-				}
-				break;
-			case MotionEvent.ACTION_MOVE:
-				point = new Vector2(motionEvent.getX(), motionEvent.getY());
-				final float diffX = point.x - mHandledPosition.x;
-				final float diffY = point.y - mHandledPosition.y;
-				final float scaleFactor = 1;//getBaseScaleFacor();
-				final Vector2 moved = new Vector2(diffX / scaleFactor, diffY
-						/ scaleFactor);
-				if (mTouchHandled) {
-					if (mListener instanceof multigear.mginterface.scene.listeners.SimpleListener)
-						((multigear.mginterface.scene.listeners.SimpleListener) mListener)
-								.onMove(this, moved);
-					mHandledPosition = point;
-					if (mListener instanceof multigear.mginterface.scene.listeners.TouchListener)
-						((multigear.mginterface.scene.listeners.TouchListener) mListener)
-								.onTouch(this, motionEvent);
-					return;
-				}
-				break;
 			}
+			break;
+		case MotionEvent.ACTION_CANCEL:
+			if (mTouchHandled) {
+				mTouchHandled = false;
+				if (mListener != null && mListener instanceof TouchListener)
+					((TouchListener) mListener).onTouch(this, motionEvent);
+			}
+			break;
+		case MotionEvent.ACTION_UP:
+		case MotionEvent.ACTION_POINTER_UP:
+			if (mTouchHandled) {
+				index = MotionEventCompat.getActionIndex(motionEvent);
+				id = MotionEventCompat.getPointerId(motionEvent, index);
+				if(id == mTouchHandledId) {
+					mTouchHandled = false;
+					
+					if (mListener != null && mListener instanceof SimpleListener)
+						((SimpleListener) mListener).onRelease(this);
+					point = new Vector2(MotionEventCompat.getX(motionEvent, index), MotionEventCompat.getY(motionEvent, index));
+					if (pointOver(point) && mListener != null
+							&& mListener instanceof ClickListener)
+						((ClickListener) mListener).onClick(this);
+					if (mListener != null && mListener instanceof TouchListener)
+						((TouchListener) mListener).onTouch(this, motionEvent);
+				}
+				return;
+			}
+			break;
+		case MotionEvent.ACTION_MOVE:
+			for(int c=0; c<MotionEventCompat.getPointerCount(motionEvent); c++) {
+				id = MotionEventCompat.getPointerId(motionEvent, c);
+				if(id == mTouchHandledId) {
+					point = new Vector2(MotionEventCompat.getX(motionEvent, c), MotionEventCompat.getY(motionEvent, c));
+					final float diffX = point.x - mHandledPosition.x;
+					final float diffY = point.y - mHandledPosition.y;
+					final float scaleFactor = 1;// getBaseScaleFacor();
+					final Vector2 moved = new Vector2(diffX / scaleFactor, diffY / scaleFactor);
+					if (mTouchHandled) {
+						if (mListener != null && mListener instanceof SimpleListener)
+							((SimpleListener) mListener).onMove(this, moved);
+						mHandledPosition = point;
+						if (mListener != null && mListener instanceof TouchListener)
+							((TouchListener) mListener).onTouch(this, motionEvent);
+						return;
+					}
+				}
+			}
+			break;
 		}
 	}
 

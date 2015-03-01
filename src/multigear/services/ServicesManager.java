@@ -570,6 +570,10 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 			// Wait For Wifi States
 			while (mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING || mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLING)
 				;
+			
+			// Disconnect
+			mWifiManager.disconnect();
+			
 			// If Wifi Enabled ignore this process
 			if (!isWifiEnabled())
 				return null;
@@ -594,6 +598,10 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 					// Wait For Wifi States
 					while (mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING || mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLING)
 						;
+					
+					// Disconnect
+					mWifiManager.disconnect();
+					
 					// If Wifi Enabled ignore this process
 					if (!isWifiEnabled()) {
 						postMessage(multigear.services.Message.WIFI_DISABLED);

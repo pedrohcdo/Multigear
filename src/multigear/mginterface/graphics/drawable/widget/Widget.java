@@ -3,6 +3,7 @@ package multigear.mginterface.graphics.drawable.widget;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 import multigear.general.utils.Vector2;
@@ -15,8 +16,15 @@ import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import multigear.mginterface.scene.components.receivers.Touchable;
 import multigear.mginterface.scene.listeners.BaseListener;
+import multigear.mginterface.scene.listeners.ClickListener;
+import multigear.mginterface.scene.listeners.SimpleListener;
+import multigear.mginterface.scene.listeners.TouchListener;
+import android.annotation.SuppressLint;
+import android.content.DialogInterface.OnClickListener;
+import android.graphics.Matrix;
 import android.graphics.Rect;
-import android.opengl.GLES20;
+import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -111,8 +119,21 @@ public class Widget implements Drawable, Touchable {
 		}
 	};
 	
+	/**
+	 * Pointer
+	 * 
+	 * @author user
+	 *
+	 */
+	final private class Pointer {
+		
+		int id;
+		Vector2 lastPosition;
+		Vector2 framePosition;
+	}
 
 	// Final Private Variables
+	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	final private Vector2[] mVertices;
 	final private float mResultMatrixA[] = new float[2];
 	final private float mResultMatrixB[] = new float[2];
@@ -125,8 +146,6 @@ public class Widget implements Drawable, Touchable {
 	
 	// Private Variables
 	private BaseListener mListener;
-	private boolean mTouchHandled;
-	private Vector2 mHandledPosition;
 	protected Rect mViewport;
 		
 	// Public Variables
@@ -156,8 +175,6 @@ public class Widget implements Drawable, Touchable {
 	
 	// Private Variables
 	private int mState;
-	private boolean mTouchHandledImpl;
-	private Vector2 mTouchLastPositionImpl;
 	private AnimationStack mAnimationStack;
 	
 	/**
@@ -165,13 +182,10 @@ public class Widget implements Drawable, Touchable {
 	 */
 	public Widget() {
 		mState = 0;
-		mTouchHandledImpl = false;
 		mLayers = new ArrayList<WidgetLayer>();
 		mAnimationStack = new AnimationStack();
 		
 		mListener = null;
-		mTouchHandled = false;
-		mHandledPosition = new Vector2(0, 0);
 		mVertices = new Vector2[4];
 		mViewport = null;
 		mFixedSpace = false;
@@ -321,6 +335,9 @@ public class Widget implements Drawable, Touchable {
 	 */
 	final public void setTouchable(final boolean touchable) {
 		mTouchable = touchable;
+		if(!mTouchable) {
+			mPointers.clear();
+		}
 	}
 	
 	/**
@@ -539,7 +556,7 @@ public class Widget implements Drawable, Touchable {
 	 * @return Return true if Sprite pressed state.
 	 */
 	final public boolean isPressed() {
-		return mTouchHandledImpl && hasState(Widget.STATE_PRESSED);
+		return mTouchable && hasState(Widget.STATE_PRESSED);
 	}
 	
 	/**
@@ -569,8 +586,10 @@ public class Widget implements Drawable, Touchable {
 	final protected void addState(final int state) {
 		if (hasState(state))
 			return;
+		final int lastState = mState;
 		mState |= state;
-		onRefresh();
+		if(lastState != mState)
+			onRefresh();
 	}
 	
 	/**
@@ -590,6 +609,8 @@ public class Widget implements Drawable, Touchable {
 	 * Clear State
 	 */
 	final protected void clearState() {
+		if(mState == 0)
+			return;
 		mState = 0;
 		onRefresh();
 	}
@@ -629,8 +650,11 @@ public class Widget implements Drawable, Touchable {
 	/**
 	 * Update Widget
 	 */
+	@SuppressLint("WrongCall") 
 	@Override
 	final public void draw(final Drawer drawer) {
+		//
+		onUpdate();
 		
 		// Prepare Animations
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
@@ -688,6 +712,35 @@ public class Widget implements Drawable, Touchable {
 			}
 		}
 		
+		{
+			// Transformations for onDraw()
+			Matrix preTransformations = new Matrix();
+			
+			// Scale
+			preTransformations.postScale(ascale.x, ascale.y);
+			
+			// Top Transformations
+			preTransformations.postTranslate(-aox, -aoy);
+			preTransformations.postRotate(arotation);
+			preTransformations.postTranslate(aox, aoy);
+			
+			// Bottom Transformations
+			preTransformations.postTranslate((mPosition.x - mScroll.x - aox) + atranslate.x, (mPosition.y - mScroll.y - aoy) + atranslate.y);
+			
+			// Enable pre transformations
+			matrixRow.setPreTransformations(preTransformations);
+			matrixRow.enablePreTransformationsMatrix();
+			
+			// onDraw()
+			onDraw(drawer);
+			
+			// Disable pre transformations
+			matrixRow.setPreTransformations(null);
+			matrixRow.disablePreTransformationsMatrix();
+		}
+		
+		
+		
 		// End Drawer
 		drawer.end();
 		
@@ -700,10 +753,11 @@ public class Widget implements Drawable, Touchable {
 		matrixRow.postTranslatef(ox, oy);
 						
 		// Translate Matrix
-		final float tX = (float) (mPosition.x - mScroll.x - ox);
-		final float tY = (float) (mPosition.y - mScroll.y - oy);
+		final float tX = mPosition.x - mScroll.x - ox;
+		final float tY = mPosition.y - mScroll.y - oy;
 		matrixRow.postTranslatef(tX, tY);
-						
+		
+		
 		// Get Transformed Vertices
 		matrixRow.swap();
 		final float transformMatrix[] = new float[16];
@@ -717,9 +771,8 @@ public class Widget implements Drawable, Touchable {
 						
 		// Pop Matrix
 		matrixRow.pop();
-						
-		//
-		onUpdate();
+				
+		
 	}
 	
 	/*
@@ -775,6 +828,93 @@ public class Widget implements Drawable, Touchable {
 	}
 	
 	/**
+	 * Add pointer
+	 * 
+	 * @param id
+	 * @param touch
+	 */
+	final private void addPointer(final MotionEvent touch) {
+		final int index = MotionEventCompat.getActionIndex(touch);
+		final int id = MotionEventCompat.getPointerId(touch, index);
+		final Vector2 position = new Vector2(MotionEventCompat.getX(touch, index), MotionEventCompat.getY(touch, index));
+		removePointer(id);
+		final Pointer pointer = new Pointer();
+		pointer.id = id;
+		pointer.lastPosition = position;
+		pointer.framePosition = position;
+		mPointers.add(pointer);
+	}
+	
+	/**
+	 * Remove Pointer
+	 * @param id
+	 */
+	final private boolean removePointer(final MotionEvent touch) {
+		final int index = MotionEventCompat.getActionIndex(touch);
+		final int id = MotionEventCompat.getPointerId(touch, index);
+		return removePointer(id);
+	}
+	
+	/**
+	 * Remove Pointer
+	 * @param id
+	 */
+	final private boolean removePointer(final int id) {
+		final Iterator<Pointer> iterator = mPointers.iterator();
+		boolean found = false;
+		while(iterator.hasNext()) {
+			Pointer pointer = iterator.next();
+			if(pointer.id == id) {
+				iterator.remove();
+				found = true;
+			}
+		}
+		return found;
+	}
+	
+	/**
+	 * Move Pointers
+	 * @param touch
+	 */
+	final private void movePointers(final MotionEvent touch) {
+		for(int index=0; index<MotionEventCompat.getPointerCount(touch); index++) {
+			final Vector2 position = new Vector2(MotionEventCompat.getX(touch, index), MotionEventCompat.getY(touch, index));
+			final int id = MotionEventCompat.getPointerId(touch, index);
+			for(final Pointer pointer : mPointers) {
+				if(pointer.id == id) {
+					pointer.lastPosition = pointer.framePosition;
+					pointer.framePosition = position;
+					break;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Update Move
+	 */
+	final private void updateMove() {
+		if(mPointers.size() > 0) {
+			boolean switchFlag = false;
+			final BaseListener listener = getListener();
+			final Pointer major = mPointers.get(mPointers.size()-1);
+			final Vector2 moved = Vector2.sub(major.framePosition, major.lastPosition);
+			if (listener != null && listener instanceof SimpleListener)
+				((SimpleListener) listener).onMove(this, moved);
+			if (pointOver(major.framePosition)) {
+				switchFlag = !hasState(STATE_IN);
+				addState(STATE_IN);
+			} else {
+				switchFlag = hasState(STATE_IN);
+				removeState(STATE_IN);
+			}
+			onMove(moved, switchFlag);
+		} 
+		for(final Pointer pointer : mPointers)
+			pointer.lastPosition = pointer.framePosition;
+	}
+	
+	/**
 	 * Get Touch Event.
 	 * 
 	 * @param motionEvent
@@ -783,85 +923,100 @@ public class Widget implements Drawable, Touchable {
 	 */
 	final public void touch(final MotionEvent motionEvent) {
 		if (!mTouchable) {
-			mTouchHandledImpl = false;
 			return;
 		}
-		final multigear.mginterface.scene.listeners.BaseListener listener = getListener();
-		Vector2 point = null;
-		switch (motionEvent.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
-				addState(STATE_PRESSED);
-				point = new Vector2(motionEvent.getX(), motionEvent.getY());
-				if (pointOver(point)) {
-					mTouchLastPositionImpl = point;
-					addState(STATE_IN);
-					onPress();
-					onTouch(motionEvent);
-					mTouchHandledImpl = true;
-					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.SimpleListener)
-						((multigear.mginterface.scene.listeners.SimpleListener) listener).onPress(this);
-					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.TouchListener)
-						((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
-					
-					break;
-				}
-			case MotionEvent.ACTION_CANCEL:
-				if (mTouchHandledImpl) {
-					removeState(STATE_PRESSED);
-					mTouchHandledImpl = false;
-					onRelease();
-					onTouch(motionEvent);
-					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.TouchListener)
-						((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
-					
-					removeState(STATE_IN);
-				}
-				break;
-			case MotionEvent.ACTION_UP:
-				
-				if (mTouchHandledImpl) {
-					removeState(STATE_PRESSED);
-					onRelease();
-					mTouchHandledImpl = false;
-					point = new Vector2(motionEvent.getX(), motionEvent.getY());
-					onTouch(motionEvent);
-					if (listener != null) {
-						if (listener instanceof multigear.mginterface.scene.listeners.SimpleListener)
-							((multigear.mginterface.scene.listeners.SimpleListener) listener).onRelease(this);
-						if (pointOver(point) && listener instanceof multigear.mginterface.scene.listeners.ClickListener)
-							((multigear.mginterface.scene.listeners.ClickListener) listener).onClick(this);
-						if (listener instanceof multigear.mginterface.scene.listeners.TouchListener)
-							((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
-					}
-					removeState(STATE_IN);
-				}
-				break;
-			case MotionEvent.ACTION_MOVE:
-				if (mTouchHandledImpl) {
-					point = new Vector2(motionEvent.getX(), motionEvent.getY());
-					final float diffX = point.x - mTouchLastPositionImpl.x;
-					final float diffY = point.y - mTouchLastPositionImpl.y;
-					final float scaleFactor = 1;//getBaseScaleFacor();
-					final Vector2 moved = new Vector2(diffX / scaleFactor, diffY / scaleFactor);
-					boolean switchFlag = false;
-					if (pointOver(point)) {
-						switchFlag = !hasState(STATE_IN);
-						addState(STATE_IN);
-					} else {
-						switchFlag = hasState(STATE_IN);
-						removeState(STATE_IN);
-					}
-					onTouch(motionEvent);
-					onMove(moved, switchFlag);
-					mTouchLastPositionImpl = point;
-					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.SimpleListener)
-						((multigear.mginterface.scene.listeners.SimpleListener) listener).onMove(this, moved);
-					if (listener != null && listener instanceof multigear.mginterface.scene.listeners.TouchListener)
-						((multigear.mginterface.scene.listeners.TouchListener) listener).onTouch(this, motionEvent);
-				}
-				break;
-		}
 		
+		// Vars
+		Vector2 point = null;
+		int index = 0;
+		final BaseListener listener = getListener();
+		
+		// Motion
+		switch(MotionEventCompat.getActionMasked(motionEvent)) {
+		case MotionEvent.ACTION_DOWN:
+		case MotionEvent.ACTION_POINTER_DOWN:
+			// Point info
+			index = MotionEventCompat.getActionIndex(motionEvent);
+			point = new Vector2(motionEvent.getX(index), motionEvent.getY(index));
+			// accept if event in
+			if (pointOver(point)) {
+				addState(STATE_PRESSED);
+				addState(STATE_IN);
+				addPointer(motionEvent);
+				//
+				if(mPointers.size() == 1)
+					onPress();
+				onTouch(motionEvent);
+				// Pass event if foucused
+				if(listener != null) {
+					if (mPointers.size() == 1 && listener instanceof SimpleListener)
+						((SimpleListener) listener).onPress(this);
+					if (listener instanceof TouchListener)
+						((TouchListener) listener).onTouch(this, motionEvent);
+				}
+			}
+			break;
+		case MotionEvent.ACTION_UP:
+		case MotionEvent.ACTION_POINTER_UP:
+			// Send touch event if this pointer consumed for this widget
+			boolean consumed = removePointer(motionEvent);
+			// If no pointers
+			if(mPointers.size() == 0 && consumed) {
+				// Remove pressed state but not used
+				removeState(STATE_PRESSED);
+				onRelease();
+				// Point info
+				index = MotionEventCompat.getActionIndex(motionEvent);
+				point = new Vector2(motionEvent.getX(index), motionEvent.getY(index));
+				if (listener != null) {
+					if (listener instanceof SimpleListener)
+						((SimpleListener) listener).onRelease(this);
+					if (pointOver(point) && listener instanceof ClickListener) {
+						((ClickListener) listener).onClick(this);
+						onClick();
+					}
+				}
+				// Remove State In
+				// This state probably used in events
+				removeState(STATE_IN);
+			} else if(consumed) {
+				// Refresh Pointer
+				final Pointer major = mPointers.get(mPointers.size()-1);
+				if(pointOver(major.framePosition))
+					addState(STATE_IN);
+				else
+					removeState(STATE_IN);
+			}
+			// Pass Event
+			if(consumed) {
+				// If consumed
+				onTouch(motionEvent);
+				if (consumed && listener != null && listener instanceof TouchListener)
+					((TouchListener) listener).onTouch(this, motionEvent);
+			}
+			break;
+		case MotionEvent.ACTION_CANCEL:
+			mPointers.clear();
+			removeState(STATE_PRESSED);
+			removeState(STATE_IN);
+			
+			onTouch(motionEvent);
+			if (listener != null && listener instanceof TouchListener)
+				((TouchListener) listener).onTouch(this, motionEvent);
+			break;
+		case MotionEvent.ACTION_MOVE:
+			movePointers(motionEvent);
+			updateMove();
+			
+			onTouch(motionEvent);
+			if (listener != null && listener instanceof TouchListener)
+				((TouchListener) listener).onTouch(this, motionEvent);
+			break;
+		default:
+			onTouch(motionEvent);
+			if (listener != null && listener instanceof TouchListener)
+				((TouchListener) listener).onTouch(this, motionEvent);
+		}
 	}
 	
 	/**
@@ -870,29 +1025,20 @@ public class Widget implements Drawable, Touchable {
 	 * This method removes all of the same updates, then this drawable be
 	 * dead/frozen from the time this method is called.
 	 */
-	public void dispose() {
-	}
-	
-	/** On Refresh */
-	protected void onRefresh() {
-	}
-	
-	/** On Press Event */
-	protected void onPress() {
-	}
-	
-	/** On Release Event */
-	protected void onRelease() {
-	}
-	
-	public void onTouch(final MotionEvent motionEvent) {
-	}
-	
-	/** On Move Event */
-	protected void onMove(final Vector2 moved, boolean inOutSwitch) {
-	}
+	public void dispose() {}
 	
 	/** On Update Event */
-	protected void onUpdate() {
-	}
+	protected void onDraw(final Drawer drawer) {}
+	protected void onUpdate() {}
+	
+	/** On Refresh */
+	protected void onRefresh() {}
+	
+	/** Reform */
+	protected void onPress() {}
+	protected void onRelease() {}
+	protected void onMove(final Vector2 moved, final boolean inOutSwitch) {};
+	protected void onTouch(MotionEvent motionEvent) {};
+	protected void onClick() {};
+	
 }

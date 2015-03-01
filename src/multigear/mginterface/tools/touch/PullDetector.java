@@ -25,9 +25,9 @@ final public class PullDetector {
 	 */
 	final private class Pointer {
 		
-		int id;
-		Vector2 startPosition;
-		Vector2 framePosition;
+		int id = 0;
+		Vector2 startPosition = new Vector2();
+		Vector2 framePosition = new Vector2();
 	}
 	
 	// Final Private Variables
@@ -78,7 +78,8 @@ final public class PullDetector {
 		removePointer(id);
 		final Pointer pointer = new Pointer();
 		pointer.id = id;
-		pointer.startPosition = position;
+		pointer.startPosition = position.clone();
+		pointer.framePosition = position.clone();
 		mPointers.add(pointer);
 	}
 	
@@ -86,24 +87,27 @@ final public class PullDetector {
 	 * Remove Pointer
 	 * @param id
 	 */
-	final private void removePointer(final MotionEvent touch) {
+	final private Pointer removePointer(final MotionEvent touch) {
 		final int index = MotionEventCompat.getActionIndex(touch);
 		final int id = MotionEventCompat.getPointerId(touch, index);
-		removePointer(id);
+		return removePointer(id);
 	}
 	
 	/**
 	 * Remove Pointer
 	 * @param id
 	 */
-	final private  void removePointer(final int id) {
+	final private Pointer removePointer(final int id) {
 		final Iterator<Pointer> iterator = mPointers.iterator();
+		Pointer returnPointer = null;
 		while(iterator.hasNext()) {
 			Pointer pointer = iterator.next();
 			if(pointer.id == id) {
 				iterator.remove();
+				returnPointer = pointer;
 			}
 		}
+		return returnPointer;
 	}
 	
 	/**
@@ -127,11 +131,10 @@ final public class PullDetector {
 	 * Update Move
 	 */
 	final private void updateMove() {
-		if(mPointers.size() == 1) {
-			final Pointer a = mPointers.get(0);
+		if(mPointers.size() >= 1) {
+			final Pointer a = mPointers.get(mPointers.size()-1);
 			final Vector2 startPosition = a.startPosition;
 			final Vector2 framePosition = a.framePosition;
-			
 			if(mPullDetectorListener != null)
 				mPullDetectorListener.onPull(startPosition, framePosition);
 		}
@@ -145,10 +148,26 @@ final public class PullDetector {
 		case MotionEvent.ACTION_DOWN:
 		case MotionEvent.ACTION_POINTER_DOWN:
 			addPointer(touch);
+			// Improvements
+			if(mPointers.size() >= 2) {
+				final Pointer major = mPointers.get(mPointers.size()-1);
+				final Pointer last = mPointers.get(mPointers.size()-2);
+				final Vector2 savePulls = Vector2.sub(last.framePosition, last.startPosition);
+				major.startPosition = Vector2.sub(major.startPosition, savePulls);
+			}
 			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
-			removePointer(touch);
+			int id = -1;
+			if(mPointers.size() >= 1)
+				id = mPointers.get(mPointers.size()-1).id; 
+			final Pointer removed = removePointer(touch);
+			// Improvements
+			if(removed != null && mPointers.size() >= 1 && id != mPointers.get(mPointers.size()-1).id) {
+				final Pointer major = mPointers.get(mPointers.size()-1);
+				final Vector2 savePulls = Vector2.sub(removed.framePosition, removed.startPosition);
+				major.startPosition = Vector2.sub(major.framePosition, savePulls);
+			}
 			break;
 		case MotionEvent.ACTION_CANCEL:
 			mPointers.clear();

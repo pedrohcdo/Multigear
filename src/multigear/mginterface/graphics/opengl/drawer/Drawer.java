@@ -24,6 +24,7 @@ import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.SceneDrawerState;
 import android.graphics.Rect;
 import android.opengl.GLES20;
+import android.util.Log;
 
 /**
  * Utilizado para desenhar uma textura.
@@ -206,12 +207,10 @@ final public class Drawer {
 			disableViewport();
 			return;
 		}
-		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
 		final int screenHeight = (int) mMainScene.getScreenSize().y;
-		final int top = screenHeight - viewport.bottom;
-		final int bottom = screenHeight - viewport.top - top;
+		final int top = screenHeight - (viewport.top + viewport.bottom);
 		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-		GLES20.glScissor(viewport.left, top, viewport.right, bottom);
+		GLES20.glScissor(viewport.left, top, viewport.right, viewport.bottom);
 	}
 	
 	/**

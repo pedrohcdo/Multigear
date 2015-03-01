@@ -71,9 +71,8 @@ public class Polygon implements Drawable {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createRoundedSquare(final float sides, final float radius) {
-		if(radius > (sides / 2.0f))
-			throw new IllegalArgumentException("Radius can not be greate than sides / 2.");
+	final public static Polygon createRoundedSquare(final float sides, float radius) {
+		radius = Math.min(radius, sides / 2.0f);
 		final double detail = Math.PI / 180.0f;
 		final Polygon roundedSquare = new Polygon();
 		for(double i=0; i<Math.PI/2; i+=detail) {
@@ -104,9 +103,8 @@ public class Polygon implements Drawable {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createRoundedRectangle(final Vector2 size, final float radius) {
-		if(radius > (size.x / 2.0f) || radius > (size.y / 2))
-			throw new IllegalArgumentException("Radius can not be greate than size / 2.");
+	final public static Polygon createRoundedRectangle(final Vector2 size, float radius) {
+		radius = Math.min(Math.min(radius, size.x / 2.0f), size.y / 2.0f);
 		final double detail = Math.PI / 180.0f;
 		final Polygon roundedRectangle = new Polygon();
 		for(double i=0; i<Math.PI/2; i+=detail) {

@@ -164,7 +164,7 @@ final public class ImpulseDetector {
 		}
 		removePointer(touch, id, index);
 		if(mPointers.size() == 0) {
-			if(mImpulseDetectorListener != null) {
+			if(mImpulseDetectorListener != null && found != null) {
 				mImpulseDetectorListener.onImpulse(found.getImpulse());
 			}
 		}

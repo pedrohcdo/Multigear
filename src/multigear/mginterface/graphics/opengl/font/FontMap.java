@@ -410,6 +410,160 @@ final public class FontMap extends CacheComponent {
 		return Math.min(maxVerticalSize, maxHorizontalSize);
 	}
 	
+	/**
+	 * Create FontMap
+	 * 
+	 * @param scene
+	 * @param assetManager
+	 * @param loader
+	 * @param fontPath
+	 * @param fontSize
+	 * @param map
+	 * @return
+	 */
+	final static protected FontMap create(final Scene scene, final Loader loader, final Typeface typeface, final int fontSize, final CharMap map) {
+		// Not support size smaller than 1
+		if(fontSize < 0)
+			throw new IllegalArgumentException("Font Size can not be less than 1");
+				
+		// Create FontMap
+		FontMap fontMap = new FontMap();
+				
+		// Get Asset Manager
+		AssetManager assetManager = scene.getActivity().getAssets();
+				
+		// Set CharMap and Font Size
+		fontMap.mCharMap = map;
+		fontMap.mFontSize = fontSize;
+				
+		// Id counter
+		int id = 0;
+				
+		// Create All Layers
+		for(final Style styleLayer : Style.values()) {
+					
+			// Load typeface
+			Typeface typefaceFamily = typeface;
+					
+			// Create Layer
+			Layer layer = new Layer();
+			layer.mId = id++;
+					
+			// get Compatibility Font Size
+			final float compatibilityFontSize = Math.min(fontSize, getMaxFontSizeSupport(typefaceFamily, styleLayer, map));
+			final float compatibilityScaleCorrection = fontSize / compatibilityFontSize;
+					
+			// Set font scale
+			layer.mScale = compatibilityScaleCorrection;
+					
+			// Create Paint
+			Paint paint = new Paint();
+			paint.setColor(0xFFFFFFFF);
+			paint.setAntiAlias(true);
+			paint.setTypeface(styleLayer.create(typeface));
+			paint.setTextSize(compatibilityFontSize);
+					
+			// Compatibility font bold
+			if((styleLayer == Style.Bold || styleLayer == Style.BoldItalic) && !typefaceFamily.isBold())
+				paint.setFakeBoldText(true);
+					
+			// Compatibility font italic
+			if((styleLayer == Style.Italic || styleLayer == Style.BoldItalic) && !typefaceFamily.isItalic())
+				paint.setTextSkewX(-0.25f);
+					
+			// Get font metrics
+			Paint.FontMetrics metrics = paint.getFontMetrics();
+					
+			// Set FontMapMetrics
+			layer.mFontMetrics = fontMap.getNewMetricsInstance(metrics);
+					
+			// Get minimums Limits
+			float fontAscent = Math.abs(metrics.ascent);
+			float fontDescent = Math.abs(metrics.descent);
+			int fontHeight = (int) Math.ceil(fontAscent + fontDescent);
+					
+			// Set font map max height
+			layer.mMaxHeight = (int) Math.ceil(Math.ceil(fontHeight) * layer.mScale);
+			layer.mMaxBoundedHeight = (int) Math.ceil(fontHeight);
+					
+			// Get CharMap map widths
+			float widths[] = new float[map.mCharactersPack.length];
+			int maxWidth = Integer.MIN_VALUE;
+			paint.getTextWidths(map.mCharactersPack, 0, map.mCharactersPack.length, widths);
+					
+			// Set font map characters widths
+			layer.mCharactersWidths = widths;
+					
+			// Get max width to create linear text map
+			for (int i=0; i<widths.length; i++) {
+				widths[i] *= layer.mScale;
+				maxWidth = (int) Math.ceil(Math.max(maxWidth, widths[i]));
+			}
+			maxWidth = (int) Math.ceil(maxWidth);
+					
+			// Set font map max width
+			layer.mMaxWidth = (int) maxWidth;
+					
+			// Get Bounds
+			Rect rect = new Rect();
+			Vector2 bounds[] = new Vector2[map.mCharactersPack.length];
+			int maxBoundedWidth = 0;
+			for (int i = 0; i < map.mCharactersPack.length; i++) {
+				final char char_ = map.mCharactersPack[i];
+				paint.getTextBounds(char_ + "", 0, 1, rect);
+				bounds[i] = new Vector2(rect.left, rect.right);
+				maxBoundedWidth = Math.max(maxBoundedWidth, rect.width());
+			}
+			maxBoundedWidth += 2;
+					
+			// Set font bounds and max bounded size
+			layer.mCharactersBounds = bounds;
+			layer.mMaxBoundedWidth = maxBoundedWidth;
+					
+			// Get squared texture size
+			int square = (int) Math.round(Math.sqrt(map.mCharactersPack.length));
+			int textureWidth = GeneralUtils.calculateUpperPowerOfTwo((int) (maxBoundedWidth * square));
+			int textureHeight = GeneralUtils.calculateUpperPowerOfTwo((int) (fontHeight * square));
+					
+			// Get max texture size
+			final int maxTextureSize[] = new int[1];
+			GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxTextureSize, 0);
+					
+			// OpenGL does not support textures with size above 2048
+			if (textureWidth > maxTextureSize[0] || textureHeight > maxTextureSize[0])
+				throw new MultigearException(0x15, "It was not possible to create a font, size exceeded the allowed.");
+					
+			// Create Bitmap with alpha chanel
+			Bitmap bitmap = Bitmap.createBitmap(textureWidth, textureHeight, Bitmap.Config.ARGB_8888);
+			Canvas canvas = new Canvas(bitmap);
+			bitmap.eraseColor(0x00000000);
+					
+			// Draw map
+			float maxWidth2 = maxBoundedWidth / 2.0f;
+			float dx = maxWidth2;
+			float dy = fontAscent;
+			for (int i = 0; i < map.mCharactersPack.length; i++) {
+				final char c = map.mCharactersPack[i];
+				final Vector2 bound = bounds[i];
+				final int width = (int) (bound.y - bound.x);
+				canvas.drawText(c + "", (dx - bound.x) - (width / 2.0f), dy, paint);
+				dx += maxBoundedWidth;
+				if (dx + maxWidth2 >= textureWidth) {
+					dy += fontHeight;
+					dx = maxWidth2;
+				}
+			}
+					
+			// Load texture
+			layer.mTextureFont = loader.create(bitmap);
+					
+			// Set FontMap layer
+			fontMap.mLayers[styleLayer.ordinal()] = layer;
+		}
+				
+		// Return FontMap
+		return fontMap;
+	}
 	
 	/**
 	 * Create FontMap

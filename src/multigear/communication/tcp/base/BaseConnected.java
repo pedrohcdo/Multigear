@@ -71,7 +71,7 @@ public class BaseConnected {
 		if (message.matches(".*(?:\\[|\\]).*"))
 			Log.d("LogTest", "Client: Warning, do not use any of these characters: []|");
 		final String messageSocket = multigear.communication.tcp.base.Utils.makeSocketMessage(code, message);
-		mOut.println(messageSocket + multigear.communication.tcp.base.Utils.EXTRA_SOCKET_BUFF);
+		mOut.println(messageSocket);
 		mOut.flush();
 	}
 	
@@ -80,7 +80,7 @@ public class BaseConnected {
 	 */
 	final public void sendMessage(final int code) {
 		final String messageSocket = multigear.communication.tcp.base.Utils.makeSocketMessage(code);
-		mOut.println(messageSocket + multigear.communication.tcp.base.Utils.EXTRA_SOCKET_BUFF);
+		mOut.println(messageSocket);
 		mOut.flush();
 	}
 	
@@ -95,7 +95,7 @@ public class BaseConnected {
 	 *            Generic Message
 	 */
 	final public void sendGenericMessage(final String message) {
-		mOut.println(message + multigear.communication.tcp.base.Utils.EXTRA_SOCKET_BUFF);
+		mOut.println(message);
 		mOut.flush();
 	}
 	

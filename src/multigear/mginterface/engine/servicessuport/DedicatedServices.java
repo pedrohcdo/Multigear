@@ -157,7 +157,7 @@ final public class DedicatedServices {
 		boolean refresh = false;
 		for (final WifiConfiguration configuredNetwork : getConfiguredNetworksSafety()) {
 			if (!foundNetworkList.contains(configuredNetwork.networkId)) {
-				Log.d("LogTest", "Non Sei: " + configuredNetwork.SSID + " ID: " + configuredNetwork.networkId);
+				//Log.d("LogTest", "Non Sei: " + configuredNetwork.SSID + " ID: " + configuredNetwork.networkId);
 				mWifiManager.removeNetwork(configuredNetwork.networkId);
 				refresh = true;
 			}

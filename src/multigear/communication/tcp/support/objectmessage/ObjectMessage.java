@@ -95,6 +95,14 @@ final public class ObjectMessage {
 	}
 	
 	/**
+	 * Get Values Size
+	 * @return
+	 */
+	final public int size() {
+		return mValues.size();
+	}
+	
+	/**
 	 * Create Object Message
 	 */
 	final static public multigear.communication.tcp.support.objectmessage.ObjectMessageBuilder create(final int code) {

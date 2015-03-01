@@ -19,7 +19,8 @@ public class WorldMatrix {
 	// Private Variables
 	public int mIndex;
 	private Matrix mRoomTransformations;
-	
+	private Matrix mPreTransformations;
+	private boolean mPreTransformationUse;
 	
 	/**
 	 * Constructor
@@ -41,6 +42,28 @@ public class WorldMatrix {
 	 */
 	final public void setRoomTransformations(final Matrix transformations) {
 		mRoomTransformations = transformations;
+	}
+	
+	/**
+	 * Set Pre transformations
+	 * @param preTransformations
+	 */
+	final public void setPreTransformations(final Matrix preTransformations) {
+		mPreTransformations = preTransformations;
+	}
+	
+	/**
+	 * Enable pre transformation matrix
+	 */
+	final public void enablePreTransformationsMatrix() {
+		mPreTransformationUse = true;
+	}
+	
+	/**
+	 * Disable pre transformations matrix
+	 */
+	final public void disablePreTransformationsMatrix() {
+		mPreTransformationUse = false;
 	}
 	
 	/**
@@ -100,6 +123,8 @@ public class WorldMatrix {
 	 */
 	final public void swap() {
 		mFinalTransformations.set(mMatrixQueue[mIndex]);
+		if(mPreTransformationUse)
+			mFinalTransformations.postConcat(mPreTransformations);
 		mFinalTransformations.postConcat(mRoomTransformations);
 		mFinalTransformations.getValues(mMatrix3x3);
 	}

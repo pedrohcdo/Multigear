@@ -559,12 +559,18 @@ public class Scene extends multigear.mginterface.scene.Installation {
 		mInstallManager.updateManager();
 	}
 	
+	/**
+	 * Called before draw
+	 */
+	protected void prepareToDraw(final WorldMatrix matrix) {}
+	
 	/*
 	 * Desenha os objetos
 	 */
 	@SuppressLint("WrongCall")
 	@Override
 	final public void draw(final multigear.mginterface.graphics.opengl.drawer.Drawer drawer) {
+		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
@@ -607,6 +613,9 @@ public class Scene extends multigear.mginterface.scene.Installation {
 		
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
+		
+		// Prepare to draw
+		prepareToDraw(matrixRow);
 		
 		// Push Matrix
 		matrixRow.push();

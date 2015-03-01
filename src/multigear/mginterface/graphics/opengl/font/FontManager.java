@@ -1,5 +1,6 @@
 package multigear.mginterface.graphics.opengl.font;
 
+import android.graphics.Typeface;
 import multigear.mginterface.engine.Manager;
 
 /**
@@ -32,6 +33,18 @@ final public class FontManager {
 	 */
 	final public FontMap create(String fontPath, int fontSize) {
 		FontMap fontMap = FontMap.create(mManager.getMainRoom(), mManager.getMainRoom().getTextureLoader(), fontPath, fontSize, FontMap.CharMapBasic);
+		return fontMap;
+	}
+	
+	/**
+	 * Create FontMap with ascii range [32, 126]
+	 * 
+	 * @param typeface Typeface
+	 * @param fontSize Font size
+	 * @return
+	 */
+	final public FontMap create(Typeface typeface, int fontSize) {
+		FontMap fontMap = FontMap.create(mManager.getMainRoom(), mManager.getMainRoom().getTextureLoader(), typeface, fontSize, FontMap.CharMapBasic);
 		return fontMap;
 	}
 }

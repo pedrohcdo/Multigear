@@ -132,8 +132,8 @@ final public class FocusDetector {
 	 */
 	final private void updateMove() {
 		if(mPointers.size() >= 2) {
-			final Pointer a = mPointers.get(0);
-			final Pointer b = mPointers.get(1);
+			final Pointer a = mPointers.get(mPointers.size()-1);
+			final Pointer b = mPointers.get(mPointers.size()-2);
 			final Vector2 aLastPosition = a.lastPosition;
 			final Vector2 bLastPosition = b.lastPosition;
 			if(mFocusDetectorListener != null) {
