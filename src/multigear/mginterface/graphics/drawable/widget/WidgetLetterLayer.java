@@ -19,7 +19,7 @@ import android.graphics.Rect;
  * 
  *         Property Createlier.
  */
-final public class WidgetLetterLayer extends WidgetLayer {
+final public class WidgetLetterLayer implements WidgetLayer {
 	
 
 	// For Draw
@@ -40,6 +40,8 @@ final public class WidgetLetterLayer extends WidgetLayer {
 	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
 	private Letter mLetter = new Letter();
 	private LetterWriter mLetterWriter;
+	private int mZ = 0;
+	private int mID = 0;
 	
 	/**
 	 * Constructor
@@ -111,8 +113,8 @@ final public class WidgetLetterLayer extends WidgetLayer {
 	 * @param inverted
 	 */
 	final public void setMirror(final boolean mirrorX, final boolean mirrorY) {
-		mMirror[0] = true;
-		mMirror[1] = true;
+		mMirror[0] = mirrorX;
+		mMirror[1] = mirrorY;
 	}
 	
 	/**
@@ -215,6 +217,24 @@ final public class WidgetLetterLayer extends WidgetLayer {
 		mFixedSpace = fixed;
 	}
 	
+	/**
+	 * Set Z depth
+	 * @param z Depth
+	 */
+	@Override
+	final public void setZ(final int z) {
+		mZ = z;
+	}
+	
+	/**
+	 * Set Id
+	 * @param id Id
+	 */
+	@Override
+	final public void setId(final int id) {
+		mID = id;
+	}
+		
 	/**
 	 * Get Letter Writer
 	 * 
@@ -353,6 +373,24 @@ final public class WidgetLetterLayer extends WidgetLayer {
 	}
 	
 	/**
+	 * Get Z Depth
+	 * @return Depth
+	 */
+	@Override
+	final public int getZ() {
+		return mZ;
+	}
+	
+	/**
+	 * Get Id
+	 * @return Id
+	 */
+	@Override
+	final public int getId() {
+		return mID;
+	}
+	
+	/**
 	 * Set Matrix Transformations for this Layer
 	 * <p>
 	 * 
@@ -360,7 +398,7 @@ final public class WidgetLetterLayer extends WidgetLayer {
 	 *            MatrixRow
 	 * @return True if need Draw
 	 */
-	final protected boolean beginDraw(final float preOpacity, final Drawer drawer) {
+	final public void draw(final float preOpacity, final Drawer drawer) {
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		
@@ -369,7 +407,7 @@ final public class WidgetLetterLayer extends WidgetLayer {
 		
 		// Not Update
 		if (mPreparedOpacity <= 0)
-			return false;
+			return;
 
 		// Get Infos
 		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
@@ -398,24 +436,18 @@ final public class WidgetLetterLayer extends WidgetLayer {
 		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
 		matrixRow.postTranslatef(tX, tY);
 
-		return true;
-		
-	}
-	
-	/*
-	 * Atualiza e Desenha
-	 */
-	protected void endDraw(final Drawer drawer) {
-	
+		// Begin Drawer
+		drawer.begin();
+				
 		// Draw
 		drawer.setOpacity(mPreparedOpacity);
-		drawer.enableViewport(mViewport);
+		drawer.snip(mViewport);
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.drawLetter(mLetter);
 		
-		// Get Matrix Row
-		final WorldMatrix matrixRow = drawer.getWorldMatrix();
-		
+		// End Drawer
+		drawer.end();
+				
 		// Pop Matrix
 		matrixRow.pop();
 	}

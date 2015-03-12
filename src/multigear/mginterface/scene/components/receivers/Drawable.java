@@ -1,7 +1,6 @@
 package multigear.mginterface.scene.components.receivers;
 
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
-import multigear.mginterface.scene.components.Component;
 
 /**
  * Drawable
@@ -9,7 +8,7 @@ import multigear.mginterface.scene.components.Component;
  * @author user
  *
  */
-public interface Drawable extends Component {
+public interface Drawable {
 	
 	/**
 	 * Draw handler

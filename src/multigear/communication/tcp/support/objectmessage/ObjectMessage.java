@@ -50,8 +50,12 @@ final public class ObjectMessage {
 	final private void addCommand(final String cmd, final String value) {
 		if (cmd.equals("code"))
 			mCode = Integer.parseInt(value);
+		if (cmd.equals("short"))
+			mValues.add(Short.parseShort(value));
 		if (cmd.equals("int"))
 			mValues.add(Integer.parseInt(value));
+		if (cmd.equals("long"))
+			mValues.add(Long.parseLong(value));
 		if (cmd.equals("float"))
 			mValues.add(Float.parseFloat(value));
 		if (cmd.equals("double"))

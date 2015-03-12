@@ -118,6 +118,9 @@ final public class DedicatedServices {
 		synchronized (DedicatedServices.this) {
 			restoreDataBase = mDatabase;
 		}
+		// Null Database
+		if(mDatabase == null)
+			return;
 		// Wait for Established
 		establishConnections();
 		// Prevents interrupt

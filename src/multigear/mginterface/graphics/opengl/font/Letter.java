@@ -26,7 +26,7 @@ final public class Letter {
 	 * @param drawer
 	 */
 	public Letter() {
-		mLetterDrawer = new LetterDrawer(this);
+		mLetterDrawer = new LetterDrawer();
 	}
 	
 	/**

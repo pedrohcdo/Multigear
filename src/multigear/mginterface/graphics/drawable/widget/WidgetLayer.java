@@ -9,11 +9,8 @@ import multigear.mginterface.graphics.opengl.drawer.Drawer;
  * 
  *         Property Createlier.
  */
-public class WidgetLayer {
-	
-	// Private Variables
-	private int mZ = 0;
-	private int mID = 0;
+public interface WidgetLayer {
+
 	
 	/**
 	 * Set Z.
@@ -21,9 +18,7 @@ public class WidgetLayer {
 	 * @param z
 	 *            Int Z
 	 */
-	final public void setZ(final int z) {
-		mZ = z;
-	}
+	public void setZ(final int z);
 	
 	/**
 	 * Set ID.
@@ -31,26 +26,21 @@ public class WidgetLayer {
 	 * @param id
 	 *            Int ID
 	 */
-	final public void setID(final int id) {
-		mID = id;
-	}
+	public void setId(final int id);
+	
 	/**
 	 * Get Z.
 	 * 
 	 * @return Int Z
 	 */
-	final public int getZ() {
-		return mZ;
-	}
+	public int getZ();
 	
 	/**
 	 * Get ID.
 	 * 
 	 * @return Int ID
 	 */
-	final public int getID() {
-		return mID;
-	}
+	public int getId();
 	
 	/**
 	 * Set Matrix Transformations for this Layer
@@ -60,13 +50,5 @@ public class WidgetLayer {
 	 *            MatrixRow
 	 * @return True if need Draw
 	 */
-	protected boolean beginDraw(final float preOpacity, final Drawer drawer) {
-		return false;
-	}
-	
-	/*
-	 * Atualiza e Desenha
-	 */
-	protected void endDraw(final Drawer drawer) {
-	}
+	public void draw(final float preOpacity, final Drawer drawer);
 }

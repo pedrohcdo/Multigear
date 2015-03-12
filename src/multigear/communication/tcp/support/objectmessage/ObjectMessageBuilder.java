@@ -33,8 +33,28 @@ final public class ObjectMessageBuilder {
 	 * @param value Integer Value
 	 * @return This ObjectMessage reference
 	 */
+	final public ObjectMessageBuilder add(final short value) {
+		addToStackMessages("short:" + value);
+		return this;
+	}
+	
+	/**
+	 * Add Integer Value
+	 * @param value Integer Value
+	 * @return This ObjectMessage reference
+	 */
 	final public ObjectMessageBuilder add(final int value) {
 		addToStackMessages("int:" + value);
+		return this;
+	}
+	
+	/**
+	 * Add Integer Value
+	 * @param value Integer Value
+	 * @return This ObjectMessage reference
+	 */
+	final public ObjectMessageBuilder add(final long value) {
+		addToStackMessages("long:" + value);
 		return this;
 	}
 	

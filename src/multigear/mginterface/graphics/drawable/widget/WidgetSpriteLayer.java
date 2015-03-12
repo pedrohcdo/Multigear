@@ -14,7 +14,7 @@ import multigear.mginterface.graphics.opengl.texture.Texture;
  * 
  *         Property Createlier.
  */
-final public class WidgetSpriteLayer extends WidgetLayer {
+final public class WidgetSpriteLayer implements WidgetLayer {
 	
 	// Private Variables
 	private multigear.mginterface.graphics.opengl.texture.Texture mTexture;
@@ -26,7 +26,8 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	private multigear.general.utils.Vector2 mCenter = new Vector2(0, 0);
 	private multigear.general.utils.Vector2 mScroll = new Vector2(0, 0);
 	private float mAngle = 0;
-
+	private int mZ = 0;
+	private int mID = 0;
 	
 	// For Draw
 	private Texture mPreparedTexture;
@@ -47,6 +48,8 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 */
 	final public void setTexture(final multigear.mginterface.graphics.opengl.texture.Texture texture) {
 		mTexture = texture;
+		if(mTexture == null)
+			return;
 		mSize = texture.getSize().clone();
 	}
 	
@@ -121,12 +124,30 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	}
 	
 	/**
+	 * Set Z depth
+	 * @param z Depth
+	 */
+	@Override
+	final public void setZ(final int z) {
+		mZ = z;
+	}
+	
+	/**
+	 * Set Id
+	 * @param id Id
+	 */
+	@Override
+	final public void setId(final int id) {
+		mID = id;
+	}
+	
+	/**
 	 * Get Texture
 	 * 
 	 * @return texture
 	 *         {@link multigear.mginterface.graphics.opengl.texture.Texture}
 	 */
-	final public multigear.mginterface.graphics.opengl.texture.Texture getTexture() {
+	final public Texture getTexture() {
 		return mTexture;
 	}
 	
@@ -136,7 +157,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 * @return animationStack
 	 *         {@link multigear.mginterface.graphics.animations.AnimationStack}
 	 */
-	final public multigear.mginterface.graphics.animations.AnimationStack getAnimationStack() {
+	final public AnimationStack getAnimationStack() {
 		return mAnimationStack;
 	}
 	
@@ -200,6 +221,24 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	}
 	
 	/**
+	 * Get Z Depth
+	 * @return Depth
+	 */
+	@Override
+	final public int getZ() {
+		return mZ;
+	}
+	
+	/**
+	 * Get Id
+	 * @return Id
+	 */
+	@Override
+	final public int getId() {
+		return mID;
+	}
+	
+	/**
 	 * Set Matrix Transformations for this Layer
 	 * <p>
 	 * 
@@ -207,7 +246,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 	 *            MatrixRow
 	 * @return True if need Draw
 	 */
-	final protected boolean beginDraw(final float preOpacity, final Drawer drawer) {
+	final public void draw(final float preOpacity, final Drawer drawer) {
 		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
@@ -225,7 +264,7 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 		
 		// Not Update
 		if (mPreparedTexture == null || mPreparedOpacity <= 0)
-			return false;
+			return;
 		
 		// Get Infos
 		
@@ -253,15 +292,10 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
 		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
 		matrixRow.postTranslatef(tX, tY);
-
-		return true;
 		
-	}
-	
-	/*
-	 * Atualiza e Desenha
-	 */
-	protected void endDraw(final Drawer drawer) {
+		// Begin Drawer
+		drawer.begin();
+		
 		// Prepare Drawer
 		drawer.setOpacity(mPreparedOpacity);
 		drawer.setTexture(mPreparedTexture);
@@ -269,8 +303,8 @@ final public class WidgetSpriteLayer extends WidgetLayer {
 		// Draw
 		drawer.drawTexture(mSize);
 		
-		// Get Matrix Row
-		final WorldMatrix matrixRow = drawer.getWorldMatrix();
+		// End Drawer
+		drawer.end();
 		
 		// Pop Matrix
 		matrixRow.pop();

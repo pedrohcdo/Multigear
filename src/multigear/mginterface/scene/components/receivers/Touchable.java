@@ -1,6 +1,5 @@
 package multigear.mginterface.scene.components.receivers;
 
-import multigear.mginterface.scene.components.Component;
 import android.view.MotionEvent;
 
 /**
@@ -9,7 +8,7 @@ import android.view.MotionEvent;
  * @author user
  *
  */
-public interface Touchable extends Component {
+public interface Touchable {
 
 	/**
 	 * Touch handler

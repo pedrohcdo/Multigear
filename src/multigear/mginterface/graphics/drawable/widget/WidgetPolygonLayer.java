@@ -24,7 +24,7 @@ import android.graphics.Rect;
  * 
  *         Property Createlier.
  */
-final public class WidgetPolygonLayer extends WidgetLayer {
+final public class WidgetPolygonLayer implements WidgetLayer {
 	
 
 	// For Draw
@@ -53,8 +53,6 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	protected boolean mTouchable = true;
 	protected boolean mFixedSpace = false;
 	protected boolean mMirror[] = { false, false };
-	protected int mZ = 0;
-	protected int mId = 0;
 	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
 	protected FloatBuffer mVertices = GeneralUtils.createFloatBuffer(0);
 	protected FloatBuffer mTextureVertex = GeneralUtils.createFloatBuffer(0);
@@ -63,6 +61,8 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	protected float mPolygonFloatExtra = 0;
 	protected Vector2 mPolygonVectorExtra = new Vector2();
 	protected FloatBuffer mPolygonFloatBufferExtra = null;
+	private int mZ = 0;
+	private int mID = 0;
 	
 	/**
 	 * Constructor
@@ -502,8 +502,8 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	 * @param inverted
 	 */
 	final public void setMirror(final boolean mirrorX, final boolean mirrorY) {
-		mMirror[0] = true;
-		mMirror[1] = true;
+		mMirror[0] = mirrorX;
+		mMirror[1] = mirrorY;
 	}
 
 	/**
@@ -561,7 +561,7 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	 * @param id Identifier
 	 */
 	public void setId(int id) {
-		mId = id;
+		mID = id;
 	}
 
 	/**
@@ -612,6 +612,15 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	 */
 	final public void setFixedSpace(final boolean fixed) {
 		mFixedSpace = fixed;
+	}
+	
+	/**
+	 * Set Z depth
+	 * @param z Depth
+	 */
+	@Override
+	final public void setZ(final int z) {
+		mZ = z;
 	}
 	
 	/**
@@ -678,15 +687,6 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	}
 	
 	/**
-	 * Get identifier
-	 * 
-	 * @return Return Indentifier
-	 */
-	public int getId() {
-		return mId;
-	}
-	
-	/**
 	 * Get drawable opacity
 	 * 
 	 * @return Return drawable opacity
@@ -733,6 +733,24 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	}
 	
 	/**
+	 * Get Z Depth
+	 * @return Depth
+	 */
+	@Override
+	final public int getZ() {
+		return mZ;
+	}
+	
+	/**
+	 * Get Id
+	 * @return Id
+	 */
+	@Override
+	final public int getId() {
+		return mID;
+	}
+	
+	/**
 	 * Set Matrix Transformations for this Layer
 	 * <p>
 	 * 
@@ -740,7 +758,7 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 	 *            MatrixRow
 	 * @return True if need Draw
 	 */
-	final protected boolean beginDraw(final float preOpacity, final Drawer drawer) {
+	final public void draw(final float preOpacity, final Drawer drawer) {
 		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
@@ -764,13 +782,14 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 		float siy = -oy;
 
 		if (mMirror[0]) {
-			siy += sy;
-			sy *= -1;
-		}
-		if (mMirror[1]) {
 			six += sx;
 			sx *= -1;
 		}
+		if (mMirror[1]) {
+			siy += sy;
+			sy *= -1;
+		}
+
 
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
@@ -790,28 +809,20 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 		mFinalTransformation[5] = -s * six + c * siy + tY;
 		matrixRow.postConcatf(mFinalTransformation);
 		
-		return true;
-		
-	}
-	
-	/*
-	 * Atualiza e Desenha
-	 */
-	protected void endDraw(final Drawer drawer) {
-		
 		// Prepare Vertex
 		// note: TextureVertex always already in the position 0
 		mVertices.position(0);
-				
+						
 		// Set Texture
+		drawer.begin();
 		drawer.setOpacity(mPreparedOpacity);
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.setColor(mColor);
 		drawer.setTexture(mTexture);
-		drawer.enableViewport(mViewport);
+		drawer.snip(mViewport);
 		drawer.setElementVertex(mVertices);
 		drawer.setTextureVertex(mTextureVertex);
-				
+						
 		// Draw
 		switch(mPolygonMode) {
 		case POLYGON_MODE_NORMAL:
@@ -824,13 +835,10 @@ final public class WidgetPolygonLayer extends WidgetLayer {
 			drawer.drawEllipse(mPolygonVectorExtra);
 			break;
 		}
-				
+						
 		// End Drawer
 		drawer.end();
-		
-		// Get Matrix Row
-		final WorldMatrix matrixRow = drawer.getWorldMatrix();
-		
+				
 		// Pop Matrix
 		matrixRow.pop();
 	}

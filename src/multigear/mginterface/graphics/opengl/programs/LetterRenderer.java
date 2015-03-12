@@ -53,7 +53,7 @@ final public class LetterRenderer extends BaseProgram {
 				"void main() {" + 
 					"gl_Position = uProjectionMatrix * vec4(aElementVertex.xy, 0, 1);" +
 					"vTextureCoord = aElementVertex.zw;" +
-					"vTextureId = aTexturesVertex;" +
+					"vTextureId = aTexturesVertex * 100.0;" +
 					"vColor = aColorsVertex;" +
 				"}";
 	}
@@ -73,14 +73,16 @@ final public class LetterRenderer extends BaseProgram {
 				"varying float vTextureId;" +
 				"varying vec4 vColor;" +
 				"void main() {" +
-					"if(int(vTextureId) == 0)" +
-						"gl_FragColor = texture2D(uTextureSample1, vTextureCoord) * uBlendColor * vColor;" + 
-					"if(int(vTextureId) == 1)" +
-						"gl_FragColor = texture2D(uTextureSample2, vTextureCoord) * uBlendColor * vColor;" + 
-					"if(int(vTextureId) == 2)" +
-						"gl_FragColor = texture2D(uTextureSample3, vTextureCoord) * uBlendColor * vColor;" + 
-					"if(int(vTextureId) == 3)" +
+					"int id = int(vTextureId);" +
+					"if(id <= 50) {" +
+						"gl_FragColor = texture2D(uTextureSample1, vTextureCoord) * uBlendColor * vColor;" +
+					"} else if(id > 50 && id <= 150) {" +
+						"gl_FragColor = texture2D(uTextureSample2, vTextureCoord) * uBlendColor * vColor;" +
+					"} else if(id > 150 && id <= 250) {" +
+						"gl_FragColor = texture2D(uTextureSample3, vTextureCoord) * uBlendColor * vColor;" +
+					"} else {" +
 						"gl_FragColor = texture2D(uTextureSample4, vTextureCoord) * uBlendColor * vColor;" + 
+					"}" +
 				"}";
 	}
 	

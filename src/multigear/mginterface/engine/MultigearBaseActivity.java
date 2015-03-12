@@ -2,6 +2,7 @@ package multigear.mginterface.engine;
 
 import android.support.v7.app.ActionBarActivity;
 import android.view.MotionEvent;
+import android.widget.Toast;
 
 /**
  * Multigear Base Activity
@@ -65,9 +66,14 @@ public class MultigearBaseActivity extends ActionBarActivity {
 	 */
 	@Override
 	protected void onPause() {
+		
+		super.onPause();
+	}
+	
+	protected void onStop() {
 		if (mMultigear != null)
 			mMultigear.sync().pause().unsync();
-		super.onPause();
+		super.onStop();
 	}
 	
 	/**

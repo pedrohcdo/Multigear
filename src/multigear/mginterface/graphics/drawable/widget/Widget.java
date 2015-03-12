@@ -1,5 +1,6 @@
 package multigear.mginterface.graphics.drawable.widget;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,6 +14,7 @@ import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.scene.Scene;
+import multigear.mginterface.scene.components.receivers.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import multigear.mginterface.scene.components.receivers.Touchable;
 import multigear.mginterface.scene.listeners.BaseListener;
@@ -20,9 +22,9 @@ import multigear.mginterface.scene.listeners.ClickListener;
 import multigear.mginterface.scene.listeners.SimpleListener;
 import multigear.mginterface.scene.listeners.TouchListener;
 import android.annotation.SuppressLint;
-import android.content.DialogInterface.OnClickListener;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.os.Parcel;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -36,7 +38,7 @@ import android.view.MotionEvent;
  * 
  *         Property Createlier.
  */
-public class Widget implements Drawable, Touchable {
+public class Widget implements Drawable, Touchable, Component {
 	
 	/**
 	 * Widget Skin
@@ -132,6 +134,19 @@ public class Widget implements Drawable, Touchable {
 		Vector2 framePosition;
 	}
 
+	/**
+	 * Drawing Layer
+	 * 
+	 * @author user
+	 *
+	 */
+	public enum DrawingLayer {
+		
+		/* Conts */
+		LAYER_BOTTOM,
+		LAYER_TOP;
+	}
+	
 	// Final Private Variables
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	final private Vector2[] mVertices;
@@ -286,15 +301,6 @@ public class Widget implements Drawable, Touchable {
 	 */
 	final public void setSize(final Vector2 size) {
 		mSize = size.clone();
-	}
-	
-	/**
-	 *	Set drawable opacity
-	 * 
-	 * @param opacity [in] Opacity
-	 */
-	final public void getOpacity(final float opacity) {
-		mOpacity = opacity;
 	}
 	
 	/**
@@ -667,7 +673,7 @@ public class Widget implements Drawable, Touchable {
 		final float sy = mSize.y * mScale.y;
 		
 		// Animation Level
-		final Vector2 ascale =Vector2.scale(mScale, animationSet.getScale());
+		final Vector2 ascale = Vector2.scale(mScale, animationSet.getScale());
 		final float aox = mCenter.x * ascale.x;
 		final float aoy = mCenter.y * ascale.y;
 		final float arotation = mAngle + animationSet.getRotation();
@@ -686,60 +692,41 @@ public class Widget implements Drawable, Touchable {
 		final float opacity = animationSet.getOpacity() * getOpacity();
 		
 		// Enable Viewport
-		drawer.enableViewport(mViewport);
+		drawer.begin();
+		drawer.snip(mViewport);
 		drawer.setBlendFunc(mBlendFunc);
 		
+		// Transformations for onDraw()
+		Matrix preTransformations = new Matrix();
+					
+		// Scale
+		preTransformations.postScale(ascale.x, ascale.y);
+					
+		// Top Transformations
+		preTransformations.postTranslate(-aox, -aoy);
+		preTransformations.postRotate(arotation);
+		preTransformations.postTranslate(aox, aoy);
+					
+		// Bottom Transformations
+		preTransformations.postTranslate((mPosition.x - mScroll.x - aox) + atranslate.x, (mPosition.y - mScroll.y - aoy) + atranslate.y);
+					
+		// Enable pre transformations
+		matrixRow.setPreTransformations(preTransformations);
+		matrixRow.enablePreTransformationsMatrix();
+		
+		// Draw bottom layer
+		onDraw(drawer, DrawingLayer.LAYER_BOTTOM);
+				
 		// Draw
-		for (final multigear.mginterface.graphics.drawable.widget.WidgetLayer layer : mLayers) {
-			// Begin Layer Draw
-			if (layer.beginDraw(opacity, drawer)) {
-				
-				// Scale
-				matrixRow.postScalef(ascale.x, ascale.y);
-				
-				// Top Transformations
-				matrixRow.postTranslatef(-aox, -aoy);
-				matrixRow.postRotatef(arotation);
-				matrixRow.postTranslatef(aox, aoy);
-				
-				// Bottom Transformations
-				final float tX = (mPosition.x - mScroll.x - aox) + atranslate.x;
-				final float tY = (mPosition.y - mScroll.y - aoy) + atranslate.y;
-				matrixRow.postTranslatef(tX, tY);
-				
-				// End Layer Draw
-				layer.endDraw(drawer);
-			}
-		}
+		for (final WidgetLayer layer : mLayers)
+			layer.draw(opacity, drawer);
 		
-		{
-			// Transformations for onDraw()
-			Matrix preTransformations = new Matrix();
+		// Draw top layer
+		onDraw(drawer, DrawingLayer.LAYER_TOP);
 			
-			// Scale
-			preTransformations.postScale(ascale.x, ascale.y);
-			
-			// Top Transformations
-			preTransformations.postTranslate(-aox, -aoy);
-			preTransformations.postRotate(arotation);
-			preTransformations.postTranslate(aox, aoy);
-			
-			// Bottom Transformations
-			preTransformations.postTranslate((mPosition.x - mScroll.x - aox) + atranslate.x, (mPosition.y - mScroll.y - aoy) + atranslate.y);
-			
-			// Enable pre transformations
-			matrixRow.setPreTransformations(preTransformations);
-			matrixRow.enablePreTransformationsMatrix();
-			
-			// onDraw()
-			onDraw(drawer);
-			
-			// Disable pre transformations
-			matrixRow.setPreTransformations(null);
-			matrixRow.disablePreTransformationsMatrix();
-		}
-		
-		
+		// Disable pre transformations
+		matrixRow.setPreTransformations(null);
+		matrixRow.disablePreTransformationsMatrix();
 		
 		// End Drawer
 		drawer.end();
@@ -921,7 +908,7 @@ public class Widget implements Drawable, Touchable {
 	 *            MotionEvent used for touch.
 	 * @return Return true if handled.
 	 */
-	final public void touch(final MotionEvent motionEvent) {
+	final public void touch(MotionEvent motionEvent) {
 		if (!mTouchable) {
 			return;
 		}
@@ -1028,7 +1015,7 @@ public class Widget implements Drawable, Touchable {
 	public void dispose() {}
 	
 	/** On Update Event */
-	protected void onDraw(final Drawer drawer) {}
+	protected void onDraw(final Drawer drawer, final DrawingLayer drawingLayer) {}
 	protected void onUpdate() {}
 	
 	/** On Refresh */

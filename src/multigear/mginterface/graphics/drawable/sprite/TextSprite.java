@@ -10,12 +10,9 @@ import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
-import multigear.mginterface.scene.Scene;
-import multigear.mginterface.scene.components.Component;
+import multigear.mginterface.scene.components.receivers.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
-import android.opengl.GLES20;
-import android.view.MotionEvent;
 
 /**
  * Text Sprite
@@ -24,7 +21,7 @@ import android.view.MotionEvent;
  * 
  *         Property Createlier.
  */
-public class TextSprite implements Drawable {
+public class TextSprite implements Drawable, Component {
 	
 	// Final Private Variables
 	final private float mFinalTransformation[] = new float[] { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
@@ -137,8 +134,8 @@ public class TextSprite implements Drawable {
 	 * @param inverted
 	 */
 	final public void setMirror(final boolean mirrorX, final boolean mirrorY) {
-		mMirror[0] = true;
-		mMirror[1] = true;
+		mMirror[0] = mirrorX;
+		mMirror[1] = mirrorY;
 	}
 	
 	/**
@@ -395,13 +392,14 @@ public class TextSprite implements Drawable {
 		float siy = -oy;
 
 		if (mMirror[0]) {
-			siy += sy;
-			sy *= -1;
-		}
-		if (mMirror[1]) {
 			six += sx;
 			sx *= -1;
 		}
+		if (mMirror[1]) {
+			siy += sy;
+			sy *= -1;
+		}
+
 
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
@@ -419,12 +417,13 @@ public class TextSprite implements Drawable {
 		mFinalTransformation[3] = -sx * s;
 		mFinalTransformation[4] = sy * c;
 		mFinalTransformation[5] = -s * six + c * siy + tY;
-		matrixRow.postConcatf(mFinalTransformation);
+		matrixRow.preConcatf(mFinalTransformation);
 		
 		// Draw Text
+		drawer.begin();
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.setOpacity(opacity);
-		drawer.enableViewport(mViewport);
+		drawer.snip(mViewport);
 		drawer.drawText(mFontMap, mText, mFontWriter);
 		drawer.end();
 		

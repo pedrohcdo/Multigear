@@ -1,6 +1,7 @@
 package multigear.mginterface.scene.components;
 
 import multigear.general.utils.Vector2;
+import multigear.mginterface.scene.components.receivers.Component;
 import multigear.mginterface.scene.components.receivers.Touchable;
 import multigear.mginterface.scene.listeners.BaseListener;
 import multigear.mginterface.scene.listeners.ClickListener;
@@ -16,7 +17,7 @@ import android.view.MotionEvent;
  * @author user
  * 
  */
-public class TouchableArea implements Touchable {
+public class TouchableArea implements Touchable, Component {
 
 	// Private Variables
 	private BaseListener mListener;

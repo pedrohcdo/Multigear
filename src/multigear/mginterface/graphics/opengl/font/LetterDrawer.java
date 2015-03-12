@@ -38,10 +38,7 @@ final public class LetterDrawer {
 		public String text;
 		public Vector2 position;
 	}
-
-	// Final Private Variables
-	final private Letter mLetter;
-
+	
 	// Private Variables
 	private boolean mBegin = false;
 	private Color mColor = Color.WHITE;
@@ -54,9 +51,7 @@ final public class LetterDrawer {
 	/**
 	 * Constructor
 	 */
-	protected LetterDrawer(final Letter letter) {
-		mLetter = letter;
-	}
+	protected LetterDrawer() {}
 	
 	/**
 	 * Clear
@@ -214,6 +209,7 @@ final public class LetterDrawer {
 					float elementRight = x + bounds.y * scale;
 					float elementBottom = y + layer.mMaxHeight;
 					
+					
 					/*
 					 *[.]   .
 					 * 
@@ -267,7 +263,7 @@ final public class LetterDrawer {
 					textureBuffer.put(layer.mId);
 					textureBuffer.put(layer.mId);
 					textureBuffer.put(layer.mId);
-					
+
 					// Add Indices
 					indicesBuffer.put(indicesCount);
 					indicesBuffer.put(indicesCount+1);
@@ -283,7 +279,6 @@ final public class LetterDrawer {
 					
 					x += padd.x;
 				} else {
-					
 					// Colors
 					for(int i=0; i<4; i++) {
 						elementsBuffer.put(0);

@@ -319,6 +319,14 @@ final public class Multigear {
 		return new MultigearSync(this, mEventHandler);
 	}
 	
+	/**
+	 * Return Blank events
+	 * @return
+	 */
+	final public MultigearBlank blank() {
+		return new MultigearBlank(this, mEventHandler);
+	}
+	
 	/*
 	 * Retorna uma instancia Thread Safe da Engine
 	 */

@@ -1,7 +1,7 @@
 package multigear.mginterface.scene.listeners;
 
 import multigear.general.utils.Vector2;
-import multigear.mginterface.scene.components.Component;
+import multigear.mginterface.scene.components.receivers.Component;
 
 
 /**

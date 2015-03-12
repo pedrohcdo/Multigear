@@ -16,7 +16,7 @@ import multigear.general.utils.Vector2;
  * @author user
  *
  */
-public class MultigearGameObjects {
+public class GameObjects {
 	
 	/**
 	 * Object Type
@@ -65,7 +65,7 @@ public class MultigearGameObjects {
 	
 	// Final Private Variables
 	final private MultigearGame mGame;
-	final private MultigearGameState mMonitor;
+	final private GameState mMonitor;
 	final private List<GameObject> mGameObjects = new ArrayList<GameObject>();
 	final private List<GameMessage> mGameMessages = new ArrayList<GameMessage>();
 	
@@ -74,7 +74,7 @@ public class MultigearGameObjects {
 	 * 
 	 * @param game
 	 */
-	protected MultigearGameObjects(final MultigearGame game, final MultigearGameState monitor) {
+	protected GameObjects(final MultigearGame game, final GameState monitor) {
 		mGame = game;
 		mMonitor = monitor;
 	}

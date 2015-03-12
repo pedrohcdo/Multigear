@@ -50,8 +50,8 @@ public class SupportService extends Service {
 	// Private Variables
 	private DedicatedServices mDedicatedServices;
 	private SupportThreadGroup mSupportThreadGroup;
-	private boolean mEngineInitialized;
-	private boolean mEngineResumed;
+	private volatile boolean mEngineInitialized;
+	private volatile boolean mEngineResumed;
 	private boolean mNotificationShowed;
 	
 	// Used for extra protection of support thread process used to kill app
@@ -188,6 +188,7 @@ public class SupportService extends Service {
 	final public void engineResumed() {
 		hideNotification();
 		mEngineResumed = true;
+		mSupportThreadGroup.killSupportThread(SupportThread.SUPPORT_DESROYER);
 	}
 	
 	/**

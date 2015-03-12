@@ -3,8 +3,6 @@ package multigear.mginterface.tools.mgmap;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.util.Log;
-
 import multigear.communication.tcp.support.ComManager;
 import multigear.communication.tcp.support.ConnectionInfo;
 import multigear.communication.tcp.support.ParentAttributes;
@@ -15,6 +13,7 @@ import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilt;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.components.UpdatableListener;
+import android.util.Log;
 
 /**
  * Multigear Map
@@ -116,10 +115,10 @@ public class MultigearGame {
 	final private ComManager mComManager;
 	final private int mComCode;
 	final private MultigearGameListener mDuoMapListener;
-	final private MultigearGameState mGameState = new MultigearGameState();
-	final private MultigearGameObjects mGameObjects = new MultigearGameObjects(this, mGameState);
-	final private MultigearGameVariables mGameVariables = new MultigearGameVariables(this);
-	final private MultigearGameMonitor mGameMonitor = new MultigearGameMonitor(this);
+	final private GameState mGameState = new GameState(this);
+	final private GameObjects mGameObjects = new GameObjects(this, mGameState);
+	final private GameVariables mGameVariables = new GameVariables(this);
+	final private GameMonitor mGameMonitor = new GameMonitor(this);
 	final private AlignMode mAlignMode;
 	
 	// Private Variables
@@ -200,6 +199,14 @@ public class MultigearGame {
 	}
 	
 	/**
+	 * Update
+	 */
+	final protected void forceToUpdate() {
+		mScene.getComManager().update();
+		update();
+	}
+	
+	/**
 	 * Communication Message
 	 */
 	final public void onComMessage(final SupportMessage message) {
@@ -276,7 +283,7 @@ public class MultigearGame {
 			}
 			// Connected
 			mConnectionFinish = true;
-			mGameState.prepare(mPlayer, mapSize, screenDivision, adjust);
+			mGameState.prepare(mPlayer, mapSize, screenDivision, adjust, attributes);
 			mDuoMapListener.onConnect(true);
 			break;
 		}
@@ -373,14 +380,7 @@ public class MultigearGame {
 		mComManager.sendForAll(built);
 	}
 	
-	/**
-	 * Get Align Position
-	 * @return
-	 */
-	final private Vector2 getAlignMapPosition() {
-		return mGameState.positionToMap(new Vector2(0, (mScene.getSpaceParser().getScreenSize().y - getState().getMapSize().y) / 2));
-	}
-	
+
 	/**
 	 * Config Scene
 	 */
@@ -388,14 +388,14 @@ public class MultigearGame {
 		if(!mConnectionFinish)
 			throw new RuntimeException("Not Connected.");
 		scene.enable(Scene.FUNC_VIRTUAL_DPI);
-		scene.setPosition(getAlignMapPosition());
+		scene.setPosition(mGameState.getAlignMapPosition());
 	}
 	
 	/**
 	 * Get DuoMap Monitor.<br>
 	 * <b>Note:</b> Monitor available after connection finish
 	 */
-	final public MultigearGameState getState() {
+	final public GameState getState() {
 		if(!mConnectionFinish)
 			throw new RuntimeException("Not Connected.");
 		return mGameState;
@@ -406,7 +406,7 @@ public class MultigearGame {
 	 * 
 	 * @return
 	 */
-	final public MultigearGameVariables getVariables() {
+	final public GameVariables getVariables() {
 		if(!mConnectionFinish)
 			throw new RuntimeException("Not Connected.");
 		return mGameVariables;
@@ -417,7 +417,7 @@ public class MultigearGame {
 	 * <b>Note:</b> Monitor available after connection finish
 	 * @return
 	 */
-	final public MultigearGameObjects getObjects() {
+	final public GameObjects getObjects() {
 		if(!mConnectionFinish)
 			throw new RuntimeException("Not Connected.");
 		return mGameObjects;
@@ -428,7 +428,7 @@ public class MultigearGame {
 	 * <b>Note:</b> Monitor available after connection finish
 	 * @return
 	 */
-	final public MultigearGameMonitor getMonitor() {
+	final public GameMonitor getMonitor() {
 		if(!mConnectionFinish)
 			throw new RuntimeException("Not Connected.");
 		return mGameMonitor;

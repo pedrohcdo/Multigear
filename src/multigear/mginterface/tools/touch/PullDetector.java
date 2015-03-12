@@ -141,6 +141,15 @@ final public class PullDetector {
 	}
 	
 	/**
+	 * To reset this detector in the middle of the event will 
+	 * cause the detector think it started from the beginning again.
+	 */
+	final public void reset() {
+		for(final Pointer pointer : mPointers)
+			pointer.startPosition = pointer.framePosition;
+	}
+	
+	/**
 	 * Process touch event
 	 */
 	final public void touch(final MotionEvent touch) {

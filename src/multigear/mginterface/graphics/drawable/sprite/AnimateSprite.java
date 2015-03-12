@@ -3,6 +3,9 @@ package multigear.mginterface.graphics.drawable.sprite;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.util.Log;
+
+import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.texture.Texture;
@@ -32,6 +35,8 @@ public class AnimateSprite extends Sprite {
 	 */
 	final public void addTextureFrame(final Texture texture) {
 		mTextures.add(texture);
+		if(!mAnimate && mTextures.size() == 1)
+			setTexture(texture);
 	}
 	
 	/**
@@ -40,6 +45,8 @@ public class AnimateSprite extends Sprite {
 	final public void clearFrames() {
 		mTextures.clear();
 		mAnimate = false;
+		setTexture(null);
+		setSize(new Vector2(32, 32));
 	}
 	
 	/**
@@ -49,6 +56,8 @@ public class AnimateSprite extends Sprite {
 		mAnimate = true;
 		mAnimationDuration = duration;
 		mAnimationStartedTime = GlobalClock.currentTimeMillis();
+		if (mTextures.size() > 0)
+			setTexture(mTextures.get(0));
 	}
 	
 	/**

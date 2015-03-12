@@ -12,10 +12,10 @@ import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
+import multigear.mginterface.scene.components.receivers.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.opengl.GLES20;
 
 /**
  * TileMap
@@ -23,7 +23,7 @@ import android.opengl.GLES20;
  * @author user
  *
  */
-public class TileMap implements Drawable {
+public class TileMap implements Drawable, Component {
 	
 	/**
 	 * 
@@ -266,8 +266,8 @@ public class TileMap implements Drawable {
 	 * @param inverted
 	 */
 	final public void setMirror(final boolean mirrorX, final boolean mirrorY) {
-		mMirror[0] = true;
-		mMirror[1] = true;
+		mMirror[0] = mirrorX;
+		mMirror[1] = mirrorY;
 	}
 
 	/**
@@ -539,13 +539,14 @@ public class TileMap implements Drawable {
 		float siy = -oy;
 
 		if (mMirror[0]) {
-			siy += sy;
-			sy *= -1;
-		}
-		if (mMirror[1]) {
 			six += sx;
 			sx *= -1;
 		}
+		if (mMirror[1]) {
+			siy += sy;
+			sy *= -1;
+		}
+
 
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
@@ -564,12 +565,13 @@ public class TileMap implements Drawable {
 		mFinalTransformation[3] = -sx * s;
 		mFinalTransformation[4] = sy * c;
 		mFinalTransformation[5] = -s * six + c * siy + tY;
-		matrixRow.postConcatf(mFinalTransformation);
+		matrixRow.preConcatf(mFinalTransformation);
 
 		// Prepare blend mod
+		drawer.begin();
 		drawer.setOpacity(opacity);
 		drawer.setBlendFunc(mBlendFunc);
-		drawer.enableViewport(mViewport);
+		drawer.snip(mViewport);
 		
 		// Draw Layers and sub layers
 		for(LayerInfo info : mLayersInfo) {

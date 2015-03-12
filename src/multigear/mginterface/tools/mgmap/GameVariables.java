@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import android.util.Log;
-
 import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilder;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.tools.mgmap.MultigearGame.Player;
@@ -17,7 +15,7 @@ import multigear.mginterface.tools.mgmap.MultigearGame.RegisterMode;
  * @author user
  *
  */
-final public class MultigearGameVariables {
+final public class GameVariables {
 	
 	/**
 	 * Game Message
@@ -71,14 +69,17 @@ final public class MultigearGameVariables {
 	final private static int VARIABLE_SET = 1;
 	
 	// Final Private Variables
-	final private List<MonitorVariable> mMonitorVariables = new ArrayList<MultigearGameVariables.MonitorVariable>();
+	final private List<MonitorVariable> mMonitorVariables = new ArrayList<GameVariables.MonitorVariable>();
 	final private List<GameMessage> mGameMessages = new ArrayList<GameMessage>();
 	final private MultigearGame mMultigearGame;
+	
+	// Private Variables
+	private boolean mAutoSync = false;
 	
 	/**
 	 * Private Constructor
 	 */
-	protected MultigearGameVariables(final MultigearGame duoMap) {
+	protected GameVariables(final MultigearGame duoMap) {
 		mMultigearGame = duoMap;
 	}
 	
@@ -197,8 +198,6 @@ final public class MultigearGameVariables {
 			variable.value = value;
 			// Finish and send
 			mMultigearGame.sendMessage(builder.build());
-			
-			Log.d("LogTest", "Playe " + mMultigearGame.getState().getPlayer() + " Modify");
 		}
 	}
 	
@@ -284,8 +283,8 @@ final public class MultigearGameVariables {
 		final Iterator<GameMessage> itr = mGameMessages.iterator();
 		while(itr.hasNext()) {
 			final GameMessage message = itr.next();
-			// Vars
-			int group, id;
+			// Variables
+			int group, id, control;
 			Object object;
 			MonitorVariable variable;
 			// Message

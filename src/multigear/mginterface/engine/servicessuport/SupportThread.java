@@ -21,7 +21,7 @@ final public class SupportThread extends Thread {
 	final private SupportService mSupportService;
 	
 	// Private Variables
-	private boolean mEndWork, mInterrupted;
+	private volatile boolean mEndWork, mInterrupted;
 	
 	/**
 	 * Constructor
@@ -103,20 +103,25 @@ final public class SupportThread extends Thread {
 			
 			@Override
 			public boolean onIntercept() {
+				try {
+					sleep(300);
+				} catch(InterruptedException e) {
+					return true;
+				}
 				boolean intercept = true;
 				// If engine has been initialized
 				if (mSupportService.isEngineInitialized()) {
 					// If engine as paused
 					if (!mSupportService.isEngineResumed()) {
 						// Wait if Engine is running
-						if (mSupportService.isEngineRunning() && !isInterrupted())
+						if (mSupportService.isEngineRunning())
 							intercept = false;
 						// Destroy Engine if is not running
 						else
 							mSupportService.engineDestroyedInternal(SupportThread.this);
 					}
 				}
-				return intercept;
+				return intercept || hasInterrupted();
 			}
 		});
 		// End Work

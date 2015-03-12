@@ -1,6 +1,8 @@
 package multigear.mginterface.graphics.opengl.drawer;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
@@ -24,7 +26,6 @@ import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.SceneDrawerState;
 import android.graphics.Rect;
 import android.opengl.GLES20;
-import android.util.Log;
 
 /**
  * Utilizado para desenhar uma textura.
@@ -49,6 +50,7 @@ final public class Drawer {
 	private Color mColor = Color.WHITE;
 	private FloatBuffer mElementVertex, mTextureVertex;
 	private FloatBuffer mTextureVertexFilled = GeneralUtils.createFloatBuffer(new float[] {0, 0, 1, 0, 1, 1, 0, 1});
+	private List<Rect> mSnippes = new ArrayList<Rect>();
 	
 	/*
 	 * Construtor
@@ -59,6 +61,7 @@ final public class Drawer {
 		mMatrixRow = new WorldMatrix(10);
 		mTransformMatrix = new float[16];
 		mRenderer = renderer;
+		mSnippes.add(null);
 	}
 	
 	/**
@@ -200,23 +203,51 @@ final public class Drawer {
 	
 	/**
 	 * Enable Viewport
-	 * @param viewport Viewport, if is null the viewport it will be disabled
+	 * @param viewport Viewport, If rect is null it is ignored
 	 */
-	final public void enableViewport(final Rect viewport) {
-		if(viewport == null) {
-			disableViewport();
+	final public void snip(final Rect rect) {
+		if(rect == null) {
+			//refreshSnip();
 			return;
 		}
-		final int screenHeight = (int) mMainScene.getScreenSize().y;
-		final int top = screenHeight - (viewport.top + viewport.bottom);
-		GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-		GLES20.glScissor(viewport.left, top, viewport.right, viewport.bottom);
+		Rect snip = mSnippes.get(mSnippes.size()-1);
+		if(snip == null)
+			snip = new Rect(rect);
+		else {
+			if(!snip.intersect(rect))
+				snip.set(0, 0, 0, 0);
+		}
+		mSnippes.set(mSnippes.size()-1, snip);
+		refreshSnip(snip);
+	}
+	
+	/**
+	 * Refresh Snip
+	 * @param snip
+	 */
+	final private void refreshSnip(final Rect snip) {
+		if(snip == null) {
+			GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+		} else {
+			final int screenHeight = (int) mMainScene.getScreenSize().y;
+			final int top = screenHeight - (snip.top + snip.bottom);
+			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+			GLES20.glScissor(snip.left, top, snip.right, snip.bottom);
+		}
+	}
+	
+	/**
+	 * Refresh last snip in list
+	 */
+	final private void refreshSnip() {
+		if(mSnippes.size() >= 1)
+			refreshSnip(mSnippes.get(mSnippes.size()-1));
 	}
 	
 	/**
 	 * Disable Viewport
 	 */
-	final public void disableViewport() {
+	final public void clearSnip() {
 		GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 	}
 	
@@ -230,7 +261,7 @@ final public class Drawer {
 		mElementVertex = null;
 		mTextureVertex = null;
 		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
-		disableViewport();
+		mSnippes.add(mSnippes.get(mSnippes.size()-1));
 	}
 	
 	/**
@@ -243,7 +274,9 @@ final public class Drawer {
 		mElementVertex = null;
 		mTextureVertex = null;
 		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
-		disableViewport();
+		if(mSnippes.size() >= 1)
+			mSnippes.remove(mSnippes.size()-1);
+		refreshSnip();
 	}
 	
 	/**

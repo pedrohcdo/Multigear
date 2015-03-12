@@ -12,6 +12,7 @@ import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
+import multigear.mginterface.scene.components.receivers.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 
@@ -21,7 +22,7 @@ import android.graphics.Rect;
  * 
  *         Property Createlier.
  */
-final public class ParticlesGroup implements Drawable {
+final public class ParticlesGroup implements Drawable, Component {
 	
 	// Private Variables
 	private Texture mTexture;
@@ -323,11 +324,12 @@ final public class ParticlesGroup implements Drawable {
 		mParticlesBuffer.position(0);
 		
 		// Prepare Drawer
+		drawer.begin();
 		drawer.setTexture(mTexture);
 		drawer.setOpacity(1);
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.setElementVertex(mParticlesBuffer);
-		drawer.enableViewport(mViewport);
+		drawer.snip(mViewport);
 		
 		// Set Begin
 		drawer.drawParticles(mParticles.size());

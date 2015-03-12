@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -108,13 +109,13 @@ final public class TouchEventsDetector {
 		case MotionEvent.ACTION_POINTER_DOWN:
 			addPointer(touch);
 			if(mTouchEventsDetectorListener != null)
-				mTouchEventsDetectorListener.onTouch(touch.getPointerCount());
+				mTouchEventsDetectorListener.onTouch(mPointers.size());
 			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 			removePointer(touch);
 			if(mTouchEventsDetectorListener != null)
-				mTouchEventsDetectorListener.onUntouch(touch.getPointerCount() - 1);
+				mTouchEventsDetectorListener.onUntouch(mPointers.size());
 			break;
 		case MotionEvent.ACTION_CANCEL:
 			mPointers.clear();
