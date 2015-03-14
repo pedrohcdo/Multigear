@@ -10,7 +10,7 @@ import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
-import multigear.mginterface.scene.components.receivers.Component;
+import multigear.mginterface.scene.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 

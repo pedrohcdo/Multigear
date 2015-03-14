@@ -8,8 +8,8 @@ import java.util.List;
 import android.view.MotionEvent;
 
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
+import multigear.mginterface.scene.Component;
 import multigear.mginterface.scene.Scene;
-import multigear.mginterface.scene.components.receivers.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import multigear.mginterface.scene.components.receivers.Touchable;
 import multigear.mginterface.scene.components.receivers.Updatable;

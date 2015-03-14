@@ -214,8 +214,10 @@ final public class Drawer {
 		if(snip == null)
 			snip = new Rect(rect);
 		else {
-			if(!snip.intersect(rect))
-				snip.set(0, 0, 0, 0);
+			if(!snip.equals(rect)) {
+				if(!snip.intersect(rect))
+					snip.set(0, 0, 0, 0);
+			}
 		}
 		mSnippes.set(mSnippes.size()-1, snip);
 		refreshSnip(snip);
@@ -261,7 +263,11 @@ final public class Drawer {
 		mElementVertex = null;
 		mTextureVertex = null;
 		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
-		mSnippes.add(mSnippes.get(mSnippes.size()-1));
+		final Rect lastSnip = mSnippes.get(mSnippes.size()-1);
+		if(lastSnip == null)
+			mSnippes.add(null);
+		else
+			mSnippes.add(new Rect(lastSnip));
 	}
 	
 	/**

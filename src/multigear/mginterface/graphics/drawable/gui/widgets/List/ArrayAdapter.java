@@ -1,9 +1,9 @@
 package multigear.mginterface.graphics.drawable.gui.widgets.List;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import multigear.general.utils.Vector2;
+import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.scene.components.receivers.Drawable;
 
 /**
@@ -41,8 +41,8 @@ public class ArrayAdapter implements SelectListAdapter {
 		 * Get Drawable
 		 */
 		@Override
-		public Drawable getDrawable() {
-			return mDrawable;
+		public void draw(final Drawer drawer, final SelectList.DrawingHolder drawingHolder, final Vector2 cellSize) {
+			mDrawable.draw(drawer);
 		}
 
 		/**

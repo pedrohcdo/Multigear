@@ -11,7 +11,7 @@ import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
-import multigear.mginterface.scene.components.receivers.Component;
+import multigear.mginterface.scene.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 
@@ -303,10 +303,13 @@ public class Polygon implements Drawable, Component {
 	final public void addVertices(final Polygon polygon) {
 		mVertices.position(mVerticesCount * 2);
 		mTextureVertex.position(mVerticesCount * 2);
-		final int verticesCount = polygon.getVerticesCount() * 2;
+		
+		final int verticesCount = polygon.mVerticesCount * 2;
+		
 		if((mVertices.position() + verticesCount) > mVertices.limit()) {
 			FloatBuffer last = mVertices;
 			FloatBuffer lastTextureVertex = mTextureVertex;
+			
 			last.position(0);
 			lastTextureVertex.position(0);
 			
@@ -321,19 +324,13 @@ public class Polygon implements Drawable, Component {
 				mTextureVertex.put(lastTextureVertex.get());
 				mTextureVertex.put(lastTextureVertex.get());
 			}
-			polygon.mVertices.position(0);
-			for(int i=0; i<polygon.mVerticesCount; i++) {
-				mVertices.put(polygon.mVertices.get());
-				mVertices.put(polygon.mVertices.get());
-			}
-		} else {
-			polygon.mVertices.position(0);
-			for(int i=0; i<polygon.mVerticesCount; i++) {
-				mVertices.put(polygon.mVertices.get());
-				mVertices.put(polygon.mVertices.get());
-			}
 		}
-		mVerticesCount += 1;
+		polygon.mVertices.position(0);
+		for(int i=0; i<polygon.mVerticesCount; i++) {
+			mVertices.put(polygon.mVertices.get());
+			mVertices.put(polygon.mVertices.get());
+		}
+		mVerticesCount += polygon.mVerticesCount;
 		mapTexture();
 	}
 	

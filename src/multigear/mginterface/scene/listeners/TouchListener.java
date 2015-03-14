@@ -1,6 +1,6 @@
 package multigear.mginterface.scene.listeners;
 
-import multigear.mginterface.scene.components.receivers.Component;
+import multigear.mginterface.scene.Component;
 import android.view.MotionEvent;
 
 /**

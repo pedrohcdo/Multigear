@@ -13,8 +13,8 @@ import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
+import multigear.mginterface.scene.Component;
 import multigear.mginterface.scene.Scene;
-import multigear.mginterface.scene.components.receivers.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import multigear.mginterface.scene.components.receivers.Touchable;
 import multigear.mginterface.scene.listeners.BaseListener;
@@ -697,36 +697,36 @@ public class Widget implements Drawable, Touchable, Component {
 		drawer.setBlendFunc(mBlendFunc);
 		
 		// Transformations for onDraw()
-		Matrix preTransformations = new Matrix();
-					
+		Matrix postTransformations = new Matrix();
+		
 		// Scale
-		preTransformations.postScale(ascale.x, ascale.y);
+		postTransformations.postScale(ascale.x, ascale.y);
 					
 		// Top Transformations
-		preTransformations.postTranslate(-aox, -aoy);
-		preTransformations.postRotate(arotation);
-		preTransformations.postTranslate(aox, aoy);
-					
+		postTransformations.postTranslate(-aox, -aoy);
+		postTransformations.postRotate(arotation);
+		postTransformations.postTranslate(aox, aoy);
+		
 		// Bottom Transformations
-		preTransformations.postTranslate((mPosition.x - mScroll.x - aox) + atranslate.x, (mPosition.y - mScroll.y - aoy) + atranslate.y);
-					
+		postTransformations.postTranslate((mPosition.x - mScroll.x - aox) + atranslate.x, (mPosition.y - mScroll.y - aoy) + atranslate.y);
+		
 		// Enable pre transformations
-		matrixRow.setPreTransformations(preTransformations);
-		matrixRow.enablePreTransformationsMatrix();
+		matrixRow.setPostTransformations(postTransformations);
+		matrixRow.enablePostTransformationsMatrix();
 		
 		// Draw bottom layer
 		onDraw(drawer, DrawingLayer.LAYER_BOTTOM);
-				
+		
 		// Draw
 		for (final WidgetLayer layer : mLayers)
 			layer.draw(opacity, drawer);
 		
 		// Draw top layer
 		onDraw(drawer, DrawingLayer.LAYER_TOP);
-			
+		
 		// Disable pre transformations
-		matrixRow.setPreTransformations(null);
-		matrixRow.disablePreTransformationsMatrix();
+		matrixRow.setPostTransformations(null);
+		matrixRow.disablePostTransformationsMatrix();
 		
 		// End Drawer
 		drawer.end();

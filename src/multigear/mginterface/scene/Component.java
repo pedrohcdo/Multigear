@@ -1,7 +1,5 @@
-package multigear.mginterface.scene.components.receivers;
+package multigear.mginterface.scene;
 
-import multigear.mginterface.graphics.opengl.drawer.Drawer;
-import android.view.MotionEvent;
 
 /**
  * Component

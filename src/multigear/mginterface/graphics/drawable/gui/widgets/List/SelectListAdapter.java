@@ -1,7 +1,7 @@
 package multigear.mginterface.graphics.drawable.gui.widgets.List;
 
 import multigear.general.utils.Vector2;
-import multigear.mginterface.scene.components.receivers.Drawable;
+import multigear.mginterface.graphics.opengl.drawer.Drawer;
 
 /**
  * Select List Adapter
@@ -20,11 +20,11 @@ public interface SelectListAdapter {
 	public interface ItemHolder {
 		
 		/**
-		 * Get Item Drawable
+		 * Draw intem
 		 * 
 		 * @return
 		 */
-		public Drawable getDrawable();
+		public void draw(final Drawer drawer, final SelectList.DrawingHolder drawingHolder, final Vector2 cellSize);
 		
 		/**
 		 * Get Item Height

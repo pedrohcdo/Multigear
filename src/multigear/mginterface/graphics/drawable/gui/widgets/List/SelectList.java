@@ -9,6 +9,8 @@ import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.graphics.animations.AnimationOpacity;
 import multigear.mginterface.graphics.animations.AnimationSet;
+import multigear.mginterface.graphics.drawable.gui.Canvas;
+import multigear.mginterface.graphics.drawable.polygon.Polygon;
 import multigear.mginterface.graphics.drawable.widget.Widget;
 import multigear.mginterface.graphics.drawable.widget.WidgetPolygonLayer;
 import multigear.mginterface.graphics.drawable.widget.WidgetSpriteLayer;
@@ -22,8 +24,8 @@ import multigear.mginterface.tools.touch.PullDetector;
 import multigear.mginterface.tools.touch.PullDetectorListener;
 import multigear.mginterface.tools.touch.TouchEventsDetector;
 import multigear.mginterface.tools.touch.TouchEventsDetectorListener;
+import android.graphics.Rect;
 import android.support.v4.view.MotionEventCompat;
-import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -116,6 +118,18 @@ final public class SelectList extends Widget {
 		CLICKABLE;
 	}
 	
+	/**
+	 * Drawing Holder type
+	 * @author user
+	 *
+	 */
+	public enum DrawingHolder {
+		
+		/* Conts */
+		BACKGROUND,
+		ITEM;
+	}
+	
  	/**
 	 * Drag Detector
 	 */
@@ -151,9 +165,9 @@ final public class SelectList extends Widget {
 	final private int VERTICAL_SCROLL_ANIM_DISAPPEAR = 1;
 	
 	// Final Private Variables
-    private WidgetPolygonLayer mCursorLayer, mVerticalScrollLayer;
 	private WidgetSpriteLayer mBackLayer;
 	private SelectListAdapter mSelectListAdapter;
+	private Polygon mCursorLayer, mVerticalScrollLayer;
 	
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	
@@ -173,8 +187,7 @@ final public class SelectList extends Widget {
 	private boolean mClickLock = true;
 	private int mClickLockPhase = 0;
 	private long mClickLockWait = 0;
-	private Vector2 mCursorPosition = new Vector2();
-	private Vector2 mDrawPosition = new Vector2();
+	private float mDrawPosition = 0;
 	private Attributes mAttributes = new Attributes();
 	private Texture mBackTexture = null;
 	private Type mType = Type.SELECTABLE;
@@ -285,11 +298,10 @@ final public class SelectList extends Widget {
 	 */
 	final public void setupCursor() {
 		
-		mCursorLayer = new WidgetPolygonLayer();
+		mCursorLayer = new Polygon();
 		mCursorLayer.setColor(Color.WHITE);
 		mCursorLayer.setOpacity(0.7f);
-		
-		addLayer(mCursorLayer);
+
 	}
 	
 	/**
@@ -297,7 +309,7 @@ final public class SelectList extends Widget {
 	 */
 	final public void refreshCursor(final float cellHeight) {
 		mCursorLayer.clearVertices();
-		mCursorLayer.addVertices(WidgetPolygonLayer.createRoundedRectangle(new Vector2(getSize().x - mAttributes.border * 2, cellHeight), mAttributes.border));
+		mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(getSize().x - mAttributes.border * 2, cellHeight), mAttributes.border));
 	}
 	
 	/*
@@ -316,12 +328,11 @@ final public class SelectList extends Widget {
 	final private void setupVerticalScroll() {
 		mVerticalScrollHeight = getSize().y - mAttributes.border * 2;
 		Vector2 size = new Vector2(mScene.getDensityParser().smallerValue(10), mVerticalScrollHeight);
-		mVerticalScrollLayer = WidgetPolygonLayer.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5));
+		mVerticalScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5));
 		mVerticalScrollLayer.setPosition(new Vector2(getSize().x - (size.x + mAttributes.border), mAttributes.border));
 		mVerticalScrollLayer.setColor(Color.WHITE);
 		mVerticalScrollLayer.setOpacity(0);
 		mVerticalScrollLayer.setZ(99999);
-		addLayer(mVerticalScrollLayer);
 		updateVerticalScroll();
 	}
 	
@@ -338,7 +349,7 @@ final public class SelectList extends Widget {
 		mVerticalScrollHeight = finalSize;
 		Vector2 size = new Vector2(mScene.getDensityParser().smallerValue(10), finalSize);
 		mVerticalScrollLayer.clearVertices();
-		mVerticalScrollLayer.addVertices(WidgetPolygonLayer.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5)));
+		mVerticalScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5)));
 		setVerticalScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
 	}
 	
@@ -411,10 +422,13 @@ final public class SelectList extends Widget {
 						selectItem(pointer);
 					mClickLockPhase = 0;
 				} else if(mType == Type.CLICKABLE) {
+					// No pressed
+					// Post Click
 					if(mClickLockPhase == 1) {
 						cursorToItem(pointer);
 						mClickLockPhase = 3;
 						mClickLockWait = GlobalClock.currentTimeMillis();
+					// Pressing + release, perform click
 					} else if(mClickLockPhase == 2) {
 						if(mSelectListener != null && mIndex >= 0)
 							mSelectListener.onSelect(mIndex);
@@ -515,18 +529,18 @@ final public class SelectList extends Widget {
 			final int index = (int)Math.max(0, Math.min(mSelectListAdapter.getCount()-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
 	
 			if(mIndex != index) {
-				mCursorPosition = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
+				final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
 				
 				refreshCursor(mSelectListAdapter.getItem(index).getHeight() + mAttributes.padding * 2);
 				mCursorLayer.setOpacity(0.7f);
-				mCursorLayer.setPosition(mCursorPosition);
+				//mCursorLayer.setPosition(mCursorPosition);
 				mCursorLayer.getAnimationStack().clear();
 				mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
 				mCursorLayer.getAnimationStack().start();
 				
 				final float cellSize = mAttributes.padding * 2 + mSelectListAdapter.getItem(index).getHeight();
 				final float scroll = getFinalPosition();
-				final float cursorPos = mCursorPosition.y + scroll;
+				final float cursorPos = cursorDesignedPos.y + scroll;
 				final float cursorPosH = cursorPos + cellSize;
 				
 				if(cursorPos < mAttributes.border)
@@ -569,18 +583,18 @@ final public class SelectList extends Widget {
 			final int index = (int)Math.max(0, Math.min(mSelectListAdapter.getCount()-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
 	
 			if(mIndex != index) {
-				mCursorPosition = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
+				final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
 				
 				refreshCursor(mSelectListAdapter.getItem(index).getHeight() + mAttributes.padding * 2);
 				mCursorLayer.setOpacity(0.7f);
-				mCursorLayer.setPosition(mCursorPosition);
+				//mCursorLayer.setPosition(mCursorPosition);
 				mCursorLayer.getAnimationStack().clear();
 				mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
 				mCursorLayer.getAnimationStack().start();
 				
 				final float cellSize = mAttributes.padding * 2 + mSelectListAdapter.getItem(index).getHeight();
 				final float scroll = getFinalPosition();
-				final float cursorPos = mCursorPosition.y + scroll;
+				final float cursorPos = cursorDesignedPos.y + scroll;
 				final float cursorPosH = cursorPos + cellSize;
 				
 				if(cursorPos < mAttributes.border)
@@ -672,8 +686,7 @@ final public class SelectList extends Widget {
 	 * Update Position
 	 */
 	final private void updatePosition() {
-		mDrawPosition.set(new Vector2(mDrawPosition.x, getFinalPosition() + mAttributes.border + mAttributes.padding));
-		mCursorLayer.setPosition(Vector2.sum(mCursorPosition, new Vector2(0, getFinalPosition())));
+		mDrawPosition = getFinalPosition();
 	}
 	
 	/**
@@ -746,16 +759,25 @@ final public class SelectList extends Widget {
 		if(drawingLayer == DrawingLayer.LAYER_BOTTOM)
 			return;
 		
-		if(mSelectListAdapter == null)
+		if(mSelectListAdapter == null) {
+			mVerticalScrollLayer.draw(drawer);
 			return;
+		}
+		
 		WorldMatrix matrix = drawer.getWorldMatrix();
 		matrix.push();
-		matrix.postTranslatef(mDrawPosition.x + mAttributes.border * 2, mDrawPosition.y);
+		matrix.postTranslatef(mAttributes.border, mDrawPosition + mAttributes.border);
+		
 		drawer.snip(mCursorLayer.getViewport());
 		
-		float filling = mDrawPosition.y - (mAttributes.border + mAttributes.padding);
+		float filling = mDrawPosition;
 		float min = 0;
 		float max = getSize().y - mAttributes.border * 2;
+		
+		float backWidth = getSize().x - mAttributes.border * 2;
+		float itemWidth = backWidth - mAttributes.border * 2;
+		
+		Canvas canvas = new Canvas(drawer);
 		
 		for(int index=0; index<mSelectListAdapter.getCount(); index++) {
 			SelectListAdapter.ItemHolder item = mSelectListAdapter.getItem(index);
@@ -765,17 +787,29 @@ final public class SelectList extends Widget {
 			float bottom = top + cellSize;
 			
 			if(top < max && bottom >= min) {
-				item.getDrawable().draw(drawer);
-			} else if(top >= max)
+				item.draw(drawer, DrawingHolder.BACKGROUND, new Vector2(backWidth, cellSize));
+				if(index == mIndex)
+					mCursorLayer.draw(drawer);
+				matrix.postTranslatef(mAttributes.border, mAttributes.padding);
+				item.draw(drawer, DrawingHolder.ITEM, new Vector2(itemWidth, item.getHeight()));
+				matrix.postTranslatef(-mAttributes.border, item.getHeight() + mAttributes.padding);
+			} else if(top >= max) {
 				break;
+			} else
+				matrix.postTranslatef(0, mAttributes.padding + item.getHeight() + mAttributes.padding);
+			
+			if(index < (mSelectListAdapter.getCount() - 1))
+				canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(backWidth, 2));
+
 			
 			filling += cellSize;
-			matrix.postTranslatef(0, cellSize);
 		}
 		
 		matrix.pop();
 		
-		mCursorLayer.draw(getOpacity(), drawer);
+		mVerticalScrollLayer.draw(drawer);
+		
+		
 	}
 	
 	/**
