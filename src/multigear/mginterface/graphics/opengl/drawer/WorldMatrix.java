@@ -123,8 +123,6 @@ public class WorldMatrix {
 	 */
 	final public void swap() {
 		mFinalTransformations.set(mMatrixQueue[mIndex]);
-		if(mPostTransformationUse)
-			mFinalTransformations.postConcat(mPostTransformations);
 		mFinalTransformations.postConcat(mRoomTransformations);
 		mFinalTransformations.getValues(mMatrix3x3);
 	}

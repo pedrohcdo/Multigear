@@ -30,6 +30,18 @@ public class FontAttributes {
 	}
 	
 	/**
+	 * Constructor with<br>
+	 * <dd>Padding: <b>Vector2(0, 0)</b><br>
+	 * <dd>Use Metric: <b>false</b><br>
+	 * <dd>Linear: <b>false</b><br>
+	 */
+	public FontAttributes() {
+		mPadd = new Vector2();
+		mUseMetrics = false;
+		mLinear = false;
+	}
+	
+	/**
 	 * Get Padd
 	 * 
 	 * @return

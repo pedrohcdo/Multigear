@@ -153,10 +153,10 @@ public class TouchableArea implements Touchable, Component {
 	 * @return Return true if handled.
 	 */
 	@Override
-	public void touch(final MotionEvent motionEvent) {
+	public boolean touch(final MotionEvent motionEvent) {
 		if (!mTouchable) {
 			mTouchHandled = false;
-			return;
+			return false;
 		}
 		Vector2 point = null;
 		int id = 0;
@@ -175,7 +175,7 @@ public class TouchableArea implements Touchable, Component {
 					mHandledPosition = point;
 					if (mListener != null && mListener instanceof TouchListener)
 						((TouchListener) mListener).onTouch(this, motionEvent);
-					return;
+					return true;
 				}
 			}
 			break;
@@ -184,8 +184,10 @@ public class TouchableArea implements Touchable, Component {
 				mTouchHandled = false;
 				if (mListener != null && mListener instanceof TouchListener)
 					((TouchListener) mListener).onTouch(this, motionEvent);
+				
 			}
-			break;
+			// For all consume
+			return false;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 			if (mTouchHandled) {
@@ -202,8 +204,8 @@ public class TouchableArea implements Touchable, Component {
 						((ClickListener) mListener).onClick(this);
 					if (mListener != null && mListener instanceof TouchListener)
 						((TouchListener) mListener).onTouch(this, motionEvent);
+					return true;
 				}
-				return;
 			}
 			break;
 		case MotionEvent.ACTION_MOVE:
@@ -221,12 +223,13 @@ public class TouchableArea implements Touchable, Component {
 						mHandledPosition = point;
 						if (mListener != null && mListener instanceof TouchListener)
 							((TouchListener) mListener).onTouch(this, motionEvent);
-						return;
 					}
 				}
 			}
 			break;
 		}
+		// For all consume
+		return false;
 	}
 
 	/**

@@ -167,4 +167,11 @@ final public class ScaleDetector {
 			break;
 		}
 	}
+	
+	/**
+	 * Reset Detector
+	 */
+	final public void reset() {
+		mPointers.clear();
+	}
 }

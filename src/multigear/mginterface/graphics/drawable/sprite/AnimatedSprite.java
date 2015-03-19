@@ -19,7 +19,7 @@ import multigear.mginterface.graphics.opengl.texture.Texture;
  * 
  *         Property Createlier.
  */
-public class AnimateSprite extends Sprite {
+public class AnimatedSprite extends Sprite {
 	
 	// Private Variables
 	private List<Texture> mTextures = new ArrayList<Texture>();

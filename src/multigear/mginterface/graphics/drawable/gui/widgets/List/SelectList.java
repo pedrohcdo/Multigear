@@ -10,10 +10,10 @@ import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.graphics.animations.AnimationOpacity;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.drawable.gui.Canvas;
+import multigear.mginterface.graphics.drawable.gui.widgets.List.SelectListAdapter.ItemHolder;
 import multigear.mginterface.graphics.drawable.polygon.Polygon;
+import multigear.mginterface.graphics.drawable.sprite.Sprite;
 import multigear.mginterface.graphics.drawable.widget.Widget;
-import multigear.mginterface.graphics.drawable.widget.WidgetPolygonLayer;
-import multigear.mginterface.graphics.drawable.widget.WidgetSpriteLayer;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
@@ -25,7 +25,9 @@ import multigear.mginterface.tools.touch.PullDetectorListener;
 import multigear.mginterface.tools.touch.TouchEventsDetector;
 import multigear.mginterface.tools.touch.TouchEventsDetectorListener;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -97,6 +99,14 @@ final public class SelectList extends Widget {
 					}
 					mPullDetector.reset();
 					mReleasedToImpulse = true;
+					// Cancel items holder touch
+					MotionEvent cancell = MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+					if(mSelectListAdapter != null) {
+						for(final ItemHolder item : mItemsHolder) {
+							item.touch(cancell);
+						}
+					}
+					cancell.recycle();
 				}
 			} else {
 				mPull = pull;
@@ -164,8 +174,13 @@ final public class SelectList extends Widget {
 	final private int VERTICAL_SCROLL_ANIM_APPEAR = 0;
 	final private int VERTICAL_SCROLL_ANIM_DISAPPEAR = 1;
 	
+	//
+	final public static int TOUCH_UNUSE = 0;
+	final public static int TOUCH_CONSUME = 1;
+	final public static int TOUCH_INTERCEPT = 2;
+	
 	// Final Private Variables
-	private WidgetSpriteLayer mBackLayer;
+	private Sprite mBackLayer;
 	private SelectListAdapter mSelectListAdapter;
 	private Polygon mCursorLayer, mVerticalScrollLayer;
 	
@@ -191,6 +206,8 @@ final public class SelectList extends Widget {
 	private Attributes mAttributes = new Attributes();
 	private Texture mBackTexture = null;
 	private Type mType = Type.SELECTABLE;
+	private ItemHolder[] mItemsHolder;
+	private int mItemsCount = 0;
 	
 	/**
 	 * Constructor
@@ -238,9 +255,10 @@ final public class SelectList extends Widget {
 			return;
 		}
 		mSelectListAdapter = adapter;
-		final float itemWidth = getSize().x;
-		for(int i=0; i<mSelectListAdapter.getCount(); i++)
-			mSelectListAdapter.createItem(i, itemWidth);
+		mItemsCount = mSelectListAdapter.getCount();
+		mItemsHolder = new ItemHolder[mItemsCount];
+		for(int i=0; i<mItemsCount; i++)
+			mItemsHolder[i] = mSelectListAdapter.createItem(i);
 		reshapeVerticalScroll();
 	}
 	
@@ -316,10 +334,10 @@ final public class SelectList extends Widget {
 	 * Setup Back
 	 */
 	final public void setupBack() {
-		mBackLayer = new WidgetSpriteLayer();
+		mBackLayer = new Sprite();
 		//mBackLayer.setPosition(new Vector2(0, mHeaderLayer.getSize().y * 0.67f));
 		
-		addLayer(mBackLayer);
+		addComponent(mBackLayer);
 	}
 	
 	/**
@@ -402,53 +420,104 @@ final public class SelectList extends Widget {
 	 */
 	@Override
 	public void onTouch(MotionEvent motionEvent) {
-		if(mSelectListAdapter == null || mSelectListAdapter.getCount() == 0)
+		if(mSelectListAdapter == null || mItemsCount == 0)
 			return;
 
+		boolean itemConsumed = false;
+		boolean itemIntercepted = false;
+		
 		if(mClickLock) {
-			switch(MotionEventCompat.getActionMasked(motionEvent)) {
-			case MotionEvent.ACTION_DOWN:
-			case MotionEvent.ACTION_POINTER_DOWN:
-				addPointer(motionEvent);
-				mClickLockPhase = 1;
-				mClickLockWait = GlobalClock.currentTimeMillis();
-				break;
-			case MotionEvent.ACTION_UP:
-			case MotionEvent.ACTION_POINTER_UP:
-				final Pointer pointer = removePointer(motionEvent);
-
-				if(mType == Type.SELECTABLE) {
-					if(mPointers.size() == 0 && pointer != null)
-						selectItem(pointer);
-					mClickLockPhase = 0;
-				} else if(mType == Type.CLICKABLE) {
-					// No pressed
-					// Post Click
-					if(mClickLockPhase == 1) {
-						cursorToItem(pointer);
-						mClickLockPhase = 3;
-						mClickLockWait = GlobalClock.currentTimeMillis();
-					// Pressing + release, perform click
-					} else if(mClickLockPhase == 2) {
-						if(mSelectListener != null && mIndex >= 0)
-							mSelectListener.onSelect(mIndex);
-						mCursorLayer.setOpacity(0);
-						mIndex = -1;
-						mClickLockPhase = 0;
-					}
-				}
+			
+			
+			
+			
+			float filling = mDrawPosition;
+			float min = 0;
+			float max = getSize().y - mAttributes.border * 2;
+			for(int index=0; index<mItemsCount; index++) {
+				SelectListAdapter.ItemHolder item = mItemsHolder[index];
+				float cellSize = item.getHeight() + mAttributes.padding * 2;
 				
-				break;
-			case MotionEvent.ACTION_CANCEL:
-				mPointers.clear();
-				break;
+				float top = filling;
+				float bottom = top + cellSize;
+				
+				if(top < max && bottom >= min) {
+					int uTouch = item.touch(motionEvent);
+					if((uTouch & TOUCH_CONSUME) == TOUCH_CONSUME) {
+						mClickLockPhase = 0;
+						if(mType == Type.CLICKABLE) {
+							mCursorLayer.setOpacity(0);
+							mIndex = 0;
+						}
+						itemConsumed = true;
+					}
+					if((uTouch & TOUCH_INTERCEPT) == TOUCH_INTERCEPT) {
+						itemIntercepted = true;
+						mTouchEventsDetector.reset();
+						mPullDetector.reset();
+						mImpulseDetector.reset();
+					}
+				} else if(top >= max) {
+					break;
+				}
+				filling += cellSize;
+			}
+			
+			// If item not consume touch, process in this list
+			if(!itemConsumed) {
+				switch(MotionEventCompat.getActionMasked(motionEvent)) {
+				case MotionEvent.ACTION_DOWN:
+				case MotionEvent.ACTION_POINTER_DOWN:
+					Log.d("LogTest", "Down");
+					addPointer(motionEvent);
+					mClickLockPhase = 1;
+					mClickLockWait = GlobalClock.currentTimeMillis();
+					break;
+				case MotionEvent.ACTION_UP:
+				case MotionEvent.ACTION_POINTER_UP:
+					Log.d("LogTest", "Up: " + mClickLockPhase);
+					final Pointer pointer = removePointer(motionEvent);
+	
+					if(mType == Type.SELECTABLE) {
+						if(mPointers.size() == 0 && pointer != null)
+							selectItem(pointer);
+						mClickLockPhase = 0;
+					} else if(mType == Type.CLICKABLE) {
+						// No pressed
+						// Post Click
+						if(mClickLockPhase == 1) {
+							mIndex = -1;
+							cursorToItem(pointer);
+							mClickLockPhase = 3;
+							
+							Log.d("LogTest", "Index: " + mIndex);
+							
+							
+							mClickLockWait = GlobalClock.currentTimeMillis();
+						// Pressing + release, perform click
+						} else if(mClickLockPhase == 2) {
+							if(mSelectListener != null && mIndex >= 0)
+								mSelectListener.onSelect(mIndex);
+							mCursorLayer.setOpacity(0);
+							mIndex = -1;
+							mClickLockPhase = 0;
+						}
+					}
+					
+					break;
+				case MotionEvent.ACTION_CANCEL:
+					mPointers.clear();
+					break;
+				}
 			}
 			
 		}
 		
-		mTouchEventsDetector.touch(motionEvent);
-		mPullDetector.touch(motionEvent);
-		mImpulseDetector.touch(motionEvent);
+		if(!itemIntercepted) {
+			mTouchEventsDetector.touch(motionEvent);
+			mPullDetector.touch(motionEvent);
+			mImpulseDetector.touch(motionEvent);
+		}
 		
 	}
 	
@@ -460,8 +529,8 @@ final public class SelectList extends Widget {
 		if(mSelectListAdapter == null)
 			return 0;
 		float filled = 0;
-		for(int index=0; index<mSelectListAdapter.getCount(); index++) {
-			final SelectListAdapter.ItemHolder item = mSelectListAdapter.getItem(index);
+		for(int index=0; index<mItemsCount; index++) {
+			final SelectListAdapter.ItemHolder item = mItemsHolder[index];
 			filled += mAttributes.padding * 2 + item.getHeight();
 		}
 		return filled;
@@ -476,13 +545,13 @@ final public class SelectList extends Widget {
 		if(mSelectListAdapter == null)
 			return 0;
 		float fill = 0;
-		for(int index=0; index<mSelectListAdapter.getCount(); index++) {
-			final SelectListAdapter.ItemHolder item = mSelectListAdapter.getItem(index);
+		for(int index=0; index<mItemsCount; index++) {
+			final SelectListAdapter.ItemHolder item = mItemsHolder[index];
 			fill += mAttributes.padding * 2 + item.getHeight();
 			if(fill >= position)
 				return index;
 		}
-		return mSelectListAdapter.getCount()-1;
+		return mItemsCount-1;
 	}
 	
 	/**
@@ -495,7 +564,7 @@ final public class SelectList extends Widget {
 			return 0;
 		float position = 0;
 		for(int j=0; j<index; j++) {
-			final SelectListAdapter.ItemHolder item = mSelectListAdapter.getItem(j);
+			final SelectListAdapter.ItemHolder item = mItemsHolder[j];
 			position += mAttributes.padding * 2 + item.getHeight();
 		}
 		return position;
@@ -515,7 +584,9 @@ final public class SelectList extends Widget {
 		final float borderX = mAttributes.border * scale.x;
 		final float borderY = mAttributes.border * scale.y;
 		
-		final Vector2 clickPos = Vector2.sub(pointer.framePosition, Vector2.sub(getPosition(), Vector2.scale(getCenter(), scale)));
+		final Vector2 pos = getDesignedVerticesPosition()[0];
+		
+		final Vector2 clickPos = Vector2.sub(pointer.framePosition, pos);
 		float maxY = (getSize().y - mAttributes.border) * scale.y;
 		// do not use "padding * 2"
 		final float filled = (mAttributes.border + getFilledItems()) * scale.y;
@@ -526,19 +597,19 @@ final public class SelectList extends Widget {
 				
 			final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
 				
-			final int index = (int)Math.max(0, Math.min(mSelectListAdapter.getCount()-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
+			final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
 	
 			if(mIndex != index) {
 				final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
 				
-				refreshCursor(mSelectListAdapter.getItem(index).getHeight() + mAttributes.padding * 2);
+				refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
 				mCursorLayer.setOpacity(0.7f);
 				//mCursorLayer.setPosition(mCursorPosition);
 				mCursorLayer.getAnimationStack().clear();
 				mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
 				mCursorLayer.getAnimationStack().start();
 				
-				final float cellSize = mAttributes.padding * 2 + mSelectListAdapter.getItem(index).getHeight();
+				final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
 				final float scroll = getFinalPosition();
 				final float cursorPos = cursorDesignedPos.y + scroll;
 				final float cursorPosH = cursorPos + cellSize;
@@ -569,7 +640,9 @@ final public class SelectList extends Widget {
 		final float borderX = mAttributes.border * scale.x;
 		final float borderY = mAttributes.border * scale.y;
 		
-		final Vector2 clickPos = Vector2.sub(pointer.framePosition, Vector2.sub(getPosition(), Vector2.scale(getCenter(), scale)));
+		final Vector2 pos = getDesignedVerticesPosition()[0];
+		
+		final Vector2 clickPos = Vector2.sub(pointer.framePosition, pos);
 		float maxY = (getSize().y - mAttributes.border) * scale.y;
 		// do not use "padding * 2"
 		final float filled = (mAttributes.border + getFilledItems()) * scale.y;
@@ -580,19 +653,19 @@ final public class SelectList extends Widget {
 				
 			final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
 				
-			final int index = (int)Math.max(0, Math.min(mSelectListAdapter.getCount()-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
+			final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
 	
 			if(mIndex != index) {
 				final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
 				
-				refreshCursor(mSelectListAdapter.getItem(index).getHeight() + mAttributes.padding * 2);
+				refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
 				mCursorLayer.setOpacity(0.7f);
 				//mCursorLayer.setPosition(mCursorPosition);
 				mCursorLayer.getAnimationStack().clear();
 				mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
 				mCursorLayer.getAnimationStack().start();
 				
-				final float cellSize = mAttributes.padding * 2 + mSelectListAdapter.getItem(index).getHeight();
+				final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
 				final float scroll = getFinalPosition();
 				final float cursorPos = cursorDesignedPos.y + scroll;
 				final float cursorPosH = cursorPos + cellSize;
@@ -696,12 +769,14 @@ final public class SelectList extends Widget {
 	protected void onUpdate() {
 		final AnimationSet set = getAnimationStack().animateFrame();
 		final Vector2 scale = Vector2.scale(set.getScale(), getScale());
-		final float x = getPosition().x - getCenter().x * scale.x;
-		final float y = getPosition().y - getCenter().y * scale.y;
+		
 		final float borderX = mAttributes.border * scale.x;
 		final float borderY = mAttributes.border * scale.y;
-		mCursorLayer.setViewport((int)(borderX + x), (int)(borderY + y), (int)(getSize().x * scale.x - borderX * 2), (int)(getSize().y * scale.y - borderY * 2));
 		
+		RectF rect = getDesignedRect();
+		
+		
+		mCursorLayer.setViewport(new Rect((int)(rect.left + borderX), (int)(rect.top + borderY), (int)(rect.right - borderX), (int)(rect.bottom - borderY)));
 		
 		float maxScroll = getMaxScroll();
 		if(!mPullStarted) {
@@ -742,7 +817,7 @@ final public class SelectList extends Widget {
 		}
 		
 		// If post have click
-		if(mClickLockPhase == 3 && (GlobalClock.currentTimeMillis() - mClickLockWait) >= 100) {
+		if(mClickLockPhase == 3 && (GlobalClock.currentTimeMillis() - mClickLockWait) >= 150) {
 			if(mType == Type.CLICKABLE && mSelectListener != null && mIndex >= 0)
 				mSelectListener.onSelect(mIndex);
 			mIndex = -1;
@@ -779,8 +854,8 @@ final public class SelectList extends Widget {
 		
 		Canvas canvas = new Canvas(drawer);
 		
-		for(int index=0; index<mSelectListAdapter.getCount(); index++) {
-			SelectListAdapter.ItemHolder item = mSelectListAdapter.getItem(index);
+		for(int index=0; index<mItemsCount; index++) {
+			SelectListAdapter.ItemHolder item = mItemsHolder[index];
 			float cellSize = item.getHeight() + mAttributes.padding * 2;
 			
 			float top = filling;
@@ -798,7 +873,7 @@ final public class SelectList extends Widget {
 			} else
 				matrix.postTranslatef(0, mAttributes.padding + item.getHeight() + mAttributes.padding);
 			
-			if(index < (mSelectListAdapter.getCount() - 1))
+			if(index < (mItemsCount - 1))
 				canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(backWidth, 2));
 
 			

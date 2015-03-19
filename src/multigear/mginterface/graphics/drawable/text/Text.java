@@ -1,5 +1,6 @@
-package multigear.mginterface.graphics.drawable.widget;
+package multigear.mginterface.graphics.drawable.text;
 
+import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
@@ -9,38 +10,36 @@ import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWriter;
+import multigear.mginterface.scene.Component;
+import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 
 /**
- * WidgetLayer
+ * Text Sprite
  * 
  * @author PedroH, RaphaelB
  * 
  *         Property Createlier.
  */
-final public class WidgetTextLayer implements WidgetLayer {
+public class Text implements Drawable, Component {
 	
-
-	// For Draw
-	private float mPreparedOpacity;
+	// Final Private Variables
+	final private float mFinalTransformation[] = new float[] { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+	final private AnimationStack mAnimationStack;
 	
 	// Private Variables
-	private AnimationStack mAnimationStack;
 	private FontMap mFontMap;
 	private String mText = "";
 	private Vector2 mScale = new Vector2(1, 1);
 	private Vector2 mPosition = new Vector2(0, 0);
 	private Vector2 mCenter = new Vector2(0, 0);
 	private Vector2 mScroll = new Vector2(0, 0);
-	private float mOpacity = 1.0f;
 	private float mAngle = 0;
-	private boolean mTouchable = true;
-	private boolean mFixedSpace = false;
 	private boolean mMirror[] = { false, false };
 	private Rect mViewport;
+	private int mId, mZ;
+	private float mOpacity = 1;
 	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
-	private int mZ = 0;
-	private int mID = 0;
 	private FontWriter mFontWriter = new FontWriter() {
 		
 		// Final private Variable
@@ -57,10 +56,33 @@ final public class WidgetTextLayer implements WidgetLayer {
 	
 	/**
 	 * Constructor
-	 * @param scene
 	 */
-	public WidgetTextLayer() {
+	public Text() {
 		mAnimationStack = new AnimationStack();
+	}
+
+	/**
+	 * Set Depth
+	 * @param z Depth
+	 */
+	public void setZ(int z) {
+		mZ = z;
+	}
+
+	/**
+	 * Set Identifier
+	 * @param id Identifier
+	 */
+	public void setId(int id) {
+		mId = id;
+	}
+	
+	/**
+	 * Set Opacity
+	 * @param opacity Opacity
+	 */
+	public void setOpacity(float opacity) {
+		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
 	}
 	
 	/**
@@ -90,7 +112,6 @@ final public class WidgetTextLayer implements WidgetLayer {
 		mFontWriter = fontWriter;
 	}
 	
-	
 	/**
 	 * Set Viewport
 	 * 
@@ -105,15 +126,6 @@ final public class WidgetTextLayer implements WidgetLayer {
 	 */
 	final public void setViewport(final int left, final int top, final int width, final int height) {
 		mViewport = new Rect(left, top, width, height);
-	}
-	
-	/**
-	 * Set Blend Func
-	 * 
-	 * @param blendFunc
-	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
 	}
 	
 	/**
@@ -147,6 +159,15 @@ final public class WidgetTextLayer implements WidgetLayer {
 	}
 	
 	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFunc(final BlendFunc blendFunc) {
+		mBlendFunc = blendFunc;
+	}
+	
+	/**
 	 * Set Scale
 	 * 
 	 * @param scale
@@ -167,13 +188,13 @@ final public class WidgetTextLayer implements WidgetLayer {
 	}
 	
 	/**
-	 * Set center axis.
+	 * Set center .
 	 * 
 	 * @param center
 	 *            {@link Vector2} Center
 	 */
 	final public void setCenter(final Vector2 center) {
-		mCenter = center.clone();
+		mCenter = center;
 	}
 	
 	/**
@@ -187,61 +208,37 @@ final public class WidgetTextLayer implements WidgetLayer {
 	}
 	
 	/**
-	 * Set Opacity
-	 * 
-	 * @param Int
-	 *            Opacity {0-255}
-	 */
-	final public void setOpacity(final float opacity) {
-		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
-	}
-	
-	/**
 	 * Set Scroll.
 	 * 
 	 * @param center
 	 *            {@link Vector2} Scroll
 	 */
 	final public void setScroll(final Vector2 scroll) {
-		mScroll = scroll.clone();
+		mScroll = scroll;
 	}
 	
 	/**
-	 * Set Touchable.
-	 * 
-	 * @param touchable
-	 *            Boolean Touchable
-	 */
-	final public void setTouchable(final boolean touchable) {
-		mTouchable = touchable;
-	}
-	
-	/**
-	 * Set Fixed Space.
-	 * 
-	 * @param fixed
-	 *            Boolean Fixed
-	 */
-	final public void setFixedSpace(final boolean fixed) {
-		mFixedSpace = fixed;
-	}
-	
-	/**
-	 * Set Z depth
-	 * @param z Depth
+	 * Get Depth
 	 */
 	@Override
-	final public void setZ(final int z) {
-		mZ = z;
+	public int getZ() {
+		return mZ;
+	}
+
+	/**
+	 * Get Identifier
+	 */
+	@Override
+	public int getId() {
+		return mId;
 	}
 	
 	/**
-	 * Set Id
-	 * @param id Id
+	 * Get Opacity
+	 * @return Opacity
 	 */
-	@Override
-	final public void setId(final int id) {
-		mID = id;
+	public float getOpacity() {
+		return mOpacity;
 	}
 	
 	/**
@@ -262,15 +259,6 @@ final public class WidgetTextLayer implements WidgetLayer {
 	}
 	
 	/**
-	 * Get Blend Func
-	 * 
-	 * @return Get Blend Func
-	 */
-	final public BlendFunc getBlendFunc() {
-		return mBlendFunc;
-	}
-	
-	/**
 	 * Invert in Vertical
 	 * 
 	 * @param inverted
@@ -284,6 +272,15 @@ final public class WidgetTextLayer implements WidgetLayer {
 	 */
 	final public Rect getViewport() {
 		return mViewport;
+	}
+	
+	/**
+	 * Get Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public BlendFunc getBlendFunc() {
+		return mBlendFunc;
 	}
 	
 	/**
@@ -317,7 +314,7 @@ final public class WidgetTextLayer implements WidgetLayer {
 	}
 	
 	/**
-	 * Get center axis.
+	 * Get center .
 	 * 
 	 * @return {@link Vector2} Center
 	 */
@@ -335,39 +332,12 @@ final public class WidgetTextLayer implements WidgetLayer {
 	}
 	
 	/**
-	 * Get Opacity
-	 */
-	final public float getOpacity() {
-		return mOpacity;
-	}
-	
-	
-	/**
 	 * Get Scroll.
 	 * 
 	 * @return {@link Vector2} Scroll
 	 */
 	final public Vector2 getScroll() {
 		return mScroll.clone();
-	}
-	
-	/**
-	 * Get Touchable.
-	 * 
-	 * @return Boolean Touchable
-	 */
-	final public boolean getTouchable() {
-		return mTouchable;
-	}
-	
-	/**
-	 * Get Fixed Space.
-	 * 
-	 * @param fixed
-	 *            Boolean Fixed
-	 */
-	final public boolean getFixedSpace() {
-		return mFixedSpace;
 	}
 	
 	/**
@@ -390,82 +360,74 @@ final public class WidgetTextLayer implements WidgetLayer {
 	}
 	
 	/**
-	 * Get Z Depth
-	 * @return Depth
+	 * Update Sprite. obs(If it is created in a ROM, it will update
+	 * altomatically on onUpdate() event.)
 	 */
 	@Override
-	final public int getZ() {
-		return mZ;
-	}
-	
-	/**
-	 * Get Id
-	 * @return Id
-	 */
-	@Override
-	final public int getId() {
-		return mID;
-	}
-	
-	/**
-	 * Set Matrix Transformations for this Layer
-	 * <p>
-	 * 
-	 * @param matrixRow
-	 *            MatrixRow
-	 * @return True if need Draw
-	 */
-	final public void draw(final float preOpacity, final Drawer drawer) {
+	final public void draw(final Drawer drawer) {
+		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		
 		// Get final Opacity
-		mPreparedOpacity = preOpacity * animationSet.getOpacity() * mOpacity;
+		final float opacity = animationSet.getOpacity() * mOpacity;
 		
 		// Not Update
-		if (mFontMap == null || mPreparedOpacity <= 0)
+		if (mFontMap == null || opacity <= 0)
 			return;
-
+		
 		// Get Infos
 		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
+		final Vector2 translate = animationSet.getPosition();
+		final float rotate = mAngle + animationSet.getRotation();
+
+		// Calc values
 		final float ox = mCenter.x * scale.x;
 		final float oy = mCenter.y * scale.y;
-		final float sx = scale.x;
-		final float sy = scale.y;
-		
+		float sx = scale.x;
+		float sy = scale.y;
+		final float tX = mPosition.x + translate.x;
+		final float tY = mPosition.y + translate.y;
+		float six = ox;
+		float siy = oy;
+
+		if (mMirror[0]) {
+			six += sx;
+			sx *= -1;
+		}
+		if (mMirror[1]) {
+			siy += sy;
+			sy *= -1;
+		}
+
+
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
-		
+
 		// Push Matrix
 		matrixRow.push();
+				
+		// Translate and Rotate Matrix with correction
+		float rad = (float) GeneralUtils.degreeToRad(rotate);
+		float c = (float) Math.cos(-rad);
+		float s = (float) Math.sin(-rad);
+		mFinalTransformation[0] = c * sx;
+		mFinalTransformation[1] = -s * sy;
+		mFinalTransformation[2] = c * -six + -s * -siy + tX;
+		mFinalTransformation[3] = s * sx;
+		mFinalTransformation[4] = c * sy;
+		mFinalTransformation[5] = s * -six + c * -siy + tY;
+		matrixRow.preConcatf(mFinalTransformation);
 		
-		// Scale Matrix
-		matrixRow.postScalef(sx, sy);
-		
-		// Translate and Rotate Matrix
-		matrixRow.postTranslatef(-ox, -oy);
-		matrixRow.postRotatef(mAngle + animationSet.getRotation());
-		matrixRow.postTranslatef(ox, oy);
-		
-		// Translate Matrix
-		final Vector2 translate = animationSet.getPosition();
-		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
-		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
-		matrixRow.postTranslatef(tX, tY);
-
-		// Begin Drawer
+		// Draw Text
 		drawer.begin();
-				
-		// Draw
-		drawer.setOpacity(mPreparedOpacity);
-		drawer.snip(mViewport);
 		drawer.setBlendFunc(mBlendFunc);
+		drawer.setOpacity(opacity);
+		drawer.snip(mViewport);
 		drawer.drawText(mFontMap, mText, mFontWriter);
-				
-		// End Drawer
 		drawer.end();
 		
-		// Pop Matrix
-		matrixRow.pop();			
+		// Pop transformations
+		matrixRow.pop();
 	}
 }

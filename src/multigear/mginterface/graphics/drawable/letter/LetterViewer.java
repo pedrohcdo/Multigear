@@ -1,96 +1,48 @@
-package multigear.mginterface.graphics.drawable.sprite;
+package multigear.mginterface.graphics.drawable.letter;
 
-import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
 import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
-import multigear.mginterface.graphics.opengl.font.FontDrawer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
-import multigear.mginterface.graphics.opengl.font.FontWriter;
+import multigear.mginterface.graphics.opengl.font.Letter;
+import multigear.mginterface.graphics.opengl.font.LetterDrawer;
+import multigear.mginterface.graphics.opengl.font.LetterWriter;
 import multigear.mginterface.scene.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 
-/**
- * Text Sprite
- * 
- * @author PedroH, RaphaelB
- * 
- *         Property Createlier.
- */
-public class TextSprite implements Drawable, Component {
-	
-	// Final Private Variables
-	final private float mFinalTransformation[] = new float[] { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
-	final private AnimationStack mAnimationStack;
+public class LetterViewer implements Component, Drawable {
+
+	// For Draw
+	private float mPreparedOpacity;
 	
 	// Private Variables
-	private FontMap mFontMap;
-	private String mText = "";
+	private AnimationStack mAnimationStack;
 	private Vector2 mScale = new Vector2(1, 1);
 	private Vector2 mPosition = new Vector2(0, 0);
 	private Vector2 mCenter = new Vector2(0, 0);
 	private Vector2 mScroll = new Vector2(0, 0);
+	private float mOpacity = 1.0f;
 	private float mAngle = 0;
+	private boolean mTouchable = true;
+	private boolean mFixedSpace = false;
 	private boolean mMirror[] = { false, false };
 	private Rect mViewport;
-	private int mId, mZ;
-	private float mOpacity = 1;
 	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
-	private FontWriter mFontWriter = new FontWriter() {
-		
-		// Final private Variable
-		final private Vector2 mDefaultDrawPos = new Vector2(0, 0);
-		
-		/**
-		 * Default Draw
-		 */
-		@Override
-		public void onDraw(FontDrawer fontDrawer, String text) {
-			fontDrawer.drawText(text, mDefaultDrawPos);
-		}
-	};
+	private Letter mLetter = new Letter();
+	private LetterWriter mLetterWriter;
+	private int mZ = 0;
+	private int mID = 0;
 	
 	/**
 	 * Constructor
+	 * @param scene
 	 */
-	public TextSprite() {
+	public LetterViewer() {
 		mAnimationStack = new AnimationStack();
-	}
-
-	/**
-	 * Set Depth
-	 * @param z Depth
-	 */
-	public void setZ(int z) {
-		mZ = z;
-	}
-
-	/**
-	 * Set Identifier
-	 * @param id Identifier
-	 */
-	public void setId(int id) {
-		mId = id;
-	}
-	
-	/**
-	 * Set Opacity
-	 * @param opacity Opacity
-	 */
-	public void setOpacity(float opacity) {
-		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
-	}
-	
-	/**
-	 * Set Text
-	 * @param text
-	 */
-	final public void setText(final String text) {
-		mText = text;
 	}
 	
 	/**
@@ -100,16 +52,44 @@ public class TextSprite implements Drawable, Component {
 	 *            {@link FontMap}
 	 */
 	final public void setFontMap(final FontMap fontMap) {
-		mFontMap = fontMap;
+		mLetter.setFontMap(fontMap);
+		if(mLetterWriter != null)
+			mLetter.write(mLetterWriter);
 	}
 	
 	/**
-	 * Set Font Writer
+	 * Set Letter Writer
 	 * 
 	 * @param fontWriter
 	 */
-	final public void setFontWriter(final FontWriter fontWriter) {
-		mFontWriter = fontWriter;
+	final public void setLetterWriter(final LetterWriter letterWriter) {
+		mLetterWriter = letterWriter;
+		if(mLetter.getFontMap() != null && mLetterWriter != null)
+			mLetter.write(mLetterWriter);
+	}
+	
+	/**
+	 * This function set new letter writer with <b>setLetterWriter(LetterWriter)</b> and write default text.
+	 */
+	final public void write(final String text) {
+		setLetterWriter(new LetterWriter() {
+			
+			/**
+			 * Draw
+			 */
+			@Override
+			public void onDraw(FontMap fontMap, LetterDrawer letterDrawer) {
+				letterDrawer.drawText(text);
+			}
+		});
+	}
+	
+	/**
+	 * Rewrite Letter
+	 */
+	final public void rewrite() {
+		if(mLetter.getFontMap() != null && mLetterWriter != null)
+			mLetter.write(mLetterWriter);
 	}
 	
 	/**
@@ -126,6 +106,15 @@ public class TextSprite implements Drawable, Component {
 	 */
 	final public void setViewport(final int left, final int top, final int width, final int height) {
 		mViewport = new Rect(left, top, width, height);
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFunc(final BlendFunc blendFunc) {
+		mBlendFunc = blendFunc;
 	}
 	
 	/**
@@ -159,15 +148,6 @@ public class TextSprite implements Drawable, Component {
 	}
 	
 	/**
-	 * Set Blend Func
-	 * 
-	 * @param blendFunc
-	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
-	}
-	
-	/**
 	 * Set Scale
 	 * 
 	 * @param scale
@@ -188,13 +168,13 @@ public class TextSprite implements Drawable, Component {
 	}
 	
 	/**
-	 * Set center .
+	 * Set center axis.
 	 * 
 	 * @param center
 	 *            {@link Vector2} Center
 	 */
 	final public void setCenter(final Vector2 center) {
-		mCenter = center;
+		mCenter = center.clone();
 	}
 	
 	/**
@@ -208,54 +188,77 @@ public class TextSprite implements Drawable, Component {
 	}
 	
 	/**
+	 * Set Opacity
+	 * 
+	 * @param Int
+	 *            Opacity {0-255}
+	 */
+	final public void setOpacity(final float opacity) {
+		mOpacity = Math.max(Math.min(opacity, 1.0f), 0.0f);
+	}
+	
+	/**
 	 * Set Scroll.
 	 * 
 	 * @param center
 	 *            {@link Vector2} Scroll
 	 */
 	final public void setScroll(final Vector2 scroll) {
-		mScroll = scroll;
+		mScroll = scroll.clone();
 	}
 	
 	/**
-	 * Get Depth
+	 * Set Touchable.
+	 * 
+	 * @param touchable
+	 *            Boolean Touchable
 	 */
-	@Override
-	public int getZ() {
-		return mZ;
-	}
-
-	/**
-	 * Get Identifier
-	 */
-	@Override
-	public int getId() {
-		return mId;
+	final public void setTouchable(final boolean touchable) {
+		mTouchable = touchable;
 	}
 	
 	/**
-	 * Get Opacity
-	 * @return Opacity
+	 * Set Fixed Space.
+	 * 
+	 * @param fixed
+	 *            Boolean Fixed
 	 */
-	public float getOpacity() {
-		return mOpacity;
+	final public void setFixedSpace(final boolean fixed) {
+		mFixedSpace = fixed;
 	}
 	
 	/**
-	 * Get Font Writer
+	 * Set Z depth
+	 * @param z Depth
+	 */
+	final public void setZ(final int z) {
+		mZ = z;
+	}
+	
+	/**
+	 * Set Id
+	 * @param id Id
+	 */
+	final public void setId(final int id) {
+		mID = id;
+	}
+		
+	/**
+	 * Get Letter Writer
 	 * 
 	 * @param fontWriter
 	 */
-	final public FontWriter getFontWriter() {
-		return mFontWriter;
+	final public LetterWriter getLetterWriter() {
+		return mLetterWriter;
 	}
 	
 	/**
-	 * Get Text
-	 * @param text
+	 * Get Blend Func
+	 * 
+	 * @return Get Blend Func
 	 */
-	final public String getText() {
-		return mText;
+	final public BlendFunc getBlendFunc() {
+		return mBlendFunc;
 	}
 	
 	/**
@@ -272,15 +275,6 @@ public class TextSprite implements Drawable, Component {
 	 */
 	final public Rect getViewport() {
 		return mViewport;
-	}
-	
-	/**
-	 * Get Blend Func
-	 * 
-	 * @param blendFunc
-	 */
-	final public BlendFunc getBlendFunc() {
-		return mBlendFunc;
 	}
 	
 	/**
@@ -314,7 +308,7 @@ public class TextSprite implements Drawable, Component {
 	}
 	
 	/**
-	 * Get center .
+	 * Get center axis.
 	 * 
 	 * @return {@link Vector2} Center
 	 */
@@ -332,12 +326,39 @@ public class TextSprite implements Drawable, Component {
 	}
 	
 	/**
+	 * Get Opacity
+	 */
+	final public float getOpacity() {
+		return mOpacity;
+	}
+	
+	
+	/**
 	 * Get Scroll.
 	 * 
 	 * @return {@link Vector2} Scroll
 	 */
 	final public Vector2 getScroll() {
 		return mScroll.clone();
+	}
+	
+	/**
+	 * Get Touchable.
+	 * 
+	 * @return Boolean Touchable
+	 */
+	final public boolean getTouchable() {
+		return mTouchable;
+	}
+	
+	/**
+	 * Get Fixed Space.
+	 * 
+	 * @param fixed
+	 *            Boolean Fixed
+	 */
+	final public boolean getFixedSpace() {
+		return mFixedSpace;
 	}
 	
 	/**
@@ -356,78 +377,86 @@ public class TextSprite implements Drawable, Component {
 	 *            {@link FontMap}
 	 */
 	final public FontMap getFontMap() {
-		return mFontMap;
+		return mLetter.getFontMap();
 	}
 	
 	/**
-	 * Update Sprite. obs(If it is created in a ROM, it will update
-	 * altomatically on onUpdate() event.)
+	 * Get Z Depth
+	 * @return Depth
 	 */
 	@Override
+	final public int getZ() {
+		return mZ;
+	}
+	
+	/**
+	 * Get Id
+	 * @return Id
+	 */
+	@Override
+	final public int getId() {
+		return mID;
+	}
+	
+	/**
+	 * Set Matrix Transformations for this Layer
+	 * <p>
+	 * 
+	 * @param matrixRow
+	 *            MatrixRow
+	 * @return True if need Draw
+	 */
 	final public void draw(final Drawer drawer) {
-		
 		// Prepare Animation
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		
 		// Get final Opacity
-		final float opacity = animationSet.getOpacity() * mOpacity;
+		mPreparedOpacity = animationSet.getOpacity() * mOpacity;
 		
 		// Not Update
-		if (mFontMap == null || opacity <= 0)
+		if (mPreparedOpacity <= 0)
 			return;
-		
+
 		// Get Infos
 		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
-		final Vector2 translate = animationSet.getPosition();
-		final float rotate = mAngle + animationSet.getRotation();
-
-		// Calc values
 		final float ox = mCenter.x * scale.x;
 		final float oy = mCenter.y * scale.y;
-		float sx = scale.x;
-		float sy = scale.y;
-		final float tX = mPosition.x + translate.x;
-		final float tY = mPosition.y + translate.y;
-		float six = -ox;
-		float siy = -oy;
-
-		if (mMirror[0]) {
-			six += sx;
-			sx *= -1;
-		}
-		if (mMirror[1]) {
-			siy += sy;
-			sy *= -1;
-		}
-
-
+		final float sx = scale.x;
+		final float sy = scale.y;
+		
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
-
+		
 		// Push Matrix
 		matrixRow.push();
-				
-		// Translate and Rotate Matrix with correction
-		float rad = (float) GeneralUtils.degreeToRad(rotate);
-		float c = (float) Math.cos(-rad);
-		float s = (float) Math.sin(-rad);
-		mFinalTransformation[0] = sx * c;
-		mFinalTransformation[1] = sy * s;
-		mFinalTransformation[2] = c * six + s * siy + tX;
-		mFinalTransformation[3] = -sx * s;
-		mFinalTransformation[4] = sy * c;
-		mFinalTransformation[5] = -s * six + c * siy + tY;
-		matrixRow.preConcatf(mFinalTransformation);
 		
-		// Draw Text
+		// Scale Matrix
+		matrixRow.postScalef(sx, sy);
+		
+		// Translate and Rotate Matrix
+		matrixRow.postTranslatef(-ox, -oy);
+		matrixRow.postRotatef(mAngle + animationSet.getRotation());
+		matrixRow.postTranslatef(ox, oy);
+		
+		// Translate Matrix
+		final Vector2 translate = animationSet.getPosition();
+		final float tX = (mPosition.x - mScroll.x - ox) + translate.x;
+		final float tY = (mPosition.y - mScroll.y - oy) + translate.y;
+		matrixRow.postTranslatef(tX, tY);
+
+		// Begin Drawer
 		drawer.begin();
-		drawer.setBlendFunc(mBlendFunc);
-		drawer.setOpacity(opacity);
+				
+		// Draw
+		drawer.setOpacity(mPreparedOpacity);
 		drawer.snip(mViewport);
-		drawer.drawText(mFontMap, mText, mFontWriter);
-		drawer.end();
+		drawer.setBlendFunc(mBlendFunc);
+		drawer.drawLetter(mLetter);
 		
-		// Pop transformations
+		// End Drawer
+		drawer.end();
+				
+		// Pop Matrix
 		matrixRow.pop();
 	}
 }

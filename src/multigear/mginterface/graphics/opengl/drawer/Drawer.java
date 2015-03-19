@@ -26,6 +26,7 @@ import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.SceneDrawerState;
 import android.graphics.Rect;
 import android.opengl.GLES20;
+import android.util.Log;
 
 /**
  * Utilizado para desenhar uma textura.
@@ -36,6 +37,29 @@ import android.opengl.GLES20;
  */
 final public class Drawer {
 	
+	/**
+	 * Drawing State
+	 * 
+	 * @author user
+	 *
+	 */
+	final private class DrawingState {
+		
+		// Private Variables
+		private float opacity = 1.0f;
+		private float lastOpacity = 1.0f;
+		private Rect snip = null;
+		
+		/**
+		 * Get Opacity
+		 * 
+		 * @return
+		 */
+		final private float getOpacity() {
+			return opacity * lastOpacity;
+		}
+	}
+	
 	// Private Variables
 	final private TextureContainer mTextureContainer;
 	final private WorldMatrix mMatrixRow;
@@ -45,12 +69,12 @@ final public class Drawer {
 	
 	// Private Variables
 	private SceneDrawerState mSceneDrawerState;
-	private float mOpacity = 1.0f;
 	private Texture mTexture;
 	private Color mColor = Color.WHITE;
 	private FloatBuffer mElementVertex, mTextureVertex;
 	private FloatBuffer mTextureVertexFilled = GeneralUtils.createFloatBuffer(new float[] {0, 0, 1, 0, 1, 1, 0, 1});
-	private List<Rect> mSnippes = new ArrayList<Rect>();
+	private DrawingState[] mDrawingStates;
+	private int mDrawingIndex = 0;
 	
 	/*
 	 * Construtor
@@ -59,9 +83,11 @@ final public class Drawer {
 		mMainScene = room;
 		mTextureContainer = new TextureContainer(this, mMainScene);
 		mMatrixRow = new WorldMatrix(10);
+		mDrawingStates = new DrawingState[10];
+		for(int i=0; i<10; i++)
+			mDrawingStates[i] = new DrawingState();
 		mTransformMatrix = new float[16];
 		mRenderer = renderer;
-		mSnippes.add(null);
 	}
 	
 	/**
@@ -124,7 +150,7 @@ final public class Drawer {
 	 * @param opacity
 	 */
 	final public void setOpacity(final float opacity) {
-		mOpacity = opacity;
+		mDrawingStates[mDrawingIndex].opacity = opacity;
 	}
 	
 	/**
@@ -210,7 +236,7 @@ final public class Drawer {
 			//refreshSnip();
 			return;
 		}
-		Rect snip = mSnippes.get(mSnippes.size()-1);
+		Rect snip = mDrawingStates[mDrawingIndex].snip;
 		if(snip == null)
 			snip = new Rect(rect);
 		else {
@@ -219,7 +245,7 @@ final public class Drawer {
 					snip.set(0, 0, 0, 0);
 			}
 		}
-		mSnippes.set(mSnippes.size()-1, snip);
+		mDrawingStates[mDrawingIndex].snip = snip;
 		refreshSnip(snip);
 	}
 	
@@ -232,9 +258,12 @@ final public class Drawer {
 			GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 		} else {
 			final int screenHeight = (int) mMainScene.getScreenSize().y;
-			final int top = screenHeight - (snip.top + snip.bottom);
+			
+			final int bottom = screenHeight - snip.bottom;
+			
 			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-			GLES20.glScissor(snip.left, top, snip.right, snip.bottom);
+			
+			GLES20.glScissor(snip.left, bottom, snip.right, snip.bottom - snip.top);
 		}
 	}
 	
@@ -242,8 +271,7 @@ final public class Drawer {
 	 * Refresh last snip in list
 	 */
 	final private void refreshSnip() {
-		if(mSnippes.size() >= 1)
-			refreshSnip(mSnippes.get(mSnippes.size()-1));
+		refreshSnip(mDrawingStates[mDrawingIndex].snip);
 	}
 	
 	/**
@@ -259,15 +287,21 @@ final public class Drawer {
 	final public void begin() {
 		mTexture = null;
 		mColor = Color.WHITE;
-		mOpacity = 1.0f;
 		mElementVertex = null;
 		mTextureVertex = null;
 		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
-		final Rect lastSnip = mSnippes.get(mSnippes.size()-1);
-		if(lastSnip == null)
-			mSnippes.add(null);
+		
+		// Set Drawing State
+		DrawingState last = mDrawingStates[mDrawingIndex++];
+		DrawingState now = mDrawingStates[mDrawingIndex];		
+		now.lastOpacity = last.opacity * last.lastOpacity;
+		now.opacity = 1.0f;
+		if(last.snip == null)
+			now.snip = null;
 		else
-			mSnippes.add(new Rect(lastSnip));
+			now.snip = new Rect(last.snip);
+		
+		
 	}
 	
 	/**
@@ -276,12 +310,10 @@ final public class Drawer {
 	final public void end() {
 		mTexture = null;
 		mColor = Color.WHITE;
-		mOpacity = 1.0f;
 		mElementVertex = null;
 		mTextureVertex = null;
+		mDrawingIndex--;
 		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
-		if(mSnippes.size() >= 1)
-			mSnippes.remove(mSnippes.size()-1);
 		refreshSnip();
 	}
 	
@@ -605,7 +637,7 @@ final public class Drawer {
 	 */
 	final public BaseProgram begin(final int rendererProgram, final Color color) {
 		final BaseProgram baseProgram = mRenderer.useRenderer(rendererProgram);
-		final float opacity = mOpacity * mSceneDrawerState.getOpacity() * color.getAlpha();
+		final float opacity = mDrawingStates[mDrawingIndex].getOpacity() * mSceneDrawerState.getOpacity() * color.getAlpha();
 		final float[] renderOpacity = new float[] { opacity * color.getRed(), opacity * color.getGreen(), opacity * color.getBlue(), opacity};
 		baseProgram.onPrepare(mTransformMatrix, renderOpacity);
 		return baseProgram;

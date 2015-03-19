@@ -124,4 +124,11 @@ final public class TouchEventsDetector {
 			break;
 		}
 	}
+	
+	/**
+	 * Reset Detector
+	 */
+	final public void reset() {
+		mPointers.clear();
+	}
 }

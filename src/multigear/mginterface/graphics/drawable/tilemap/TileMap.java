@@ -528,15 +528,15 @@ public class TileMap implements Drawable, Component {
 		final float rotate = mAngle + animationSet.getRotation();
 
 		// Calc values
-		final float ox = mCenter.x * scale.x;
-		final float oy = mCenter.y * scale.y;
+		final float ox = mCenter.x;
+		final float oy = mCenter.y;
 		float sx = scale.x;
 		float sy = scale.y;
 		
 		final float tX = mPosition.x + translate.x;
 		final float tY = mPosition.y + translate.y;
-		float six = -ox;
-		float siy = -oy;
+		float six = ox;
+		float siy = oy;
 
 		if (mMirror[0]) {
 			six += sx;
@@ -557,14 +557,14 @@ public class TileMap implements Drawable, Component {
 		
 		// Translate and Rotate Matrix with correction
 		float rad = (float) GeneralUtils.degreeToRad(rotate);
-		float c = (float) Math.cos(-rad);
-		float s = (float) Math.sin(-rad);
-		mFinalTransformation[0] = sx * c;
-		mFinalTransformation[1] = sy * s;
-		mFinalTransformation[2] = c * six + s * siy + tX;
-		mFinalTransformation[3] = -sx * s;
-		mFinalTransformation[4] = sy * c;
-		mFinalTransformation[5] = -s * six + c * siy + tY;
+		float c = (float) Math.cos(rad);
+		float s = (float) Math.sin(rad);
+		mFinalTransformation[0] = c * sx;
+		mFinalTransformation[1] = -s * sy;
+		mFinalTransformation[2] = c * -six + -s * -siy + tX;
+		mFinalTransformation[3] = s * sx;
+		mFinalTransformation[4] = c * sy;
+		mFinalTransformation[5] = s * -six + c * -siy + tY;
 		matrixRow.preConcatf(mFinalTransformation);
 
 		// Prepare blend mod

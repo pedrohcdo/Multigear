@@ -168,4 +168,11 @@ final public class FocusDetector {
 			break;
 		}
 	}
+	
+	/**
+	 * Reset Detector
+	 */
+	final public void reset() {
+		mPointers.clear();
+	}
 }

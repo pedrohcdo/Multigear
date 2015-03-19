@@ -1,12 +1,12 @@
 package multigear.mginterface.graphics.drawable.widget;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
@@ -24,7 +24,7 @@ import multigear.mginterface.scene.listeners.TouchListener;
 import android.annotation.SuppressLint;
 import android.graphics.Matrix;
 import android.graphics.Rect;
-import android.os.Parcel;
+import android.graphics.RectF;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -110,13 +110,13 @@ public class Widget implements Drawable, Touchable, Component {
 	 * Comparador utilisado para ordenamento de sobreposição para todos Layers
 	 * para fins de Desenho.
 	 */
-	final private Comparator<multigear.mginterface.graphics.drawable.widget.WidgetLayer> mLayersComparatorDraw = new Comparator<multigear.mginterface.graphics.drawable.widget.WidgetLayer>() {
+	final private Comparator<Component> mLayersComparatorDraw = new Comparator<Component>() {
 		
 		/*
 		 * Comparador
 		 */
 		@Override
-		public int compare(multigear.mginterface.graphics.drawable.widget.WidgetLayer lhs, multigear.mginterface.graphics.drawable.widget.WidgetLayer rhs) {
+		public int compare(Component lhs, Component rhs) {
 			return lhs.getZ() - rhs.getZ();
 		}
 	};
@@ -158,6 +158,7 @@ public class Widget implements Drawable, Touchable, Component {
 	final private float mBaseVerticeB[] = new float[] { 1, 0 };
 	final private float mBaseVerticeC[] = new float[] { 1, 1 };
 	final private float mBaseVerticeD[] = new float[] { 0, 1 };
+	final private float mFinalTransformation[] = new float[] {0, 0, 0, 0, 0, 0, 0, 0, 1};
 	
 	// Private Variables
 	private BaseListener mListener;
@@ -186,7 +187,7 @@ public class Widget implements Drawable, Touchable, Component {
 	final static public int STATE_IN = 0x2;
 	
 	// Final Private Variables
-	final private List<multigear.mginterface.graphics.drawable.widget.WidgetLayer> mLayers;
+	final private List<Component> mComponents;
 	
 	// Private Variables
 	private int mState;
@@ -197,7 +198,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 */
 	public Widget() {
 		mState = 0;
-		mLayers = new ArrayList<WidgetLayer>();
+		mComponents = new ArrayList<Component>();
 		mAnimationStack = new AnimationStack();
 		
 		mListener = null;
@@ -568,19 +569,19 @@ public class Widget implements Drawable, Touchable, Component {
 	/**
 	 * Add a new Sprite Layer. Similar to Sprite.
 	 */
-	final public void addLayer(final WidgetLayer layer) {
-		if(mLayers.contains(layer))
-			throw new RuntimeException("This layer has already been added.");
-		mLayers.add(layer);
+	final public void addComponent(final Component component) {
+		if(mComponents.contains(component))
+			throw new RuntimeException("This component has already been added.");
+		mComponents.add(component);
 	}
 	
 	/**
 	 * Remove the Layer of this Object
 	 * 
-	 * @param layer
+	 * @param component
 	 */
-	final public void removeLayer(multigear.mginterface.graphics.drawable.widget.WidgetLayer layer) {
-		mLayers.remove(layer);
+	final public void removeComponent(final Component component) {
+		mComponents.remove(component);
 	}
 	
 	/**
@@ -665,12 +666,6 @@ public class Widget implements Drawable, Touchable, Component {
 		// Prepare Animations
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
 		
-		// Prepare Transformations
-		// Top Level
-		final float ox = mCenter.x * mScale.x;
-		final float oy = mCenter.y * mScale.y;
-		final float sx = mSize.x * mScale.x;
-		final float sy = mSize.y * mScale.y;
 		
 		// Animation Level
 		final Vector2 ascale = Vector2.scale(mScale, animationSet.getScale());
@@ -682,11 +677,8 @@ public class Widget implements Drawable, Touchable, Component {
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
-		// Push Matrix
-		matrixRow.push();
-		
 		// Order Layers
-		Collections.sort(mLayers, mLayersComparatorDraw);
+		Collections.sort(mComponents, mLayersComparatorDraw);
 		
 		// Opacity
 		final float opacity = animationSet.getOpacity() * getOpacity();
@@ -695,71 +687,88 @@ public class Widget implements Drawable, Touchable, Component {
 		drawer.begin();
 		drawer.snip(mViewport);
 		drawer.setBlendFunc(mBlendFunc);
+		drawer.setOpacity(opacity);
 		
-		// Transformations for onDraw()
-		Matrix postTransformations = new Matrix();
+		// Push new transformation to stack
+		matrixRow.push();
 		
-		// Scale
-		postTransformations.postScale(ascale.x, ascale.y);
-					
-		// Top Transformations
-		postTransformations.postTranslate(-aox, -aoy);
-		postTransformations.postRotate(arotation);
-		postTransformations.postTranslate(aox, aoy);
+		// Final Transformation
+		// pre = M * other
+		// M Transform "other" and not "other" transform M because "other" 
+		// Calculate without M informations
+		float rad = (float) GeneralUtils.degreeToRad(arotation);
+		float c = (float) Math.cos(rad);
+		float s = (float) Math.sin(rad);
+		mFinalTransformation[0] = c * ascale.x;
+		mFinalTransformation[1] = -s * ascale.y;
+		mFinalTransformation[2] = c * -aox + -s * -aoy + (mPosition.x + atranslate.x);
+		mFinalTransformation[3] = s * ascale.x;
+		mFinalTransformation[4] = c * ascale.y;
+		mFinalTransformation[5] = s * -aox + c * -aoy + (mPosition.y + atranslate.y);
+		matrixRow.preConcatf(mFinalTransformation);
 		
-		// Bottom Transformations
-		postTransformations.postTranslate((mPosition.x - mScroll.x - aox) + atranslate.x, (mPosition.y - mScroll.y - aoy) + atranslate.y);
-		
-		// Enable pre transformations
-		matrixRow.setPostTransformations(postTransformations);
-		matrixRow.enablePostTransformationsMatrix();
-		
-		// Draw bottom layer
+		// Draw bottom component
 		onDraw(drawer, DrawingLayer.LAYER_BOTTOM);
 		
 		// Draw
-		for (final WidgetLayer layer : mLayers)
-			layer.draw(opacity, drawer);
+		for (final Component component : mComponents) {
+			if(component instanceof Drawable)
+				((Drawable)component).draw(drawer);
+		}
 		
-		// Draw top layer
+		// Draw top component
 		onDraw(drawer, DrawingLayer.LAYER_TOP);
-		
-		// Disable pre transformations
-		matrixRow.setPostTransformations(null);
-		matrixRow.disablePostTransformationsMatrix();
 		
 		// End Drawer
 		drawer.end();
 		
-		// Scale Widget
-		matrixRow.postScalef(sx, sy);
-						
-		// Pre Rotate
-		matrixRow.postTranslatef(-ox, -oy);
-		matrixRow.postRotatef(mAngle);
-		matrixRow.postTranslatef(ox, oy);
-						
-		// Translate Matrix
-		final float tX = mPosition.x - mScroll.x - ox;
-		final float tY = mPosition.y - mScroll.y - oy;
-		matrixRow.postTranslatef(tX, tY);
+		// Pop transformations
+		matrixRow.pop();
 		
+		// Update designed vertices
+		updateVertices(drawer);
+	}
+	
+	/**
+	 * Update Vertices
+	 * 
+	 * @param drawer
+	 */
+	final protected void updateVertices(final Drawer drawer) {
+		// Get Matrix Row
+		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 		
-		// Get Transformed Vertices
-		matrixRow.swap();
-		final float transformMatrix[] = new float[16];
-		matrixRow.copyValues(transformMatrix);
-						
+		// Prepare Transformations
+		final float ox = mCenter.x * mScale.x;
+		final float oy = mCenter.y * mScale.y;
+		final float sx = mSize.x * mScale.x;
+		final float sy = mSize.y * mScale.y;
+		
+		// Final Transformation
+		double rad = GeneralUtils.degreeToRad(mAngle);
+		float c = (float) Math.cos(-rad);
+		float s = (float) Math.sin(-rad);
+		mFinalTransformation[0] = c * sx;
+		mFinalTransformation[1] = -s * sy;
+		mFinalTransformation[2] = c * -ox + -s * -oy + mPosition.x;
+		mFinalTransformation[3] = s * sx;
+		mFinalTransformation[4] = c * sy;
+		mFinalTransformation[5] = s * -ox + c * -oy + mPosition.y;
+				
+		// Push a new transformation
+		matrixRow.push();
+				
+		// Set post transformations
+		matrixRow.preConcatf(mFinalTransformation);
+				
 		// Swap transformations
 		matrixRow.swap();
-						
+								
 		// Prepare Vertices Position
 		refreshVerticesPosition(matrixRow);
-						
-		// Pop Matrix
-		matrixRow.pop();
-				
 		
+		// Release transformation
+		matrixRow.pop();
 	}
 	
 	/*
@@ -812,6 +821,15 @@ public class Widget implements Drawable, Touchable, Component {
 	 */
 	final public Vector2[] getDesignedVerticesPosition() {
 		return mVertices;
+	}
+	
+	/**
+	 * Returns the four vertices of the edge of the sprite.
+	 * 
+	 * @return Pack of four vertices.
+	 */
+	final public RectF getDesignedRect() {
+		return new RectF(mVertices[0].x, mVertices[0].y, mVertices[2].x, mVertices[2].y);
 	}
 	
 	/**
@@ -908,9 +926,20 @@ public class Widget implements Drawable, Touchable, Component {
 	 *            MotionEvent used for touch.
 	 * @return Return true if handled.
 	 */
-	final public void touch(MotionEvent motionEvent) {
+	final public boolean touch(MotionEvent motionEvent) {
 		if (!mTouchable) {
-			return;
+			return false;
+		}
+		
+		// Order Components
+		Collections.sort(mComponents, mLayersComparatorDraw);
+		
+		// 
+		for(final Component component : mComponents) {
+			if(component instanceof Touchable) {
+				if(((Touchable)component).touch(motionEvent))
+					return true;
+			}
 		}
 		
 		// Vars
@@ -941,6 +970,8 @@ public class Widget implements Drawable, Touchable, Component {
 					if (listener instanceof TouchListener)
 						((TouchListener) listener).onTouch(this, motionEvent);
 				}
+				// Consumed
+				return true;
 			}
 			break;
 		case MotionEvent.ACTION_UP:
@@ -980,17 +1011,25 @@ public class Widget implements Drawable, Touchable, Component {
 				onTouch(motionEvent);
 				if (consumed && listener != null && listener instanceof TouchListener)
 					((TouchListener) listener).onTouch(this, motionEvent);
+				// Consumed
+				return true;
 			}
 			break;
 		case MotionEvent.ACTION_CANCEL:
 			mPointers.clear();
+			
 			removeState(STATE_PRESSED);
+			
+			onRelease();
+			
+			
 			removeState(STATE_IN);
 			
 			onTouch(motionEvent);
 			if (listener != null && listener instanceof TouchListener)
 				((TouchListener) listener).onTouch(this, motionEvent);
-			break;
+			// for all consume
+			return false;
 		case MotionEvent.ACTION_MOVE:
 			movePointers(motionEvent);
 			updateMove();
@@ -998,12 +1037,18 @@ public class Widget implements Drawable, Touchable, Component {
 			onTouch(motionEvent);
 			if (listener != null && listener instanceof TouchListener)
 				((TouchListener) listener).onTouch(this, motionEvent);
-			break;
+			
+			// for all consume
+			return false;
+			
 		default:
 			onTouch(motionEvent);
 			if (listener != null && listener instanceof TouchListener)
 				((TouchListener) listener).onTouch(this, motionEvent);
 		}
+		
+		// for all consume
+		return false;
 	}
 	
 	/**

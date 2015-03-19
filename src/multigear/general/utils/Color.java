@@ -1,5 +1,7 @@
 package multigear.general.utils;
 
+import java.util.Random;
+
 /**
  * Color
  * @author user
@@ -75,6 +77,24 @@ final public class Color {
 	 */
 	final static public Color rgb(final float red, final float green, final float blue) {
 		return new Color(red, green, blue);
+	}
+	
+	/**
+	 * Return instance of color with random rgb values
+	 * @return Color
+	 */
+	final static public Color randRGB() {
+		final Random random = new Random();
+		return new Color(random.nextFloat(), random.nextFloat(), random.nextFloat());
+	}
+	
+	/**
+	 * Return instance of color with random rgba values
+	 * @return Color
+	 */
+	final static public Color randRGBA() {
+		final Random random = new Random();
+		return new Color(random.nextFloat(), random.nextFloat(), random.nextFloat(), random.nextFloat());
 	}
 	
 	/**

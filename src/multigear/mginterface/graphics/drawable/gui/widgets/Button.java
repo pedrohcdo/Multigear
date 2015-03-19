@@ -1,8 +1,8 @@
 package multigear.mginterface.graphics.drawable.gui.widgets;
 
 import multigear.general.utils.Vector2;
+import multigear.mginterface.graphics.drawable.sprite.Sprite;
 import multigear.mginterface.graphics.drawable.widget.Widget;
-import multigear.mginterface.graphics.drawable.widget.WidgetSpriteLayer;
 
 /**
  * Button
@@ -36,7 +36,7 @@ public class Button extends Widget {
 	final public Animation Animation = new Animation();
 	
 	// Final private Variables
-	final private WidgetSpriteLayer mLayer;
+	final private Sprite mLayer = new Sprite();
 	
 	/*
 	 * Construtor
@@ -44,8 +44,7 @@ public class Button extends Widget {
 	public Button() {
 		Animation.Press = null;
 		Animation.Release = null;
-		mLayer = new WidgetSpriteLayer();
-		addLayer(mLayer);
+		addComponent(mLayer);
 	}
 	
 	/*

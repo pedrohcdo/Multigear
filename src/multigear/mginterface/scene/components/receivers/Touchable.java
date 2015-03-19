@@ -14,5 +14,5 @@ public interface Touchable {
 	 * Touch handler
 	 * @return Depth
 	 */
-	public void touch(final MotionEvent motionEvent);
+	public boolean touch(final MotionEvent motionEvent);
 }

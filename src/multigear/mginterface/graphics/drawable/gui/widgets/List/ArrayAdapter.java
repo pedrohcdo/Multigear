@@ -2,6 +2,8 @@ package multigear.mginterface.graphics.drawable.gui.widgets.List;
 
 import java.util.List;
 
+import android.view.MotionEvent;
+
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.scene.components.receivers.Drawable;
@@ -38,11 +40,19 @@ public class ArrayAdapter implements SelectListAdapter {
 		}
 		
 		/**
-		 * Get Drawable
+		 * Draw Event
 		 */
 		@Override
 		public void draw(final Drawer drawer, final SelectList.DrawingHolder drawingHolder, final Vector2 cellSize) {
 			mDrawable.draw(drawer);
+		}
+		
+		/**
+		 * Touch Event
+		 */
+		@Override
+		public int touch(final MotionEvent motionEvent) {
+			return SelectList.TOUCH_UNUSE;
 		}
 
 		/**
@@ -68,7 +78,9 @@ public class ArrayAdapter implements SelectListAdapter {
 	
 	/* Unused */
 	@Override
-	public void createItem(final int index, final float itemWidth) {}
+	public ItemHolder createItem(final int index) {
+		return mItems.get(index);
+	}
 	
 	/**
 	 * Count
@@ -76,13 +88,5 @@ public class ArrayAdapter implements SelectListAdapter {
 	@Override
 	public int getCount() {
 		return mItems.size();
-	}
-
-	/**
-	 * Item
-	 */
-	@Override
-	public ItemHolder getItem(int index) {
-		return mItems.get(index);
 	}
 }

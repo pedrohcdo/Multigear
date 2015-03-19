@@ -245,4 +245,11 @@ final public class ImpulseDetector {
 			break;
 		}
 	}
+	
+	/**
+	 * Reset Detector
+	 */
+	final public void reset() {
+		mPointers.clear();
+	}
 }
