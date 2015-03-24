@@ -24,6 +24,7 @@ import multigear.mginterface.graphics.opengl.programs.UniformColorRenderer;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.SceneDrawerState;
+import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
 import android.opengl.GLES20;
 import android.util.Log;
@@ -49,6 +50,7 @@ final public class Drawer {
 		private float opacity = 1.0f;
 		private float lastOpacity = 1.0f;
 		private Rect snip = null;
+		private List<Drawable> stencils = new ArrayList<Drawable>();
 		
 		/**
 		 * Get Opacity
@@ -263,7 +265,7 @@ final public class Drawer {
 			
 			GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
 			
-			GLES20.glScissor(snip.left, bottom, snip.right, snip.bottom - snip.top);
+			GLES20.glScissor(snip.left, bottom, snip.right - snip.left, snip.bottom - snip.top);
 		}
 	}
 	
@@ -279,6 +281,44 @@ final public class Drawer {
 	 */
 	final public void clearSnip() {
 		GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+	}
+	
+	/**
+	 * Enable Stencil
+	 */
+	final public void useStencil() {
+		GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT);
+		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
+		GLES20.glColorMask(false, false, false, false);
+		GLES20.glDepthMask(false);
+		int level = 0;
+		DrawingState state = mDrawingStates[mDrawingIndex];
+		GLES20.glStencilOp(GLES20.GL_INCR, GLES20.GL_KEEP, GLES20.GL_KEEP);
+		GLES20.glStencilMask(0xFF);
+		for(final Drawable drawable : state.stencils) {
+			GLES20.glStencilFunc(GLES20.GL_GREATER, level, 0xFF);
+			drawable.draw(this);
+			level++;
+		}
+		GLES20.glColorMask(true, true, true, true);
+		GLES20.glDepthMask(true);
+		GLES20.glStencilMask(0);
+		GLES20.glStencilFunc(GLES20.GL_EQUAL, level, 0xFF);
+	}
+	
+	/**
+	 * Disable Stencil
+	 */
+	final public void clearStencil() {
+		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
+	}
+	
+	/**
+	 * Add Drawable to Stencil
+	 * @param drawable
+	 */
+	final public void addDrawableToStencil(final Drawable drawable) {
+		mDrawingStates[mDrawingIndex].stencils.add(drawable);
 	}
 	
 	/**
@@ -301,7 +341,9 @@ final public class Drawer {
 		else
 			now.snip = new Rect(last.snip);
 		
-		
+		// Add all stencil
+		now.stencils.clear();
+		now.stencils.addAll(last.stencils);
 	}
 	
 	/**

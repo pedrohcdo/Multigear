@@ -42,6 +42,7 @@ public class Button extends Widget {
 	 * Construtor
 	 */
 	public Button() {
+		setStaticTouch(true);
 		Animation.Press = null;
 		Animation.Release = null;
 		addComponent(mLayer);

@@ -16,16 +16,16 @@ final public class ColideMath {
 	/*
 	 * Retorna posição de uma interseção entre duas retas
 	 */
-	final static protected Vector2 getIntersectionLines(multigear.general.utils.Line2D a, multigear.general.utils.Line2D b) {
+	final static protected Vector2 getIntersectionLines(multigear.general.utils.Line2 a, multigear.general.utils.Line2 b) {
 		// Get Positions
-		final int x1 = (int)Math.floor(a.Start.x);
-		final int x2 = (int)Math.ceil(a.End.x);
-		final int x3 = (int)Math.floor(b.Start.x);
-		final int x4 = (int)Math.ceil(b.End.x);
-		final int y1 = (int)Math.floor(a.Start.y);
-		final int y2 = (int)Math.ceil(a.End.y);
-		final int y3 = (int)Math.floor(b.Start.y);
-		final int y4 = (int)Math.ceil(b.End.y);
+		final int x1 = (int)Math.floor(a.start.x);
+		final int x2 = (int)Math.ceil(a.end.x);
+		final int x3 = (int)Math.floor(b.start.x);
+		final int x4 = (int)Math.ceil(b.end.x);
+		final int y1 = (int)Math.floor(a.start.y);
+		final int y2 = (int)Math.ceil(a.end.y);
+		final int y3 = (int)Math.floor(b.start.y);
+		final int y4 = (int)Math.ceil(b.end.y);
 		
 		int d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 		if (d == 0)

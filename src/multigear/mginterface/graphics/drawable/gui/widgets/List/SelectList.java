@@ -8,7 +8,6 @@ import multigear.general.utils.Color;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.graphics.animations.AnimationOpacity;
-import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.drawable.gui.Canvas;
 import multigear.mginterface.graphics.drawable.gui.widgets.List.SelectListAdapter.ItemHolder;
 import multigear.mginterface.graphics.drawable.polygon.Polygon;
@@ -18,14 +17,13 @@ import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.scene.Scene;
+import multigear.mginterface.scene.components.receivers.Drawable;
 import multigear.mginterface.tools.touch.ImpulseDetector;
 import multigear.mginterface.tools.touch.ImpulseDetectorListener;
 import multigear.mginterface.tools.touch.PullDetector;
 import multigear.mginterface.tools.touch.PullDetectorListener;
 import multigear.mginterface.tools.touch.TouchEventsDetector;
 import multigear.mginterface.tools.touch.TouchEventsDetectorListener;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -82,11 +80,63 @@ final public class SelectList extends Widget {
 	/**
 	 * Pull Detector
 	 */
-	private PullDetector mPullDetector = new PullDetector(new PullDetectorListener() {
+	final private PullDetector mPullDetector = new PullDetector(new PullDetectorListener() {
 		
 		@Override
-		public void onPull(Vector2 start, Vector2 end) {
+		final public void onPull(Vector2 start, Vector2 end) {
+			end = transformPosition(end);
+			start = transformPosition(start);
+			switch(mOrientation) {
+			case HORIZONTAL:
+				onPullHorizontal(start, end);
+				break;
+			case VERTICAL:
+				onPullVertical(start, end);
+				break;
+			}
+		}
+		
+		/**
+		 * Vertical pull
+		 * @param start
+		 * @param end
+		 */
+		public void onPullVertical(final Vector2 start, final Vector2 end) {
 			final float pull = end.y - start.y;
+			if(mClickLock) {
+				if(Math.abs(pull) >= PRESS_MARK * mScene.getDensity()) {
+					mClickLock = false;
+					mClickLockPhase = 0;
+					mPointers.clear();
+					// Unselect
+					if(mType == Type.CLICKABLE) {
+						mCursorLayer.setOpacity(0);
+						mIndex = -1;
+					}
+					mPullDetector.reset();
+					mReleasedToImpulse = true;
+					// Cancel items holder touch
+					MotionEvent cancell = MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+					if(mSelectListAdapter != null) {
+						for(final ItemHolder item : mItemsHolder) {
+							item.touch(cancell);
+						}
+					}
+					cancell.recycle();
+				}
+			} else {
+				mPull = pull;
+				updatePosition();
+			}
+		}
+		
+		/**
+		 * Horizontal Pull
+		 * @param start
+		 * @param end
+		 */
+		public void onPullHorizontal(final Vector2 start, final Vector2 end) {
+			final float pull = end.x - start.x;
 			if(mClickLock) {
 				if(Math.abs(pull) >= PRESS_MARK * mScene.getDensity()) {
 					mClickLock = false;
@@ -115,6 +165,33 @@ final public class SelectList extends Widget {
 		}
 	});
 	
+ 	/**
+	 * Drag Detector
+	 */
+	private ImpulseDetector mImpulseDetector;
+	private ImpulseDetectorListener mImpulseDetectorListener = new ImpulseDetectorListener() {
+		
+		@Override
+		public void onImpulse(Vector2 draged) {
+			draged = transformVector(draged);
+			
+			switch(mOrientation) {
+			case HORIZONTAL:
+				if(mReleasedToImpulse) {
+					mSmoth = (mSmoth + (draged.x / mScene.getDensity()));
+					mReleasedToImpulse = false;
+				}
+				break;
+			case VERTICAL:
+				if(mReleasedToImpulse) {
+					mSmoth = (mSmoth + (draged.y / mScene.getDensity()));
+					mReleasedToImpulse = false;
+				}
+				break;
+			}
+		}
+	};
+	
 	/**
 	 * List Type
 	 * 
@@ -125,7 +202,19 @@ final public class SelectList extends Widget {
 		
 		/* Conts */
 		SELECTABLE,
-		CLICKABLE;
+		CLICKABLE,
+		UNSELECTABLE;
+	}
+	
+	/**
+	 * Orientation
+	 * 
+	 * @author user
+	 *
+	 */
+	public enum Orientation {
+		VERTICAL,
+		HORIZONTAL;
 	}
 	
 	/**
@@ -139,21 +228,6 @@ final public class SelectList extends Widget {
 		BACKGROUND,
 		ITEM;
 	}
-	
- 	/**
-	 * Drag Detector
-	 */
-	private ImpulseDetector mImpulseDetector;
-	private ImpulseDetectorListener mImpulseDetectorListener = new ImpulseDetectorListener() {
-		
-		@Override
-		public void onImpulse(Vector2 draged) {
-			if(mReleasedToImpulse) {
-				mSmoth = (mSmoth + (draged.y / mScene.getDensity()));
-				mReleasedToImpulse = false;
-			}
-		}
-	};
 	
 	/**
 	 * Attributes
@@ -180,9 +254,10 @@ final public class SelectList extends Widget {
 	final public static int TOUCH_INTERCEPT = 2;
 	
 	// Final Private Variables
-	private Sprite mBackLayer;
+	private Drawable mBackLayer;
 	private SelectListAdapter mSelectListAdapter;
-	private Polygon mCursorLayer, mVerticalScrollLayer;
+	private Polygon mCursorLayer, mScrollLayer;
+	private Polygon mStencil;
 	
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();
 	
@@ -195,8 +270,8 @@ final public class SelectList extends Widget {
 	private boolean mPullStarted = false;
 	private float mScroll = 0;
 	private float mSmoth = 0;
-	private float mVerticalScrollHeight;
-	private int mVerticalScrollAnimation = -1;
+	private float mScrollSize;
+	private int mScrollAnimation = -1;
 	private long mLastTime = GlobalClock.currentTimeMillis();
 	private float mLastScroll = 0;
 	private boolean mClickLock = true;
@@ -204,8 +279,8 @@ final public class SelectList extends Widget {
 	private long mClickLockWait = 0;
 	private float mDrawPosition = 0;
 	private Attributes mAttributes = new Attributes();
-	private Texture mBackTexture = null;
 	private Type mType = Type.SELECTABLE;
+	private Orientation mOrientation = Orientation.VERTICAL;
 	private ItemHolder[] mItemsHolder;
 	private int mItemsCount = 0;
 	
@@ -251,7 +326,7 @@ final public class SelectList extends Widget {
 			mSelectListAdapter = null;
 			mCursorLayer.setOpacity(0);
 			mIndex = -1;
-			reshapeVerticalScroll();
+			reshapeScroll();
 			return;
 		}
 		mSelectListAdapter = adapter;
@@ -259,7 +334,7 @@ final public class SelectList extends Widget {
 		mItemsHolder = new ItemHolder[mItemsCount];
 		for(int i=0; i<mItemsCount; i++)
 			mItemsHolder[i] = mSelectListAdapter.createItem(i);
-		reshapeVerticalScroll();
+		reshapeScroll();
 	}
 	
 	/**
@@ -271,6 +346,16 @@ final public class SelectList extends Widget {
 	}
 	
 	/**
+	 * Set Orientation
+	 * 
+	 * @param orientation
+	 */
+	final public void setOrientation(final Orientation orientation) {
+		mOrientation = orientation;
+		reshapeScroll();
+	}
+	
+	/**
 	 * Get list type
 	 * @param type
 	 */
@@ -279,12 +364,48 @@ final public class SelectList extends Widget {
 	}
 	
 	/**
-	 * Set Background texture
+	 * Get Orientation
+	 * @return
+	 */
+	final public Orientation getOrientation() {
+		return mOrientation;
+	}
+	
+	/**
+	 * Set Background Drawable
 	 * @param back
 	 */
-	final public void setBackgroundTexture(final Texture back) {
-		mBackLayer.setTexture(back);
-		mBackLayer.setSize(mSize);
+	final public void setBackground(final Drawable bg) {
+		mBackLayer = bg;
+	}
+	
+	/**
+	 * Set Background
+	 * @param text
+	 */
+	final public void setBackground(final Texture text) {
+		final Sprite sprite = new Sprite();
+		sprite.setTexture(text);
+		sprite.setSize(mSize);
+		mBackLayer = sprite;
+	}
+	
+	/**
+	 * Set Background
+	 * @param color
+	 */
+	final public void setBackground(final Color color) {
+		final Polygon polygon = Polygon.createRectangle(mSize);
+		polygon.setColor(color);
+		mBackLayer = polygon;
+	}
+	
+	/**
+	 * Set Scroll Color
+	 * @param color
+	 */
+	final public void setScrollColor(final Color color) {
+		mScrollLayer.setColor(color);
 	}
 	
 	/**
@@ -304,10 +425,10 @@ final public class SelectList extends Widget {
 	 */
 	final private void measure(final Vector2 size) {
 		setSize(size.clone());
-		setupBack();
+		setupStencil();
 		
 		setupCursor();
-		setupVerticalScroll();
+		setupScroll();
 		
 	}
 	
@@ -325,50 +446,95 @@ final public class SelectList extends Widget {
 	/**
 	 * Refresh Cursor
 	 */
-	final public void refreshCursor(final float cellHeight) {
+	final public void refreshCursor(final float cell) {
 		mCursorLayer.clearVertices();
-		mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(getSize().x - mAttributes.border * 2, cellHeight), mAttributes.border));
-	}
-	
-	/*
-	 * Setup Back
-	 */
-	final public void setupBack() {
-		mBackLayer = new Sprite();
-		//mBackLayer.setPosition(new Vector2(0, mHeaderLayer.getSize().y * 0.67f));
+		switch(mOrientation) {
+		case HORIZONTAL:
+			mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(cell, getSize().y - mAttributes.border * 2), mAttributes.border));
+			break;
+		case VERTICAL:
+			mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(getSize().x - mAttributes.border * 2, cell), mAttributes.border));
+			break;
 		
-		addComponent(mBackLayer);
+		}
+		
 	}
 	
 	/**
-	 * Setup Vertical Scroll
+	 * Setup Stencil
 	 */
-	final private void setupVerticalScroll() {
-		mVerticalScrollHeight = getSize().y - mAttributes.border * 2;
-		Vector2 size = new Vector2(mScene.getDensityParser().smallerValue(10), mVerticalScrollHeight);
-		mVerticalScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5));
-		mVerticalScrollLayer.setPosition(new Vector2(getSize().x - (size.x + mAttributes.border), mAttributes.border));
-		mVerticalScrollLayer.setColor(Color.WHITE);
-		mVerticalScrollLayer.setOpacity(0);
-		mVerticalScrollLayer.setZ(99999);
-		updateVerticalScroll();
+	final public void setupStencil() {
+		mStencil = Polygon.createRectangle(new Vector2(mSize.x - mAttributes.border * 2, mSize.y - mAttributes.border * 2));
+		mStencil.setPosition(new Vector2(mAttributes.border, mAttributes.border));
 	}
 	
 	/**
-	 * Reshape Vertical Scroll
+	 * Setup Scroll
 	 */
-	final private void reshapeVerticalScroll() {
-		final float minSize = mScene.getDensityParser().smallerValue(MIN_VERTICAL_SCROLL_SIZE);
-		final float contentSize = getContentHeight();
-		float finalSize = getSize().y - mAttributes.border * 2;
-		if(contentSize != -1)
-			finalSize = (finalSize / contentSize) * getSize().y;
-		finalSize = Math.max(minSize, finalSize);
-		mVerticalScrollHeight = finalSize;
-		Vector2 size = new Vector2(mScene.getDensityParser().smallerValue(10), finalSize);
-		mVerticalScrollLayer.clearVertices();
-		mVerticalScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5)));
-		setVerticalScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
+	final private void setupScroll() {
+		Vector2 size;
+		switch(mOrientation) {
+		case HORIZONTAL:
+			mScrollSize = getSize().x - mAttributes.border * 2;
+			size = new Vector2(mScrollSize, mScene.getDensityParser().smallerValue(10));
+			mScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5));
+			mScrollLayer.setPosition(new Vector2(mAttributes.border, getSize().y - (size.y + mAttributes.border)));
+			mScrollLayer.setColor(Color.WHITE);
+			mScrollLayer.setOpacity(0);
+			mScrollLayer.setZ(99999);
+			updateScroll();
+			break;
+		case VERTICAL:
+			mScrollSize = getSize().y - mAttributes.border * 2;
+			size = new Vector2(mScene.getDensityParser().smallerValue(10), mScrollSize);
+			mScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5));
+			mScrollLayer.setPosition(new Vector2(getSize().x - (size.x + mAttributes.border), mAttributes.border));
+			mScrollLayer.setColor(Color.WHITE);
+			mScrollLayer.setOpacity(0);
+			mScrollLayer.setZ(99999);
+			updateScroll();
+			break;
+		
+		}
+		
+	}
+	
+	/**
+	 * Reshape Scroll
+	 */
+	final private void reshapeScroll() {
+		float minSize = mScene.getDensityParser().smallerValue(MIN_VERTICAL_SCROLL_SIZE);
+		float contentSize;
+		float finalSize;
+		Vector2 size;
+		switch(mOrientation) {
+		case HORIZONTAL:
+			contentSize = getContentSize();
+			finalSize = getSize().x - mAttributes.border * 2;
+			if(contentSize != -1)
+				finalSize = (finalSize / contentSize) * getSize().y;
+			finalSize = Math.max(minSize, finalSize);
+			mScrollSize = finalSize;
+			size = new Vector2(finalSize, mScene.getDensityParser().smallerValue(10));
+			mScrollLayer.setPosition(new Vector2(mAttributes.border, getSize().y - (size.y + mAttributes.border)));
+			mScrollLayer.clearVertices();
+			mScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5)));
+			setScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
+			break;
+		case VERTICAL:
+			contentSize = getContentSize();
+			finalSize = getSize().y - mAttributes.border * 2;
+			if(contentSize != -1)
+				finalSize = (finalSize / contentSize) * getSize().y;
+			finalSize = Math.max(minSize, finalSize);
+			mScrollSize = finalSize;
+			size = new Vector2(mScene.getDensityParser().smallerValue(10), finalSize);
+			mScrollLayer.setPosition(new Vector2(getSize().x - (size.x + mAttributes.border), mAttributes.border));
+			mScrollLayer.clearVertices();
+			mScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5)));
+			setScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
+			break;
+		}
 	}
 	
 	/**
@@ -429,53 +595,96 @@ final public class SelectList extends Widget {
 		if(mClickLock) {
 			
 			
-			
-			
+			// Processs Itens click
 			float filling = mDrawPosition;
-			float min = 0;
-			float max = getSize().y - mAttributes.border * 2;
-			for(int index=0; index<mItemsCount; index++) {
-				SelectListAdapter.ItemHolder item = mItemsHolder[index];
-				float cellSize = item.getHeight() + mAttributes.padding * 2;
+			float min;
+			float max;
+			
+			switch(mOrientation) {
+			case HORIZONTAL:
+				min = 0;
+				max = getSize().x - mAttributes.border * 2;
 				
-				float top = filling;
-				float bottom = top + cellSize;
-				
-				if(top < max && bottom >= min) {
-					int uTouch = item.touch(motionEvent);
-					if((uTouch & TOUCH_CONSUME) == TOUCH_CONSUME) {
-						mClickLockPhase = 0;
-						if(mType == Type.CLICKABLE) {
-							mCursorLayer.setOpacity(0);
-							mIndex = 0;
+				for(int index=0; index<mItemsCount; index++) {
+					SelectListAdapter.ItemHolder item = mItemsHolder[index];
+					float cellSize = item.getHeight() + mAttributes.padding * 2;
+					
+					float left = filling;
+					float right = left + cellSize;
+					
+					if(left < max && right >= min) {
+						int uTouch = item.touch(motionEvent);
+						if((uTouch & TOUCH_CONSUME) == TOUCH_CONSUME) {
+							mClickLockPhase = 0;
+							if(mType == Type.CLICKABLE) {
+								mCursorLayer.setOpacity(0);
+								mIndex = 0;
+							}
+							itemConsumed = true;
 						}
-						itemConsumed = true;
+						if((uTouch & TOUCH_INTERCEPT) == TOUCH_INTERCEPT) {
+							itemIntercepted = true;
+							mTouchEventsDetector.reset();
+							mPullDetector.reset();
+							mImpulseDetector.reset();
+						}
+					} else if(left >= max) {
+						break;
 					}
-					if((uTouch & TOUCH_INTERCEPT) == TOUCH_INTERCEPT) {
-						itemIntercepted = true;
-						mTouchEventsDetector.reset();
-						mPullDetector.reset();
-						mImpulseDetector.reset();
-					}
-				} else if(top >= max) {
-					break;
+					filling += cellSize;
 				}
-				filling += cellSize;
+				
+				break;
+			case VERTICAL:
+				min = 0;
+				max = getSize().y - mAttributes.border * 2;
+				
+				for(int index=0; index<mItemsCount; index++) {
+					SelectListAdapter.ItemHolder item = mItemsHolder[index];
+					float cellSize = item.getHeight() + mAttributes.padding * 2;
+					
+					float top = filling;
+					float bottom = top + cellSize;
+					
+					if(top < max && bottom >= min) {
+						int uTouch = item.touch(motionEvent);
+						if((uTouch & TOUCH_CONSUME) == TOUCH_CONSUME) {
+							mClickLockPhase = 0;
+							if(mType == Type.CLICKABLE) {
+								mCursorLayer.setOpacity(0);
+								mIndex = 0;
+							}
+							itemConsumed = true;
+						}
+						if((uTouch & TOUCH_INTERCEPT) == TOUCH_INTERCEPT) {
+							itemIntercepted = true;
+							mTouchEventsDetector.reset();
+							mPullDetector.reset();
+							mImpulseDetector.reset();
+						}
+					} else if(top >= max) {
+						break;
+					}
+					filling += cellSize;
+				}
+				
+				break;
+			
 			}
 			
+			
+			
 			// If item not consume touch, process in this list
-			if(!itemConsumed) {
+			if(!itemConsumed && mType != Type.UNSELECTABLE) {
 				switch(MotionEventCompat.getActionMasked(motionEvent)) {
 				case MotionEvent.ACTION_DOWN:
 				case MotionEvent.ACTION_POINTER_DOWN:
-					Log.d("LogTest", "Down");
 					addPointer(motionEvent);
 					mClickLockPhase = 1;
 					mClickLockWait = GlobalClock.currentTimeMillis();
 					break;
 				case MotionEvent.ACTION_UP:
 				case MotionEvent.ACTION_POINTER_UP:
-					Log.d("LogTest", "Up: " + mClickLockPhase);
 					final Pointer pointer = removePointer(motionEvent);
 	
 					if(mType == Type.SELECTABLE) {
@@ -525,7 +734,7 @@ final public class SelectList extends Widget {
 	 * Get filled items
 	 * @return
 	 */
-	final private float getFilledItems() {
+	final private float getFilledItemsSize() {
 		if(mSelectListAdapter == null)
 			return 0;
 		float filled = 0;
@@ -577,52 +786,94 @@ final public class SelectList extends Widget {
 		if(mSelectListAdapter == null)
 			return;
 		
-		final AnimationSet set = getAnimationStack().animateFrame();
+		// Prepare
+		final float borderX = mAttributes.border;
+		final float borderY = mAttributes.border;
 		
-		final Vector2 scale = Vector2.scale(set.getScale(), getScale());
+		final Vector2 clickPos = transformPosition(pointer.framePosition);
+		float filled;
 		
-		final float borderX = mAttributes.border * scale.x;
-		final float borderY = mAttributes.border * scale.y;
-		
-		final Vector2 pos = getDesignedVerticesPosition()[0];
-		
-		final Vector2 clickPos = Vector2.sub(pointer.framePosition, pos);
-		float maxY = (getSize().y - mAttributes.border) * scale.y;
-		// do not use "padding * 2"
-		final float filled = (mAttributes.border + getFilledItems()) * scale.y;
-		if(filled <= maxY)
-			maxY = filled;
+		// Orient
+		switch(mOrientation) {
+		case HORIZONTAL:
 			
-		if(clickPos.x >= borderX && clickPos.x <= (getSize().x - mAttributes.border) * scale.x && clickPos.y >= borderY && clickPos.y <= maxY) {
-				
-			final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
-				
-			final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
-	
-			if(mIndex != index) {
-				final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
-				
-				refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
-				mCursorLayer.setOpacity(0.7f);
-				//mCursorLayer.setPosition(mCursorPosition);
-				mCursorLayer.getAnimationStack().clear();
-				mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
-				mCursorLayer.getAnimationStack().start();
-				
-				final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
-				final float scroll = getFinalPosition();
-				final float cursorPos = cursorDesignedPos.y + scroll;
-				final float cursorPosH = cursorPos + cellSize;
-				
-				if(cursorPos < mAttributes.border)
-					mScroll += mAttributes.border - cursorPos;
-				else if(cursorPosH > (getSize().y - mAttributes.border))
-					mScroll -= cursorPosH - (getSize().y - mAttributes.border);
-				
-				updatePosition();
-				
-				mIndex = index;
+			float maxX = (getSize().x - mAttributes.border);
+			// do not use "padding * 2"
+			filled = (mAttributes.border + getFilledItemsSize());
+			if(filled <= maxX)
+				maxX = filled;
+			
+			if(clickPos.y >= borderY && clickPos.y <= (getSize().y - mAttributes.border) && clickPos.x >= borderX && clickPos.x <= maxX) {
+					
+				final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
+					
+				final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.x ) - getFinalPosition())));
+		
+				if(mIndex != index) {
+					final Vector2 cursorDesignedPos = new Vector2(getPositionIndex(index) + mAttributes.border, mAttributes.border);
+					
+					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
+					mCursorLayer.setOpacity(0.7f);
+					//mCursorLayer.setPosition(mCursorPosition);
+					mCursorLayer.getAnimationStack().clear();
+					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().start();
+					
+					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
+					final float scroll = getFinalPosition();
+					final float cursorPos = cursorDesignedPos.x + scroll;
+					final float cursorPosH = cursorPos + cellSize;
+					
+					if(cursorPos < mAttributes.border)
+						mScroll += mAttributes.border - cursorPos;
+					else if(cursorPosH > (getSize().x - mAttributes.border))
+						mScroll -= cursorPosH - (getSize().x - mAttributes.border);
+					
+					updatePosition();
+					
+					mIndex = index;
+				}
 			}
+			break;
+		case VERTICAL:
+			float maxY = (getSize().y - mAttributes.border);
+			// do not use "padding * 2"
+			filled = (mAttributes.border + getFilledItemsSize());
+			if(filled <= maxY)
+				maxY = filled;
+				
+			if(clickPos.x >= borderX && clickPos.x <= (getSize().x - mAttributes.border) && clickPos.y >= borderY && clickPos.y <= maxY) {
+					
+				final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
+					
+				final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.y ) - getFinalPosition())));
+		
+				if(mIndex != index) {
+					final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
+					
+					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
+					mCursorLayer.setOpacity(0.7f);
+					//mCursorLayer.setPosition(mCursorPosition);
+					mCursorLayer.getAnimationStack().clear();
+					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().start();
+					
+					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
+					final float scroll = getFinalPosition();
+					final float cursorPos = cursorDesignedPos.y + scroll;
+					final float cursorPosH = cursorPos + cellSize;
+					
+					if(cursorPos < mAttributes.border)
+						mScroll += mAttributes.border - cursorPos;
+					else if(cursorPosH > (getSize().y - mAttributes.border))
+						mScroll -= cursorPosH - (getSize().y - mAttributes.border);
+					
+					updatePosition();
+					
+					mIndex = index;
+				}
+			}
+			break;
 		}
 	}
 	
@@ -633,57 +884,99 @@ final public class SelectList extends Widget {
 		if(mSelectListAdapter == null)
 			return;
 		
-		final AnimationSet set = getAnimationStack().animateFrame();
+		// Prepare
+		final float borderX = mAttributes.border;
+		final float borderY = mAttributes.border;
 		
-		final Vector2 scale = Vector2.scale(set.getScale(), getScale());
+		final Vector2 clickPos = transformPosition(pointer.framePosition);
 		
-		final float borderX = mAttributes.border * scale.x;
-		final float borderY = mAttributes.border * scale.y;
+		float filled;
 		
-		final Vector2 pos = getDesignedVerticesPosition()[0];
-		
-		final Vector2 clickPos = Vector2.sub(pointer.framePosition, pos);
-		float maxY = (getSize().y - mAttributes.border) * scale.y;
-		// do not use "padding * 2"
-		final float filled = (mAttributes.border + getFilledItems()) * scale.y;
-		if(filled <= maxY)
-			maxY = filled;
+		// Orient
+		switch(mOrientation) {
+		case HORIZONTAL:
 			
-		if(clickPos.x >= borderX && clickPos.x <= (getSize().x - mAttributes.border) * scale.x && clickPos.y >= borderY && clickPos.y <= maxY) {
-				
-			final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
-				
-			final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.y ) / scale.y - getFinalPosition())));
-	
-			if(mIndex != index) {
-				final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
-				
-				refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
-				mCursorLayer.setOpacity(0.7f);
-				//mCursorLayer.setPosition(mCursorPosition);
-				mCursorLayer.getAnimationStack().clear();
-				mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
-				mCursorLayer.getAnimationStack().start();
-				
-				final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
-				final float scroll = getFinalPosition();
-				final float cursorPos = cursorDesignedPos.y + scroll;
-				final float cursorPosH = cursorPos + cellSize;
-				
-				if(cursorPos < mAttributes.border)
-					mScroll += mAttributes.border - cursorPos;
-				else if(cursorPosH > (getSize().y - mAttributes.border))
-					mScroll -= cursorPosH - (getSize().y - mAttributes.border);
-				
-				updatePosition();
-				
-				if(mSelectListener != null)
-					mSelectListener.onSelect(index);
-				mIndex = index;
+			float maxX = getSize().x - mAttributes.border;
+			// do not use "padding * 2"
+			filled = mAttributes.border + getFilledItemsSize();
+			if(filled <= maxX)
+				maxX = filled;
+			
+			if(clickPos.y >= borderY && clickPos.y <= (getSize().y - mAttributes.border) && clickPos.x >= borderX && clickPos.x <= maxX) {
+					
+				final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
+					
+				final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.x ) - getFinalPosition())));
+		
+				if(mIndex != index) {
+					final Vector2 cursorDesignedPos = new Vector2(getPositionIndex(index) + mAttributes.border, mAttributes.border);
+					
+					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
+					mCursorLayer.setOpacity(0.7f);
+					//mCursorLayer.setPosition(mCursorPosition);
+					mCursorLayer.getAnimationStack().clear();
+					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().start();
+					
+					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
+					final float scroll = getFinalPosition();
+					final float cursorPos = cursorDesignedPos.x + scroll;
+					final float cursorPosH = cursorPos + cellSize;
+					
+					if(cursorPos < mAttributes.border)
+						mScroll += mAttributes.border - cursorPos;
+					else if(cursorPosH > (getSize().x - mAttributes.border))
+						mScroll -= cursorPosH - (getSize().x - mAttributes.border);
+					
+					updatePosition();
+					
+					if(mSelectListener != null)
+						mSelectListener.onSelect(index);
+					mIndex = index;
+				}
 			}
-		} else {
-			mIndex = -1;
-			mCursorLayer.setOpacity(0);
+			break;
+		case VERTICAL:
+			float maxY = (getSize().y - mAttributes.border);
+			// do not use "padding * 2"
+			filled = (mAttributes.border + getFilledItemsSize());
+			if(filled <= maxY)
+				maxY = filled;
+				
+			if(clickPos.x >= borderX && clickPos.x <= (getSize().x - mAttributes.border) && clickPos.y >= borderY && clickPos.y <= maxY) {
+					
+				final Vector2 normalizedPos = Vector2.sub(clickPos, new Vector2(borderX, borderY));
+					
+				final int index = (int)Math.max(0, Math.min(mItemsCount-1, getIndexInItems((normalizedPos.y ) - getFinalPosition())));
+		
+				if(mIndex != index) {
+					final Vector2 cursorDesignedPos = new Vector2(mAttributes.border, getPositionIndex(index) + mAttributes.border);
+					
+					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
+					mCursorLayer.setOpacity(0.7f);
+					//mCursorLayer.setPosition(mCursorPosition);
+					mCursorLayer.getAnimationStack().clear();
+					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().start();
+					
+					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
+					final float scroll = getFinalPosition();
+					final float cursorPos = cursorDesignedPos.y + scroll;
+					final float cursorPosH = cursorPos + cellSize;
+					
+					if(cursorPos < mAttributes.border)
+						mScroll += mAttributes.border - cursorPos;
+					else if(cursorPosH > (getSize().y - mAttributes.border))
+						mScroll -= cursorPosH - (getSize().y - mAttributes.border);
+					
+					updatePosition();
+					
+					if(mSelectListener != null)
+						mSelectListener.onSelect(index);
+					mIndex = index;
+				}
+			}
+			break;
 		}
 	}
 	
@@ -696,10 +989,21 @@ final public class SelectList extends Widget {
 		
 		
 		float maxScroll = getMaxScroll();
-		final float peace = getSize().y * 0.2f;
+		float peace = 0;
 		float pulloff = mPull;
 		float pullon = 0;
 		
+		// Orient
+		switch(mOrientation) {
+		case HORIZONTAL:
+			peace = getSize().x * 0.2f;
+			break;
+		case VERTICAL:
+			peace = getSize().y * 0.2f;
+			break;
+		}
+		
+		// Pull
 		if(pulloff >= 0) {
 			if(pulloff + mScroll > 0) {
 				if(mScroll < 0) {
@@ -738,9 +1042,17 @@ final public class SelectList extends Widget {
 	final private float getMaxScroll() {
 		if(mSelectListAdapter == null)
 			return 0;
-		final float filled = (mAttributes.border * 2 + getFilledItems());
-		if(filled >= mSize.y)
-			return filled - mSize.y;
+		final float filled = (mAttributes.border * 2 + getFilledItemsSize());
+		switch(mOrientation) {
+		case HORIZONTAL:
+			if(filled >= mSize.x)
+				return filled - mSize.x;
+			break;
+		case VERTICAL:
+			if(filled >= mSize.y)
+				return filled - mSize.y;
+			break;
+		}
 		return 0;
 	}
 	
@@ -748,10 +1060,18 @@ final public class SelectList extends Widget {
 	 * Get Content Size
 	 * @return
 	 */
-	final private float getContentHeight() {
-		final float filled = getFilledItems();
-		if(filled >= mSize.y)
-			return filled;
+	final private float getContentSize() {
+		final float filled = getFilledItemsSize();
+		switch(mOrientation) {
+		case HORIZONTAL:
+			if(filled >= mSize.x)
+				return filled;
+			break;
+		case VERTICAL:
+			if(filled >= mSize.y)
+				return filled;
+			break;
+		}
 		return -1;
 	}
 	
@@ -767,17 +1087,6 @@ final public class SelectList extends Widget {
 	 */
 	@Override
 	protected void onUpdate() {
-		final AnimationSet set = getAnimationStack().animateFrame();
-		final Vector2 scale = Vector2.scale(set.getScale(), getScale());
-		
-		final float borderX = mAttributes.border * scale.x;
-		final float borderY = mAttributes.border * scale.y;
-		
-		RectF rect = getDesignedRect();
-		
-		
-		mCursorLayer.setViewport(new Rect((int)(rect.left + borderX), (int)(rect.top + borderY), (int)(rect.right - borderX), (int)(rect.bottom - borderY)));
-		
 		float maxScroll = getMaxScroll();
 		if(!mPullStarted) {
 
@@ -807,7 +1116,7 @@ final public class SelectList extends Widget {
 			
 			updatePosition();
 		}
-		updateVerticalScroll();
+		updateScroll();
 		
 		// If pressing
 		if(mClickLock && mClickLockPhase == 1 && (GlobalClock.currentTimeMillis() - mClickLockWait) >= 150) {
@@ -831,131 +1140,214 @@ final public class SelectList extends Widget {
 	 */
 	@Override
 	protected void onDraw(final Drawer drawer, final DrawingLayer drawingLayer) {
-		if(drawingLayer == DrawingLayer.LAYER_BOTTOM)
+		if(drawingLayer == DrawingLayer.LAYER_BOTTOM) {
+			mBackLayer.draw(drawer);
 			return;
+		}
 		
 		if(mSelectListAdapter == null) {
-			mVerticalScrollLayer.draw(drawer);
+			mScrollLayer.draw(drawer);
 			return;
 		}
 		
 		WorldMatrix matrix = drawer.getWorldMatrix();
 		matrix.push();
-		matrix.postTranslatef(mAttributes.border, mDrawPosition + mAttributes.border);
 		
-		drawer.snip(mCursorLayer.getViewport());
+		drawer.addDrawableToStencil(mStencil);
+		drawer.useStencil();
 		
-		float filling = mDrawPosition;
-		float min = 0;
-		float max = getSize().y - mAttributes.border * 2;
-		
-		float backWidth = getSize().x - mAttributes.border * 2;
-		float itemWidth = backWidth - mAttributes.border * 2;
-		
-		Canvas canvas = new Canvas(drawer);
-		
-		for(int index=0; index<mItemsCount; index++) {
-			SelectListAdapter.ItemHolder item = mItemsHolder[index];
-			float cellSize = item.getHeight() + mAttributes.padding * 2;
+		switch(mOrientation) {
+		case HORIZONTAL:
+		{
+			matrix.preTranslatef(mDrawPosition + mAttributes.border, mAttributes.border);
 			
-			float top = filling;
-			float bottom = top + cellSize;
+			float filling = mDrawPosition;
+			float min = 0;
+			float max = getSize().x - mAttributes.border * 2;
 			
-			if(top < max && bottom >= min) {
-				item.draw(drawer, DrawingHolder.BACKGROUND, new Vector2(backWidth, cellSize));
-				if(index == mIndex)
-					mCursorLayer.draw(drawer);
-				matrix.postTranslatef(mAttributes.border, mAttributes.padding);
-				item.draw(drawer, DrawingHolder.ITEM, new Vector2(itemWidth, item.getHeight()));
-				matrix.postTranslatef(-mAttributes.border, item.getHeight() + mAttributes.padding);
-			} else if(top >= max) {
-				break;
-			} else
-				matrix.postTranslatef(0, mAttributes.padding + item.getHeight() + mAttributes.padding);
+			float backHeight = getSize().y - mAttributes.border * 2;
+			float itemHeight = backHeight - mAttributes.border * 2;
 			
-			if(index < (mItemsCount - 1))
-				canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(backWidth, 2));
+			Canvas canvas = new Canvas(drawer);
+			
+			for(int index=0; index<mItemsCount; index++) {
+				SelectListAdapter.ItemHolder item = mItemsHolder[index];
+				float cellSize = item.getHeight() + mAttributes.padding * 2;
+				
+				float left = filling;
+				float right = left + cellSize;
+				
+				if(left < max && right >= min) {
+					item.draw(drawer, DrawingHolder.BACKGROUND, new Vector2(cellSize, backHeight));
+					if(index == mIndex)
+						mCursorLayer.draw(drawer);
+					matrix.preTranslatef(mAttributes.padding, mAttributes.border);
+					item.draw(drawer, DrawingHolder.ITEM, new Vector2(item.getHeight(), itemHeight));
+					matrix.preTranslatef(item.getHeight() + mAttributes.padding, -mAttributes.border);
+				} else if(left >= max) {
+					break;
+				} else
+					matrix.preTranslatef(mAttributes.padding * 2 + item.getHeight(), 0);
+				
+				if(index < (mItemsCount - 1))
+					canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(2, backHeight));
 
-			
-			filling += cellSize;
+				
+				filling += cellSize;
+			}
+			break;
 		}
+		case VERTICAL:
+		{
+			matrix.preTranslatef(mAttributes.border, mDrawPosition + mAttributes.border);
+			
+			
+			float filling = mDrawPosition;
+			float min = 0;
+			float max = getSize().y - mAttributes.border * 2;
+			
+			float backWidth = getSize().x - mAttributes.border * 2;
+			float itemWidth = backWidth - mAttributes.border * 2;
+			
+			Canvas canvas = new Canvas(drawer);
+			
+			for(int index=0; index<mItemsCount; index++) {
+				SelectListAdapter.ItemHolder item = mItemsHolder[index];
+				float cellSize = item.getHeight() + mAttributes.padding * 2;
+				
+				float top = filling;
+				float bottom = top + cellSize;
+				
+				if(top < max && bottom >= min) {
+					item.draw(drawer, DrawingHolder.BACKGROUND, new Vector2(backWidth, cellSize));
+					if(index == mIndex)
+						mCursorLayer.draw(drawer);
+					matrix.preTranslatef(mAttributes.border, mAttributes.padding);
+					item.draw(drawer, DrawingHolder.ITEM, new Vector2(itemWidth, item.getHeight()));
+					matrix.preTranslatef(-mAttributes.border, item.getHeight() + mAttributes.padding);
+				} else if(top >= max) {
+					break;
+				} else
+					matrix.preTranslatef(0, mAttributes.padding + item.getHeight() + mAttributes.padding);
+				
+				if(index < (mItemsCount - 1))
+					canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(backWidth, 2));
+
+				
+				filling += cellSize;
+			}
+			break;
+		}
+		}
+		
+		drawer.clearStencil();
 		
 		matrix.pop();
-		
-		mVerticalScrollLayer.draw(drawer);
-		
-		
+		mScrollLayer.draw(drawer);
 	}
 	
 	/**
-	 * Ser Vertical Scroll Anim State
+	 * Set Scroll Anim State
 	 * @param state
 	 */
-	final private void setVerticalScrollAnim(final int state) {
+	final private void setScrollAnim(final int state) {
 		mLastTime = GlobalClock.currentTimeMillis();
-		if(mVerticalScrollAnimation == state)
+		if(mScrollAnimation == state)
 			return;
-		mVerticalScrollAnimation = state;
-		switch(mVerticalScrollAnimation) {
+		mScrollAnimation = state;
+		switch(mScrollAnimation) {
 		case VERTICAL_SCROLL_ANIM_APPEAR:
-			mVerticalScrollLayer.setOpacity(1);
-			mVerticalScrollLayer.getAnimationStack().clear();
-			mVerticalScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(200, 0, 1));
-			mVerticalScrollLayer.getAnimationStack().start();
+			mScrollLayer.setOpacity(1);
+			mScrollLayer.getAnimationStack().clear();
+			mScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(200, 0, 1));
+			mScrollLayer.getAnimationStack().start();
 			break;
 		case VERTICAL_SCROLL_ANIM_DISAPPEAR:
-			mVerticalScrollLayer.getAnimationStack().clear();
-			mVerticalScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(200, 1, 0));
-			mVerticalScrollLayer.getAnimationStack().start();
+			mScrollLayer.getAnimationStack().clear();
+			mScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(200, 1, 0));
+			mScrollLayer.getAnimationStack().start();
 			break;
 		}
 	}
 	
 	/**
-	 * Update Vertical Scroll
+	 * Update Scroll
 	 */
-	final private void updateVerticalScroll() {
+	final private void updateScroll() {
 		// Update Position and Measure
 		final float minSize = mScene.getDensityParser().smallerValue(MIN_VERTICAL_SCROLL_SIZE);
-		final float contentSize = getContentHeight();
+		final float contentSize = getContentSize();
 		final float maxScroll = getMaxScroll();
 		final float finalScrollPosition = getFinalPosition();
 		float finalScale = 0;
-		Vector2 finalPosition = new Vector2(mVerticalScrollLayer.getPosition().x, 0);
-		if(contentSize == -1) {
-			finalPosition.y = mAttributes.border;
-			finalScale = 1;
-		} else {
-			float scaler = mVerticalScrollHeight;
-			float position = finalScrollPosition;
-			
-			if(position > 0)
-				scaler += position;
-			if(position < -maxScroll)
-				scaler += ((-maxScroll) - position);
-			
-			position = Math.min(0, position);
-			position = Math.max(-maxScroll, position);
+		Vector2 finalPosition;
+		
+		switch(mOrientation) {
+		case HORIZONTAL:
+			finalPosition = new Vector2(0, mScrollLayer.getPosition().y);
+			if(contentSize == -1) {
+				finalPosition.x = mAttributes.border;
+				finalScale = 1;
+			} else {
+				float scaler = mScrollSize;
+				float position = finalScrollPosition;
+				
+				if(position > 0)
+					scaler += position;
+				if(position < -maxScroll)
+					scaler += ((-maxScroll) - position);
+				
+				position = Math.min(0, position);
+				position = Math.max(-maxScroll, position);
 
-			float finalSize = ((getSize().y - mAttributes.border * 2) / contentSize) * getSize().y;
-			finalScale = Math.max(minSize, (finalSize / scaler) * mVerticalScrollHeight) / mVerticalScrollHeight;
-			
-			final float view = getSize().y - mAttributes.border * 2;
-			finalPosition.y = mAttributes.border + ((position * -1) / maxScroll) * (view - (finalScale * mVerticalScrollHeight));
+				float finalSize = ((getSize().x - mAttributes.border * 2) / contentSize) * getSize().x;
+				finalScale = Math.max(minSize, (finalSize / scaler) * mScrollSize) / mScrollSize;
+				
+				final float view = getSize().x - mAttributes.border * 2;
+				finalPosition.x = mAttributes.border + ((position * -1) / maxScroll) * (view - (finalScale * mScrollSize));
+			}
+			mScrollLayer.setScale(new Vector2(finalScale, 1));
+			mScrollLayer.setPosition(finalPosition);
+			break;
+		case VERTICAL:
+			finalPosition = new Vector2(mScrollLayer.getPosition().x, 0);
+			if(contentSize == -1) {
+				finalPosition.y = mAttributes.border;
+				finalScale = 1;
+			} else {
+				float scaler = mScrollSize;
+				float position = finalScrollPosition;
+				
+				if(position > 0)
+					scaler += position;
+				if(position < -maxScroll)
+					scaler += ((-maxScroll) - position);
+				
+				position = Math.min(0, position);
+				position = Math.max(-maxScroll, position);
+
+				float finalSize = ((getSize().y - mAttributes.border * 2) / contentSize) * getSize().y;
+				finalScale = Math.max(minSize, (finalSize / scaler) * mScrollSize) / mScrollSize;
+				
+				final float view = getSize().y - mAttributes.border * 2;
+				finalPosition.y = mAttributes.border + ((position * -1) / maxScroll) * (view - (finalScale * mScrollSize));
+			}
+			mScrollLayer.setScale(new Vector2(1, finalScale));
+			mScrollLayer.setPosition(finalPosition);
+			break;
 		}
-		mVerticalScrollLayer.setScale(new Vector2(1, finalScale));
-		mVerticalScrollLayer.setPosition(finalPosition);
+		
 		
 		// Update Animation
 		// If you have a considerable movement
 		if((Math.abs(mLastScroll - finalScrollPosition) > mAttributes.border / 3) || 
 			(finalScrollPosition > 0 || finalScrollPosition < -maxScroll)) {
-			setVerticalScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
+			setScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
 			mLastScroll = finalScrollPosition;
 			mLastTime = GlobalClock.currentTimeMillis();
 		}
 		if((GlobalClock.currentTimeMillis() - mLastTime) >= 1000) {
-			setVerticalScrollAnim(VERTICAL_SCROLL_ANIM_DISAPPEAR);
+			setScrollAnim(VERTICAL_SCROLL_ANIM_DISAPPEAR);
 			mLastTime = GlobalClock.currentTimeMillis();
 		}
 		

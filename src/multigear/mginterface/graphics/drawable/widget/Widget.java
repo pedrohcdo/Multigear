@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import multigear.general.utils.GeneralUtils;
+import multigear.general.utils.Line2;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
@@ -177,7 +178,7 @@ public class Widget implements Drawable, Touchable, Component {
 	protected boolean mMirror[] = { false, false };
 	protected int mZ, mId;
 	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
-	
+	private boolean mStaticTouch = false;
 	
 	// Final Public Variables
 	final public Skin Skin = new Skin();
@@ -384,6 +385,14 @@ public class Widget implements Drawable, Touchable, Component {
 	}
 	
 	/**
+	 * 
+	 * @param staticTouch
+	 */
+	public void setStaticTouch(final boolean staticTouch) {
+		mStaticTouch = staticTouch;
+	}
+	
+	/**
 	 * Get Listener
 	 * @return
 	 */
@@ -555,7 +564,13 @@ public class Widget implements Drawable, Touchable, Component {
 		return scene.getSpaceParser().getInverseScaleFactor();
 	}
 	
-	
+	/**
+	 * Get state of Static Touch
+	 * @return True/False
+	 */
+	final public boolean getStaticTouch() {
+		return mStaticTouch;
+	}
 	
 	/**
 	 * Return Sprite pressed state.
@@ -660,22 +675,39 @@ public class Widget implements Drawable, Touchable, Component {
 	@SuppressLint("WrongCall") 
 	@Override
 	final public void draw(final Drawer drawer) {
-		//
-		onUpdate();
 		
 		// Prepare Animations
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
-		
-		
-		// Animation Level
-		final Vector2 ascale = Vector2.scale(mScale, animationSet.getScale());
-		final float aox = mCenter.x * ascale.x;
-		final float aoy = mCenter.y * ascale.y;
-		final float arotation = mAngle + animationSet.getRotation();
-		final Vector2 atranslate = animationSet.getPosition();
-		
+				
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
+		
+		// Put new Transformation
+		matrixRow.push();
+		
+		// If static touch
+		if(mStaticTouch) {
+			// Static Transform and copy
+			matrixRow.push();
+				staticTransform(matrixRow);
+				matrixRow.swap();
+				refreshVerticesPosition(matrixRow);
+			matrixRow.pop();
+			// Normal Transform
+			normalTransform(matrixRow, animationSet);
+		} else {
+			// Normal transform and copy
+			normalTransform(matrixRow, animationSet);
+			matrixRow.swap();
+			refreshVerticesPosition(matrixRow);
+		}
+
+		
+				
+		//
+		onUpdate();
+		
+		
 		
 		// Order Layers
 		Collections.sort(mComponents, mLayersComparatorDraw);
@@ -688,24 +720,6 @@ public class Widget implements Drawable, Touchable, Component {
 		drawer.snip(mViewport);
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.setOpacity(opacity);
-		
-		// Push new transformation to stack
-		matrixRow.push();
-		
-		// Final Transformation
-		// pre = M * other
-		// M Transform "other" and not "other" transform M because "other" 
-		// Calculate without M informations
-		float rad = (float) GeneralUtils.degreeToRad(arotation);
-		float c = (float) Math.cos(rad);
-		float s = (float) Math.sin(rad);
-		mFinalTransformation[0] = c * ascale.x;
-		mFinalTransformation[1] = -s * ascale.y;
-		mFinalTransformation[2] = c * -aox + -s * -aoy + (mPosition.x + atranslate.x);
-		mFinalTransformation[3] = s * ascale.x;
-		mFinalTransformation[4] = c * ascale.y;
-		mFinalTransformation[5] = s * -aox + c * -aoy + (mPosition.y + atranslate.y);
-		matrixRow.preConcatf(mFinalTransformation);
 		
 		// Draw bottom component
 		onDraw(drawer, DrawingLayer.LAYER_BOTTOM);
@@ -722,28 +736,50 @@ public class Widget implements Drawable, Touchable, Component {
 		// End Drawer
 		drawer.end();
 		
-		// Pop transformations
+		// Release transformation
 		matrixRow.pop();
-		
-		// Update designed vertices
-		updateVertices(drawer);
 	}
 	
 	/**
-	 * Update Vertices
-	 * 
+	 * Normal Transformation
 	 * @param drawer
 	 */
-	final protected void updateVertices(final Drawer drawer) {
-		// Get Matrix Row
-		final WorldMatrix matrixRow = drawer.getWorldMatrix();
+	final protected void normalTransform(final WorldMatrix matrixRow, final AnimationSet animationSet ) {
+		// Animation Level
+		final Vector2 scale = animationSet.getScale();
+		final Vector2 ascale = new Vector2(mScale.x * scale.x, mScale.y  * scale.y);
+		final float aox = mCenter.x * ascale.x;
+		final float aoy = mCenter.y * ascale.y;
+		final float arotation = mAngle + animationSet.getRotation();
+		final Vector2 atranslate = animationSet.getPosition();
 		
+		// Final Transformation
+		// pre = M * other
+		// M Transform "other" and not "other" transform M because "other" 
+		// Calculate without M informations
+		float rad = (float) GeneralUtils.degreeToRad(arotation);
+		float c = (float) Math.cos(rad);
+		float s = (float) Math.sin(rad);
+		mFinalTransformation[0] = c * ascale.x;
+		mFinalTransformation[1] = -s * ascale.y;
+		mFinalTransformation[2] = c * -aox + -s * -aoy + (mPosition.x + atranslate.x);
+		mFinalTransformation[3] = s * ascale.x;
+		mFinalTransformation[4] = c * ascale.y;
+		mFinalTransformation[5] = s * -aox + c * -aoy + (mPosition.y + atranslate.y);
+		matrixRow.preConcatf(mFinalTransformation);
+	}
+	
+	/**
+	 * Static Transformation
+	 * @param matrixRow
+	 */
+	final private void staticTransform(final WorldMatrix matrixRow) {
 		// Prepare Transformations
 		final float ox = mCenter.x * mScale.x;
 		final float oy = mCenter.y * mScale.y;
-		final float sx = mSize.x * mScale.x;
-		final float sy = mSize.y * mScale.y;
-		
+		final float sx = mScale.x;
+		final float sy = mScale.y;
+				
 		// Final Transformation
 		double rad = GeneralUtils.degreeToRad(mAngle);
 		float c = (float) Math.cos(-rad);
@@ -754,21 +790,9 @@ public class Widget implements Drawable, Touchable, Component {
 		mFinalTransformation[3] = s * sx;
 		mFinalTransformation[4] = c * sy;
 		mFinalTransformation[5] = s * -ox + c * -oy + mPosition.y;
-				
-		// Push a new transformation
-		matrixRow.push();
-				
-		// Set post transformations
-		matrixRow.preConcatf(mFinalTransformation);
-				
-		// Swap transformations
-		matrixRow.swap();
-								
-		// Prepare Vertices Position
-		refreshVerticesPosition(matrixRow);
 		
-		// Release transformation
-		matrixRow.pop();
+		// Transform
+		matrixRow.preConcatf(mFinalTransformation);
 	}
 	
 	/*
@@ -785,6 +809,11 @@ public class Widget implements Drawable, Touchable, Component {
 	 * Refresh Vertices Position
 	 */
 	final protected void refreshVerticesPosition(final WorldMatrix matrixRow) {
+		// Set Size
+		mBaseVerticeB[0] = mSize.x;
+		mBaseVerticeC[0] = mSize.x;
+		mBaseVerticeC[1] = mSize.y;
+		mBaseVerticeD[1] = mSize.y;
 		// Swap transformations and project points
 		matrixRow.project(mBaseVerticeA, mResultMatrixA);
 		matrixRow.project(mBaseVerticeB, mResultMatrixB);
@@ -805,13 +834,17 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @return Return true if point over Sprite.
 	 */
 	final public boolean pointOver(final Vector2 point) {
-		// Get Edges
-		final float left = mVertices[0].x;
-		final float top = mVertices[0].y;
-		final float right = mVertices[2].x;
-		final float bottom = mVertices[2].y;
+		// Get distances
+		Line2 left = new Line2(mVertices[0], mVertices[3]);
+		Line2 top = new Line2(mVertices[1], mVertices[0]);
+		Line2 right = new Line2(mVertices[2], mVertices[1]);
+		Line2 bottom = new Line2(mVertices[3], mVertices[2]);
+		float distance_left = left.distanceToPoint(point);
+		float distance_top = top.distanceToPoint(point);
+		float distance_right = right.distanceToPoint(point);
+		float distance_bottom = bottom.distanceToPoint(point);
 		// Return result
-		return (point.x >= left && point.x < right && point.y >= top && point.y < bottom);
+		return !(distance_left < 0 || distance_top < 0 || distance_right < 0 || distance_bottom < 0);
 	}
 	
 	/**
@@ -830,6 +863,50 @@ public class Widget implements Drawable, Touchable, Component {
 	 */
 	final public RectF getDesignedRect() {
 		return new RectF(mVertices[0].x, mVertices[0].y, mVertices[2].x, mVertices[2].y);
+	}
+	
+	/**
+	 * Transform position into widget
+	 * @param position
+	 * @return
+	 */
+	final public Vector2 transformPosition(final Vector2 position) {
+		
+		Line2 left = new Line2(mVertices[0], mVertices[3]);
+		Line2 top = new Line2(mVertices[1], mVertices[0]);
+		Line2 right = new Line2(mVertices[2], mVertices[1]);
+		Line2 bottom = new Line2(mVertices[3], mVertices[2]);
+		
+		float distance_left = left.distanceToPoint(position);
+		float distance_top = top.distanceToPoint(position);
+		float distance_right = right.distanceToPoint(position);
+		float distance_bottom = bottom.distanceToPoint(position);
+		
+		
+		float x = (distance_left / (distance_left + distance_right)) * getSize().x;
+		float y = (distance_top / (distance_top + distance_bottom)) * getSize().y;
+		
+		return new Vector2(x, y);
+	}
+	
+	/**
+	 * Transform position into widget
+	 * @param position
+	 * @return
+	 */
+	final public Vector2 transformVector(Vector2 position) {
+		position = new Vector2(position.x+mVertices[0].x, position.y+mVertices[0].y);
+		Line2 left = new Line2(mVertices[0], mVertices[3]);
+		Line2 top = new Line2(mVertices[1], mVertices[0]);
+		Line2 right = new Line2(mVertices[2], mVertices[1]);
+		Line2 bottom = new Line2(mVertices[3], mVertices[2]);
+		float distance_left = left.distanceToPoint(position);
+		float distance_top = top.distanceToPoint(position);
+		float distance_right = right.distanceToPoint(position);
+		float distance_bottom = bottom.distanceToPoint(position);
+		float x = (distance_left / (distance_left + distance_right)) * getSize().x;
+		float y = (distance_top / (distance_top + distance_bottom)) * getSize().y;
+		return new Vector2(x, y);
 	}
 	
 	/**
@@ -946,7 +1023,6 @@ public class Widget implements Drawable, Touchable, Component {
 		Vector2 point = null;
 		int index = 0;
 		final BaseListener listener = getListener();
-		
 		// Motion
 		switch(MotionEventCompat.getActionMasked(motionEvent)) {
 		case MotionEvent.ACTION_DOWN:
@@ -956,6 +1032,7 @@ public class Widget implements Drawable, Touchable, Component {
 			point = new Vector2(motionEvent.getX(index), motionEvent.getY(index));
 			// accept if event in
 			if (pointOver(point)) {
+				
 				addState(STATE_PRESSED);
 				addState(STATE_IN);
 				addPointer(motionEvent);

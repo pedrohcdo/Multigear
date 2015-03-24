@@ -112,6 +112,21 @@ public class WorldMatrix {
 	}
 	
 	/**
+	 * Copy Values.<br>
+	 * For best performance for this method does not clear the matrix.
+	 * @param values
+	 */
+	final public void copyValues9x9(final float[] values) {
+		values[0] = mMatrix3x3[0];
+		values[1] = mMatrix3x3[1];
+		values[2] = mMatrix3x3[2];
+		values[3] = mMatrix3x3[3];
+		values[4] = mMatrix3x3[4];
+		values[5] = mMatrix3x3[5];
+		values[8] = 1.0f;
+	}
+	
+	/**
 	 * Set Matrix Identity
 	 */
 	final public void setIdenity() {

@@ -40,7 +40,7 @@ public class Canvas {
 	 */
 	final public void drawTexture(final Texture texture, final Vector2 position) {
 		mWorldMatrix.push();
-		mWorldMatrix.postTranslatef(position.x, position.y);
+		mWorldMatrix.preTranslatef(position.x, position.y);
 		mDrawer.begin();
 		mDrawer.setTexture(texture);
 		mDrawer.drawRectangle(texture.getSize());
@@ -56,7 +56,7 @@ public class Canvas {
 	 */
 	final public void drawTexture(final Texture texture, final Vector2 position, final Vector2 size) {
 		mWorldMatrix.push();
-		mWorldMatrix.postTranslatef(position.x, position.y);
+		mWorldMatrix.preTranslatef(position.x, position.y);
 		mDrawer.begin();
 		mDrawer.setTexture(texture);
 		mDrawer.drawRectangle(size);
@@ -71,7 +71,7 @@ public class Canvas {
 	 */
 	final public void drawLetter(final Letter letter, final Vector2 position) {
 		mWorldMatrix.push();
-		mWorldMatrix.postTranslatef(position.x, position.y);
+		mWorldMatrix.preTranslatef(position.x, position.y);
 		mDrawer.begin();
 		mDrawer.drawLetter(letter);
 		mDrawer.end();
@@ -86,7 +86,7 @@ public class Canvas {
 	 */
 	final public void drawRect(final Color color, final Vector2 position, final Vector2 size) {
 		mWorldMatrix.push();
-		mWorldMatrix.postTranslatef(position.x, position.y);
+		mWorldMatrix.preTranslatef(position.x, position.y);
 		mDrawer.begin();
 		mDrawer.setColor(color);
 		mDrawer.drawRectangle(size);
@@ -102,7 +102,7 @@ public class Canvas {
 	 */
 	final public void drawRect(final Color color, final Vector2 position, final Vector2 size, final float opacity) {
 		mWorldMatrix.push();
-		mWorldMatrix.postTranslatef(position.x, position.y);
+		mWorldMatrix.preTranslatef(position.x, position.y);
 		mDrawer.begin();
 		mDrawer.setOpacity(opacity);
 		mDrawer.setColor(color);
@@ -119,7 +119,7 @@ public class Canvas {
 	 */
 	final public void drawRoundedRect(final Color color, final Vector2 position, final Vector2 size, final float radius) {
 		mWorldMatrix.push();
-		mWorldMatrix.postTranslatef(position.x, position.y);
+		mWorldMatrix.preTranslatef(position.x, position.y);
 		
 		
 		mDrawer.begin();
