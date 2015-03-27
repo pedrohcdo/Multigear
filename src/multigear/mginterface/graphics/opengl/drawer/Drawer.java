@@ -8,6 +8,7 @@ import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.general.utils.buffers.GlobalFloatBuffer;
+import multigear.mginterface.graphics.drawable.polygon.Polygon;
 import multigear.mginterface.graphics.opengl.Renderer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWrapper;
@@ -50,7 +51,6 @@ final public class Drawer {
 		private float opacity = 1.0f;
 		private float lastOpacity = 1.0f;
 		private Rect snip = null;
-		private List<Drawable> stencils = new ArrayList<Drawable>();
 		
 		/**
 		 * Get Opacity
@@ -77,6 +77,7 @@ final public class Drawer {
 	private FloatBuffer mTextureVertexFilled = GeneralUtils.createFloatBuffer(new float[] {0, 0, 1, 0, 1, 1, 0, 1});
 	private DrawingState[] mDrawingStates;
 	private int mDrawingIndex = 0;
+	private int mStencilLevel = 1;
 	
 	/*
 	 * Construtor
@@ -284,41 +285,52 @@ final public class Drawer {
 	}
 	
 	/**
-	 * Enable Stencil
+	 * Add Stencil
 	 */
-	final public void useStencil() {
-		GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT);
+	final public void drawStencil(final Polygon stencil) {
+		
 		GLES20.glEnable(GLES20.GL_STENCIL_TEST);
 		GLES20.glColorMask(false, false, false, false);
 		GLES20.glDepthMask(false);
-		int level = 0;
-		DrawingState state = mDrawingStates[mDrawingIndex];
+		
+		GLES20.glStencilFunc(GLES20.GL_NEVER, 1, 0xFF);
 		GLES20.glStencilOp(GLES20.GL_INCR, GLES20.GL_KEEP, GLES20.GL_KEEP);
 		GLES20.glStencilMask(0xFF);
-		for(final Drawable drawable : state.stencils) {
-			GLES20.glStencilFunc(GLES20.GL_GREATER, level, 0xFF);
-			drawable.draw(this);
-			level++;
-		}
+		
+		stencil.draw(this);
+		
 		GLES20.glColorMask(true, true, true, true);
 		GLES20.glDepthMask(true);
 		GLES20.glStencilMask(0);
-		GLES20.glStencilFunc(GLES20.GL_EQUAL, level, 0xFF);
+		GLES20.glStencilFunc(GLES20.GL_EQUAL, mStencilLevel++, 0xFF);
+		
 	}
 	
 	/**
 	 * Disable Stencil
 	 */
-	final public void clearStencil() {
-		GLES20.glDisable(GLES20.GL_STENCIL_TEST);
-	}
-	
-	/**
-	 * Add Drawable to Stencil
-	 * @param drawable
-	 */
-	final public void addDrawableToStencil(final Drawable drawable) {
-		mDrawingStates[mDrawingIndex].stencils.add(drawable);
+	final public void eraseStencil(final Polygon stencil) {
+		
+		mStencilLevel--;
+		
+		GLES20.glColorMask(false, false, false, false);
+		GLES20.glDepthMask(false);
+		
+		GLES20.glStencilFunc(GLES20.GL_NEVER, 1, 0xFF);
+		GLES20.glStencilOp(GLES20.GL_DECR, GLES20.GL_KEEP, GLES20.GL_KEEP);
+		GLES20.glStencilMask(0xFF);
+		
+		stencil.draw(this);
+		
+		GLES20.glColorMask(true, true, true, true);
+		GLES20.glDepthMask(true);
+		GLES20.glStencilMask(0);
+		// Minus 1 because "0" use to clear buffer and
+		// in draw stencil jump 1 and in erase subtract 1 to normalize
+		GLES20.glStencilFunc(GLES20.GL_EQUAL, mStencilLevel-1, 0xFF);
+		
+		if(mStencilLevel == 1)
+			GLES20.glDisable(GLES20.GL_STENCIL_TEST);
 	}
 	
 	/**
@@ -340,10 +352,6 @@ final public class Drawer {
 			now.snip = null;
 		else
 			now.snip = new Rect(last.snip);
-		
-		// Add all stencil
-		now.stencils.clear();
-		now.stencils.addAll(last.stencils);
 	}
 	
 	/**

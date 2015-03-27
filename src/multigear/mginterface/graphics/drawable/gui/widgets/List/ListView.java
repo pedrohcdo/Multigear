@@ -9,7 +9,7 @@ import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.graphics.animations.AnimationOpacity;
 import multigear.mginterface.graphics.drawable.gui.Canvas;
-import multigear.mginterface.graphics.drawable.gui.widgets.List.SelectListAdapter.ItemHolder;
+import multigear.mginterface.graphics.drawable.gui.widgets.List.ListViewAdapter.ItemHolder;
 import multigear.mginterface.graphics.drawable.polygon.Polygon;
 import multigear.mginterface.graphics.drawable.sprite.Sprite;
 import multigear.mginterface.graphics.drawable.widget.Widget;
@@ -35,7 +35,7 @@ import android.view.MotionEvent;
  * 
  *         Property Createlier.
  */
-final public class SelectList extends Widget {
+final public class ListView extends Widget {
 	
 	
 	/**
@@ -109,7 +109,7 @@ final public class SelectList extends Widget {
 					mClickLockPhase = 0;
 					mPointers.clear();
 					// Unselect
-					if(mType == Type.CLICKABLE) {
+					if(mStyle == Style.CLICKABLE) {
 						mCursorLayer.setOpacity(0);
 						mIndex = -1;
 					}
@@ -143,7 +143,7 @@ final public class SelectList extends Widget {
 					mClickLockPhase = 0;
 					mPointers.clear();
 					// Unselect
-					if(mType == Type.CLICKABLE) {
+					if(mStyle == Style.CLICKABLE) {
 						mCursorLayer.setOpacity(0);
 						mIndex = -1;
 					}
@@ -193,12 +193,12 @@ final public class SelectList extends Widget {
 	};
 	
 	/**
-	 * List Type
+	 * List Style
 	 * 
 	 * @author user
 	 *
 	 */
-	public enum Type{
+	public enum Style {
 		
 		/* Conts */
 		SELECTABLE,
@@ -255,7 +255,7 @@ final public class SelectList extends Widget {
 	
 	// Final Private Variables
 	private Drawable mBackLayer;
-	private SelectListAdapter mSelectListAdapter;
+	private ListViewAdapter mSelectListAdapter;
 	private Polygon mCursorLayer, mScrollLayer;
 	private Polygon mStencil;
 	
@@ -263,7 +263,7 @@ final public class SelectList extends Widget {
 	
 	// Private Variables
 	private int mIndex = -1;
-	private SelectListListener mSelectListener;
+	private ListViewListener mSelectListener;
 	private Scene mScene;
 	private float mPull = 0;
 	private boolean mReleasedToImpulse = false;
@@ -279,7 +279,7 @@ final public class SelectList extends Widget {
 	private long mClickLockWait = 0;
 	private float mDrawPosition = 0;
 	private Attributes mAttributes = new Attributes();
-	private Type mType = Type.SELECTABLE;
+	private Style mStyle = Style.SELECTABLE;
 	private Orientation mOrientation = Orientation.VERTICAL;
 	private ItemHolder[] mItemsHolder;
 	private int mItemsCount = 0;
@@ -288,7 +288,7 @@ final public class SelectList extends Widget {
 	 * Constructor
 	 * @param scene
 	 */
-	public SelectList(Scene scene, final Vector2 size) {
+	public ListView(Scene scene, final Vector2 size) {
 		super();
 		mImpulseDetector = new ImpulseDetector(scene.getDensity(), mImpulseDetectorListener);
 		mScene = scene; 
@@ -306,7 +306,7 @@ final public class SelectList extends Widget {
 	 * @param scene
 	 * @param attributes
 	 */
-	public SelectList(final Scene scene, final Attributes attributes, final Vector2 size) {
+	public ListView(final Scene scene, final Attributes attributes, final Vector2 size) {
 		super();
 		mImpulseDetector = new ImpulseDetector(scene.getDensity(), mImpulseDetectorListener);
 		mScene = scene; 
@@ -321,7 +321,7 @@ final public class SelectList extends Widget {
 	 * Set List Adapater
 	 * @param adapter
 	 */
-	final public void setAdapter(final SelectListAdapter adapter) {
+	final public void setAdapter(final ListViewAdapter adapter) {
 		if(adapter == null) {
 			mSelectListAdapter = null;
 			mCursorLayer.setOpacity(0);
@@ -341,8 +341,8 @@ final public class SelectList extends Widget {
 	 * Set list type
 	 * @param type
 	 */
-	final public void setType(final Type type) {
-		mType = type;
+	final public void setStyle(final Style type) {
+		mStyle = type;
 	}
 	
 	/**
@@ -359,8 +359,8 @@ final public class SelectList extends Widget {
 	 * Get list type
 	 * @param type
 	 */
-	final public Type getType() {
-		return mType;
+	final public Style getStyle() {
+		return mStyle;
 	}
 	
 	/**
@@ -413,7 +413,7 @@ final public class SelectList extends Widget {
 	 * 
 	 * @param selectListener
 	 */
-	final public void setSelectListener(final SelectListListener selectListener) {
+	final public void setSelectListener(final ListViewListener selectListener) {
 		mSelectListener = selectListener;
 	}
 	
@@ -606,7 +606,7 @@ final public class SelectList extends Widget {
 				max = getSize().x - mAttributes.border * 2;
 				
 				for(int index=0; index<mItemsCount; index++) {
-					SelectListAdapter.ItemHolder item = mItemsHolder[index];
+					ListViewAdapter.ItemHolder item = mItemsHolder[index];
 					float cellSize = item.getHeight() + mAttributes.padding * 2;
 					
 					float left = filling;
@@ -616,7 +616,7 @@ final public class SelectList extends Widget {
 						int uTouch = item.touch(motionEvent);
 						if((uTouch & TOUCH_CONSUME) == TOUCH_CONSUME) {
 							mClickLockPhase = 0;
-							if(mType == Type.CLICKABLE) {
+							if(mStyle == Style.CLICKABLE) {
 								mCursorLayer.setOpacity(0);
 								mIndex = 0;
 							}
@@ -640,7 +640,7 @@ final public class SelectList extends Widget {
 				max = getSize().y - mAttributes.border * 2;
 				
 				for(int index=0; index<mItemsCount; index++) {
-					SelectListAdapter.ItemHolder item = mItemsHolder[index];
+					ListViewAdapter.ItemHolder item = mItemsHolder[index];
 					float cellSize = item.getHeight() + mAttributes.padding * 2;
 					
 					float top = filling;
@@ -650,7 +650,7 @@ final public class SelectList extends Widget {
 						int uTouch = item.touch(motionEvent);
 						if((uTouch & TOUCH_CONSUME) == TOUCH_CONSUME) {
 							mClickLockPhase = 0;
-							if(mType == Type.CLICKABLE) {
+							if(mStyle == Style.CLICKABLE) {
 								mCursorLayer.setOpacity(0);
 								mIndex = 0;
 							}
@@ -675,7 +675,7 @@ final public class SelectList extends Widget {
 			
 			
 			// If item not consume touch, process in this list
-			if(!itemConsumed && mType != Type.UNSELECTABLE) {
+			if(!itemConsumed && mStyle != Style.UNSELECTABLE) {
 				switch(MotionEventCompat.getActionMasked(motionEvent)) {
 				case MotionEvent.ACTION_DOWN:
 				case MotionEvent.ACTION_POINTER_DOWN:
@@ -687,11 +687,11 @@ final public class SelectList extends Widget {
 				case MotionEvent.ACTION_POINTER_UP:
 					final Pointer pointer = removePointer(motionEvent);
 	
-					if(mType == Type.SELECTABLE) {
+					if(mStyle == Style.SELECTABLE) {
 						if(mPointers.size() == 0 && pointer != null)
 							selectItem(pointer);
 						mClickLockPhase = 0;
-					} else if(mType == Type.CLICKABLE) {
+					} else if(mStyle == Style.CLICKABLE) {
 						// No pressed
 						// Post Click
 						if(mClickLockPhase == 1) {
@@ -739,7 +739,7 @@ final public class SelectList extends Widget {
 			return 0;
 		float filled = 0;
 		for(int index=0; index<mItemsCount; index++) {
-			final SelectListAdapter.ItemHolder item = mItemsHolder[index];
+			final ListViewAdapter.ItemHolder item = mItemsHolder[index];
 			filled += mAttributes.padding * 2 + item.getHeight();
 		}
 		return filled;
@@ -755,7 +755,7 @@ final public class SelectList extends Widget {
 			return 0;
 		float fill = 0;
 		for(int index=0; index<mItemsCount; index++) {
-			final SelectListAdapter.ItemHolder item = mItemsHolder[index];
+			final ListViewAdapter.ItemHolder item = mItemsHolder[index];
 			fill += mAttributes.padding * 2 + item.getHeight();
 			if(fill >= position)
 				return index;
@@ -773,7 +773,7 @@ final public class SelectList extends Widget {
 			return 0;
 		float position = 0;
 		for(int j=0; j<index; j++) {
-			final SelectListAdapter.ItemHolder item = mItemsHolder[j];
+			final ListViewAdapter.ItemHolder item = mItemsHolder[j];
 			position += mAttributes.padding * 2 + item.getHeight();
 		}
 		return position;
@@ -1120,14 +1120,14 @@ final public class SelectList extends Widget {
 		
 		// If pressing
 		if(mClickLock && mClickLockPhase == 1 && (GlobalClock.currentTimeMillis() - mClickLockWait) >= 150) {
-			if(mPointers.size() == 1 && mType == Type.CLICKABLE)
+			if(mPointers.size() == 1 && mStyle == Style.CLICKABLE)
 				cursorToItem(mPointers.get(0));
 			mClickLockPhase = 2;
 		}
 		
 		// If post have click
 		if(mClickLockPhase == 3 && (GlobalClock.currentTimeMillis() - mClickLockWait) >= 150) {
-			if(mType == Type.CLICKABLE && mSelectListener != null && mIndex >= 0)
+			if(mStyle == Style.CLICKABLE && mSelectListener != null && mIndex >= 0)
 				mSelectListener.onSelect(mIndex);
 			mIndex = -1;
 			mCursorLayer.setOpacity(0);
@@ -1150,11 +1150,10 @@ final public class SelectList extends Widget {
 			return;
 		}
 		
+		drawer.drawStencil(mStencil);
+		
 		WorldMatrix matrix = drawer.getWorldMatrix();
 		matrix.push();
-		
-		drawer.addDrawableToStencil(mStencil);
-		drawer.useStencil();
 		
 		switch(mOrientation) {
 		case HORIZONTAL:
@@ -1171,7 +1170,7 @@ final public class SelectList extends Widget {
 			Canvas canvas = new Canvas(drawer);
 			
 			for(int index=0; index<mItemsCount; index++) {
-				SelectListAdapter.ItemHolder item = mItemsHolder[index];
+				ListViewAdapter.ItemHolder item = mItemsHolder[index];
 				float cellSize = item.getHeight() + mAttributes.padding * 2;
 				
 				float left = filling;
@@ -1212,7 +1211,7 @@ final public class SelectList extends Widget {
 			Canvas canvas = new Canvas(drawer);
 			
 			for(int index=0; index<mItemsCount; index++) {
-				SelectListAdapter.ItemHolder item = mItemsHolder[index];
+				ListViewAdapter.ItemHolder item = mItemsHolder[index];
 				float cellSize = item.getHeight() + mAttributes.padding * 2;
 				
 				float top = filling;
@@ -1239,10 +1238,11 @@ final public class SelectList extends Widget {
 			break;
 		}
 		}
-		
-		drawer.clearStencil();
-		
+			
 		matrix.pop();
+		
+		drawer.eraseStencil(mStencil);
+		
 		mScrollLayer.draw(drawer);
 	}
 	

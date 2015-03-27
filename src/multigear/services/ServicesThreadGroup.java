@@ -78,7 +78,6 @@ final public class ServicesThreadGroup extends ThreadGroup {
 				final multigear.services.ServiceThread serviceThread = itr.next();
 				if(serviceThread.getServiceRunnable() == serviceRunnable) {
 					// Close Thread
-					serviceThread.interrupt();
 					serviceThread.close();
 					// Remove from Stack
 					itr.remove();

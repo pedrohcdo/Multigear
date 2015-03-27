@@ -9,7 +9,6 @@ import multigear.communication.tcp.support.ParentAttributes;
 import multigear.communication.tcp.support.SupportMessage;
 import multigear.communication.tcp.support.objectmessage.ObjectMessage;
 import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilder;
-import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilt;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.scene.Scene;
 import multigear.mginterface.scene.components.UpdatableListener;
@@ -376,7 +375,7 @@ public class MultigearGame {
 	 * Send Message Builder
 	 * @param builder
 	 */
-	final protected void sendMessage(ObjectMessageBuilt built) {
+	final protected void sendMessage(ObjectMessage built) {
 		mComManager.sendForAll(built);
 	}
 	

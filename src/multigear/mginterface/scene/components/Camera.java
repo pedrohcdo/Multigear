@@ -131,15 +131,15 @@ final public class Camera {
 	};
 	
 	// Final Private Variables
-	final private Scene mScene;
-	final private DragDetector mDragDetector = new DragDetector();
-	final private ScaleDetector mScaleDetector = new ScaleDetector();
-	final private RotateDetector mRotateDetector = new RotateDetector();
-	final private FocusDetector mFocusDetector = new FocusDetector();
-	final private TouchEventsDetector mTouchEventsDetector = new TouchEventsDetector();
+	final private DragDetector mDragDetector = new DragDetector(mDragDetectorListener);
+	final private ScaleDetector mScaleDetector = new ScaleDetector(mScaleDetectorListener);
+	final private RotateDetector mRotateDetector = new RotateDetector(mRotateDetectorListener);
+	final private FocusDetector mFocusDetector = new FocusDetector(mFocusDetectorListener);
+	final private TouchEventsDetector mTouchEventsDetector = new TouchEventsDetector(mTouchEventsDetectorListener);
 	final private Vector2 mScaleLimit = new Vector2(-1, -1);
 	
 	// Private Variables
+	private Scene mScene;
 	private boolean mAttached;
 	private boolean mDrag = false;
 	private boolean mScale = false;
@@ -155,16 +155,29 @@ final public class Camera {
 	/**
 	 * Constructor
 	 */
-	public Camera(final Scene scene) {
+	public Camera() {}
+	
+	/**
+	 * 
+	 * @param scene
+	 */
+	final public void attach(final Scene scene) {
 		mScene = scene;
 		scene.addTouchableListener(mTouchableListener);
 		scene.addUpdatableListener(mUpdatableListener);
-		mDragDetector.setListener(mDragDetectorListener);
-		mScaleDetector.setListener(mScaleDetectorListener);
-		mRotateDetector.setListener(mRotateDetectorListener);
-		mFocusDetector.setListener(mFocusDetectorListener);
-		mTouchEventsDetector.setListener(mTouchEventsDetectorListener);
 		mAttached = true;
+	}
+	
+	/**
+	 * Detach this camera from the scene
+	 */
+	final public void detach() {
+		if(!mAttached)
+			throw new RuntimeException("The camera has been removed from the scene.");
+		mScene.removeTouchableListener(mTouchableListener);
+		mScene.removeUpdatableListener(mUpdatableListener);
+		mAttached = false;
+		mScene = null;
 	}
 	
 	/**
@@ -435,16 +448,5 @@ final public class Camera {
 		if(newSceneY < sceneMaxY)
 			newSceneY = sceneMaxY;
 		mScene.setPosition(Vector2.sum(new Vector2(newSceneX, newSceneY), mScene.getCenter()));
-	}
-	
-	/**
-	 * Detach this camera from the scene
-	 */
-	final public void destroy() {
-		if(!mAttached)
-			throw new RuntimeException("The camera has been removed from the scene.");
-		mScene.removeTouchableListener(mTouchableListener);
-		mScene.removeUpdatableListener(mUpdatableListener);
-		mAttached = false;
 	}
 }

@@ -10,5 +10,5 @@ package multigear.services;
 public interface ServiceRunnable {
 	
 	/** Runner */
-	public void run(final multigear.services.ServiceControl serviceControl);
+	public void run(final ServiceControl serviceControl);
 }

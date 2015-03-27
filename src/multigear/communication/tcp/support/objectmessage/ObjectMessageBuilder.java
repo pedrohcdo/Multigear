@@ -1,5 +1,6 @@
 package multigear.communication.tcp.support.objectmessage;
 
+import android.util.Base64;
 import multigear.general.utils.Vector2;
 
 /**
@@ -117,9 +118,27 @@ final public class ObjectMessageBuilder {
 	}
 	
 	/**
+	 * Add Object Message
+	 * @param message
+	 * @return
+	 */
+	final public ObjectMessageBuilder add(final ObjectMessage message) {
+		String byteValues = "";
+		boolean first = true;
+		for(byte b : message.getMessage().getBytes()) {
+			if(!first)
+				byteValues += ".";
+			byteValues += "" + b;
+			first = false;
+		}
+		addToStackMessages("message:" + byteValues);
+		return this;
+	}
+	
+	/**
 	 * Return Build Message
 	 */
-	final public multigear.communication.tcp.support.objectmessage.ObjectMessageBuilt build() {
-		return new multigear.communication.tcp.support.objectmessage.ObjectMessageBuilt(mMessage);
+	final public ObjectMessage build() {
+		return new ObjectMessage(mMessage);
 	}
 }

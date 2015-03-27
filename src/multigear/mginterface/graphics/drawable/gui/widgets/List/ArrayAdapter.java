@@ -14,7 +14,7 @@ import multigear.mginterface.scene.components.receivers.Drawable;
  * @author user
  *
  */
-public class ArrayAdapter implements SelectListAdapter {
+public class ArrayAdapter implements ListViewAdapter {
 
 	/**
 	 * Item Adapter
@@ -22,7 +22,7 @@ public class ArrayAdapter implements SelectListAdapter {
 	 * @author user
 	 *
 	 */
-	final public static class ItemAdapter implements SelectListAdapter.ItemHolder {
+	final public static class ItemAdapter implements ListViewAdapter.ItemHolder {
 
 		// Final Private Variables
 		final private Drawable mDrawable;
@@ -43,7 +43,7 @@ public class ArrayAdapter implements SelectListAdapter {
 		 * Draw Event
 		 */
 		@Override
-		public void draw(final Drawer drawer, final SelectList.DrawingHolder drawingHolder, final Vector2 cellSize) {
+		public void draw(final Drawer drawer, final ListView.DrawingHolder drawingHolder, final Vector2 cellSize) {
 			mDrawable.draw(drawer);
 		}
 		
@@ -52,7 +52,7 @@ public class ArrayAdapter implements SelectListAdapter {
 		 */
 		@Override
 		public int touch(final MotionEvent motionEvent) {
-			return SelectList.TOUCH_UNUSE;
+			return ListView.TOUCH_UNUSE;
 		}
 
 		/**

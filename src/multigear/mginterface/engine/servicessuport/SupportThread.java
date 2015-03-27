@@ -103,11 +103,6 @@ final public class SupportThread extends Thread {
 			
 			@Override
 			public boolean onIntercept() {
-				try {
-					sleep(300);
-				} catch(InterruptedException e) {
-					return true;
-				}
 				boolean intercept = true;
 				// If engine has been initialized
 				if (mSupportService.isEngineInitialized()) {

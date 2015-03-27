@@ -1,12 +1,11 @@
 package multigear.mginterface.tools.mgmap;
 
-import android.util.Log;
 import multigear.communication.tcp.support.ParentAttributes;
 import multigear.general.utils.Vector2;
-import multigear.mginterface.scene.Scene;
 import multigear.mginterface.tools.mgmap.MultigearGame.Adjust;
 import multigear.mginterface.tools.mgmap.MultigearGame.Player;
 import multigear.mginterface.tools.sharedtouch.SharedTouchOffset;
+import android.graphics.RectF;
 
 /**
  * MultigearGame
@@ -70,6 +69,15 @@ final public class GameState {
 	}
 	
 	/**
+	 * Get Parent Player
+	 * 
+	 * @return {@link MultigearGame.Player} Player
+	 */
+	final public MultigearGame.Player getParentPlayer() {
+		return mPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
+	}
+	
+	/**
 	 * Get Major Player
 	 * 
 	 * @return {@link MultigearGame.Player} Player
@@ -112,34 +120,42 @@ final public class GameState {
 	}
 	
 	/**
+	 * Mask unsigned int
+	 * @param number
+	 * @return
+	 */
+	final public int maskUnsignedInt(final int value) {
+		switch(mPlayer) {
+		default:
+		case Player1:
+			return value & Integer.MAX_VALUE;
+		case Player2:
+			return (value & Integer.MAX_VALUE) | 0x80000000;
+		}
+	}
+	
+	/**
+	 * Unmask unsigned int
+	 * @param value
+	 * @return
+	 */
+	final public int unmaskUnsignedInt(final int value) {
+		return value & Integer.MAX_VALUE;
+	}
+	
+	/**
 	 * Converts screen position to map position based on connections
 	 * 
 	 * @param postion
 	 * @return
 	 */
-	final public Vector2 positionToMap(final Vector2 position) {
+	final private Vector2 positionInMap(final Vector2 position) {
 		switch(mPlayer) {
 		default:
 		case Player1:
 			return position;
 		case Player2:
 			return new Vector2(position.x - mScreenDivision, position.y);
-		}
-	}
-	
-	/**
-	 * Converts map position to screen position based on connections
-	 * 
-	 * @param postion
-	 * @return
-	 */
-	final public Vector2 positionToScreen(final Vector2 position) {
-		switch(mPlayer) {
-		default:
-		case Player1:
-			return position;
-		case Player2:
-			return new Vector2(position.x + mScreenDivision, position.y);
 		}
 	}
 	
@@ -154,13 +170,41 @@ final public class GameState {
 	}
 	
 	/**
+	 * Get Visible Map Rect
+	 * @return
+	 */
+	final public RectF getVisibleMapRect() {
+		final Vector2 mapSize = getMapSize();
+		switch(mPlayer) {
+		case Player1:
+		default:
+			return new RectF(0, 0, mScreenDivision, mapSize.y);
+		case Player2:
+			return new RectF(mScreenDivision, 0, mapSize.x, mapSize.y);
+		}
+	}
+	
+	/**
+	 * Return device position in map
+	 * @return
+	 */
+	final public float getMapOffset() {
+		switch(mPlayer) {
+		case Player1:
+		default:
+			return 0;
+		case Player2:
+			return mScreenDivision;
+		}
+	}
+	
+	/**
 	 * Get Align Position
 	 * @return
 	 */
 	final protected Vector2 getAlignMapPosition() {
-		return positionToMap(new Vector2(0, (mMG.getScene().getSpaceParser().getScreenSize().y - getMapSize().y) / 2));
+		return positionInMap(new Vector2(0, (mMG.getScene().getSpaceParser().getScreenSize().y - getMapSize().y) / 2));
 	}
-	
 	
 	/**
 	 * Extension for Shared Touch Offset

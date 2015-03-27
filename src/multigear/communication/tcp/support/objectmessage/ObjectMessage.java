@@ -18,7 +18,8 @@ final public class ObjectMessage {
 	
 	// Final Private Variables
 	final private Pattern mCommandPattern = Pattern.compile("(\\w+)\\:(.*)");
-	final private List<Object> mValues;
+	final private List<Object> mValues = new ArrayList<Object>();
+	final private String mMessage;
 	
 	// Private Variables
 	private int mCode;
@@ -26,16 +27,16 @@ final public class ObjectMessage {
 	/*
 	 * Construtor
 	 */
-	private ObjectMessage(final String message) {
-		mValues = new ArrayList<Object>();
-		translateMessage(message);
+	protected ObjectMessage(final String message) {
+		mMessage = message;
 	}
 	
 	/*
 	 * Traduz a mensagem
 	 */
-	final private void translateMessage(final String message) {
-		String[] lines = message.split(";");
+	final public void translate() {
+		mValues.clear();
+		String[] lines = mMessage.split(";");
 		for (String line : lines) {
 			final Matcher commandMatcher = mCommandPattern.matcher(line);
 			if (commandMatcher.matches()) {
@@ -69,6 +70,17 @@ final public class ObjectMessage {
 			for (String byteString : bytesString)
 				bytes[index++] = Byte.parseByte(byteString);
 			mValues.add(new String(bytes));
+		}
+		if(cmd.equals("message")) {
+			String[] bytesString = value.split("\\.");
+			byte[] bytes = new byte[bytesString.length];
+			int index = 0;
+			for (String byteString : bytesString)
+				bytes[index++] = Byte.parseByte(byteString);
+			String message = new String(bytes);
+			final ObjectMessage om = new ObjectMessage(message);
+			om.translate();
+			mValues.add(om);
 		}
 		if (cmd.equals("ref2d")) {
 			String[] refList = value.split("\\,");
@@ -109,17 +121,26 @@ final public class ObjectMessage {
 	/**
 	 * Create Object Message
 	 */
-	final static public multigear.communication.tcp.support.objectmessage.ObjectMessageBuilder create(final int code) {
-		return new multigear.communication.tcp.support.objectmessage.ObjectMessageBuilder(code);
+	final static public ObjectMessageBuilder create(final int code) {
+		return new ObjectMessageBuilder(code);
 	}
 	
 	/**
-	 * Read Object Message
+	 * Read Object Message and Translate automatically
 	 * 
 	 * @param message
 	 * @return
 	 */
 	final static public ObjectMessage read(final String message) {
-		return new ObjectMessage(message);
+		final ObjectMessage om = new ObjectMessage(message);
+		om.translate();
+		return om;
+	}
+	
+	/**
+	 * Get Message
+	 */
+	final public String getMessage() {
+		return mMessage;
 	}
 }

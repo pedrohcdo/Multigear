@@ -9,7 +9,6 @@ import multigear.communication.tcp.base.Message;
 import multigear.communication.tcp.base.Utils;
 import multigear.communication.tcp.support.listener.Listener;
 import multigear.communication.tcp.support.objectmessage.ObjectMessage;
-import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilt;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.Manager;
 
@@ -140,18 +139,18 @@ final public class ComManager {
 			messages++;
 			recvSupportMessage(connection, message);
 			message = message.next();
-			if (messages >= 10)
+			if (messages >= 20)
 				break;
 		}
 		
-		//Log.d("LogTest2", "Messages Read: " + messages);
+	
 	}
 	
 	/**
 	 * Send message for all clients
 	 * @param object
 	 */
-	final public void sendForAll(final ObjectMessageBuilt object) {
+	final public void sendForAll(final ObjectMessage object) {
 		for (final BaseConnected connection : mSupportList) {
 			connection.sendMessage(Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
 		}

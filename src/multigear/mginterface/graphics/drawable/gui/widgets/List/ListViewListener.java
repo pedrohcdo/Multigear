@@ -7,7 +7,7 @@ package multigear.mginterface.graphics.drawable.gui.widgets.List;
  *
  * Property Createlier.
  */
-public interface SelectListListener {
+public interface ListViewListener {
 	
 	/** On Select Event */
 	public void onSelect(final int index);

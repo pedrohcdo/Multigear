@@ -59,6 +59,7 @@ public class Renderer extends BaseRenderer {
 		//GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 		GLES20.glEnable(GLES20.GL_TEXTURE_2D);
 		//gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);
+		GLES20.glClearStencil(0);
 	}
 	
 	/*
@@ -81,7 +82,8 @@ public class Renderer extends BaseRenderer {
 			GLES20.glClearColor(red, green, blue, alpha);
 		}
 		// Clear Screen
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+		GLES20.glStencilMask(0xFF);
+		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_STENCIL_BUFFER_BIT);
 	}
 	
 	/**

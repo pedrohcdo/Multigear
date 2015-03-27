@@ -19,8 +19,7 @@ public class WorldMatrix {
 	// Private Variables
 	public int mIndex;
 	private Matrix mRoomTransformations;
-	private Matrix mPostTransformations;
-	private boolean mPostTransformationUse;
+	private boolean mPostTransformationUse = true;
 	
 	/**
 	 * Constructor
@@ -41,28 +40,23 @@ public class WorldMatrix {
 	 * @param transformations
 	 */
 	final public void setRoomTransformations(final Matrix transformations) {
+		if(transformations == null)
+			throw new IllegalArgumentException("Transformations can not be null.");
 		mRoomTransformations = transformations;
 	}
 	
-	/**
-	 * Set Pre transformations
-	 * @param preTransformations
-	 */
-	final public void setPostTransformations(final Matrix preTransformations) {
-		mPostTransformations = preTransformations;
-	}
 	
 	/**
 	 * Enable pre transformation matrix
 	 */
-	final public void enablePostTransformationsMatrix() {
+	final public void enableSceneState() {
 		mPostTransformationUse = true;
 	}
 	
 	/**
 	 * Disable pre transformations matrix
 	 */
-	final public void disablePostTransformationsMatrix() {
+	final public void disableSceneState() {
 		mPostTransformationUse = false;
 	}
 	
@@ -138,7 +132,8 @@ public class WorldMatrix {
 	 */
 	final public void swap() {
 		mFinalTransformations.set(mMatrixQueue[mIndex]);
-		mFinalTransformations.postConcat(mRoomTransformations);
+		if(mPostTransformationUse)
+			mFinalTransformations.postConcat(mRoomTransformations);
 		mFinalTransformations.getValues(mMatrix3x3);
 	}
 	

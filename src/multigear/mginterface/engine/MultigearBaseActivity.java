@@ -66,14 +66,9 @@ public class MultigearBaseActivity extends ActionBarActivity {
 	 */
 	@Override
 	protected void onPause() {
-		
-		super.onPause();
-	}
-	
-	protected void onStop() {
 		if (mMultigear != null)
 			mMultigear.sync().pause().unsync();
-		super.onStop();
+		super.onPause();
 	}
 	
 	/**

@@ -24,7 +24,7 @@ import android.graphics.Rect;
  * @author user
  * 
  */
-public class Polygon implements Drawable, Component {
+final public class Polygon implements Drawable, Component {
 
 	// For Draw
 	private float mPreparedOpacity;
@@ -841,11 +841,12 @@ public class Polygon implements Drawable, Component {
 		float siy = oy;
 
 		if (mMirror[0]) {
-			six += sx;
+			six *= -1;
 			sx *= -1;
 		}
+		
 		if (mMirror[1]) {
-			siy += sy;
+			siy *= -1;
 			sy *= -1;
 		}
 

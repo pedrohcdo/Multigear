@@ -20,11 +20,11 @@ public class ServiceThread extends Thread {
 	/**
 	 * Construtor
 	 */
-	protected ServiceThread(final multigear.services.ServicesThreadGroup servicesGroup, final multigear.services.ServiceRunnable serviceRunnable) {
+	protected ServiceThread(final ServicesThreadGroup servicesGroup, final ServiceRunnable serviceRunnable) {
 		super(servicesGroup, "MGServiceThread");
 		mServicesManager = servicesGroup.getServicesManager();
 		mServiceRunnable = serviceRunnable;
-		mServiceControl = new multigear.services.ServiceControl(this, mServicesManager);
+		mServiceControl = new ServiceControl(this, mServicesManager);
 		mClosed = false;
 	}
 	
@@ -54,6 +54,8 @@ public class ServiceThread extends Thread {
 		boolean flag = false;
 		while (!flag) {
 			try {
+				if(!isInterrupted())
+					interrupt();
 				this.join();
 				flag = true;
 			} catch (Exception e) {
@@ -67,6 +69,6 @@ public class ServiceThread extends Thread {
 	 * @return
 	 */
 	protected boolean isEndService() {
-		return (Thread.currentThread().isInterrupted() || mClosed);
+		return (isInterrupted() || mClosed);
 	}
 }

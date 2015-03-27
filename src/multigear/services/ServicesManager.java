@@ -1049,6 +1049,20 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 		
 		// Lock
 		synchronized (mScanLock) {
+			
+			// Disconnect
+			mWifiManager.disconnect();
+			
+			// Wait For this Wifi States
+			SafetyLock.lock(3000, new Interception() {
+				
+				@Override
+				public boolean onIntercept() {
+					// TODO Auto-generated method stub
+					return !(mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING || mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLING);
+				}
+			});
+			
 			// if (!mScanStarted && mScanFilterLock == null) {
 			mScanStarted = true;
 			mScanFilter = null;
@@ -1082,14 +1096,26 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 		
 		// Lock
 		synchronized (mScanLock) {
+			// Disconnect
+			mWifiManager.disconnect();
+			
+			// Wait For this Wifi States
+			SafetyLock.lock(3000, new Interception() {
+				
+				@Override
+				public boolean onIntercept() {
+					// TODO Auto-generated method stub
+					return !(mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING || mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLING);
+				}
+			});
+			
 			if (!mScanStarted && mScanFilterLock == null) {
 				mScanStarted = true;
 				mScanFilter = filter;
 				mScanFilterLock = new Object();
 			}
-			mWifiManager.disconnect();
+			
 			mWifiManager.startScan();
-			mWifiManager.reassociate();
 		}
 	}
 	
@@ -1373,6 +1399,20 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 * Scan Access Points Complete
 	 */
 	final protected void scanAccessPointsComplete() {
+		
+		// Wait For this Wifi States
+		SafetyLock.lock(3000, new Interception() {
+			
+			@Override
+			public boolean onIntercept() {
+				// TODO Auto-generated method stub
+				return !(mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING || mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLING);
+			}
+		});
+		
+		// Reconnect
+		mWifiManager.reconnect();
+		
 		// Lock
 		synchronized (mScanLock) {
 			if (mScanStarted) {

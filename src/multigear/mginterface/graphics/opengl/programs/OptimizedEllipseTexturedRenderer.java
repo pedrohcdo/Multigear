@@ -71,7 +71,7 @@ final public class OptimizedEllipseTexturedRenderer extends BaseProgram {
 					"if(d < 0.5) {" +
 						"gl_FragColor = texture2D(uTextureSample, vTextureCoord) * uColor;" +
 					"} else {" +
-						"gl_FragColor = vec4(0);" +
+						"discard;" +
 					"}" +
 				"}";
 	}

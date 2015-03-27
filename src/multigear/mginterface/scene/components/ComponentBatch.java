@@ -76,6 +76,7 @@ public class ComponentBatch {
 		 */
 		@Override
 		public void onDraw(Scene scene, Drawer drawer) {
+			Collections.sort(mComponents, mComponentsComparatorDraw);
 			for(int i=0; i<mComponents.size(); i++) {
 				final Component component = mComponents.get(i);
 				if(component instanceof Drawable) {

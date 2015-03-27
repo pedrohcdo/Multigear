@@ -10,7 +10,7 @@ import multigear.mginterface.graphics.opengl.drawer.Drawer;
  * @author user
  *
  */
-public interface SelectListAdapter {
+public interface ListViewAdapter {
 
 	/**
 	 * Item
@@ -25,7 +25,7 @@ public interface SelectListAdapter {
 		 * 
 		 * @return
 		 */
-		public void draw(final Drawer drawer, final SelectList.DrawingHolder drawingHolder, final Vector2 cellSize);
+		public void draw(final Drawer drawer, final ListView.DrawingHolder drawingHolder, final Vector2 cellSize);
 		
 		/**
 		 * Touch

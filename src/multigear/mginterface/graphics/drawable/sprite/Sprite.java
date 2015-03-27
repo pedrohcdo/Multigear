@@ -355,18 +355,18 @@ public class Sprite implements Drawable, Component {
 		final float oy = mCenter.y * scale.y;
 		float sx = mSize.x * scale.x;
 		float sy = mSize.y * scale.y;
-		final float tX = mPosition.x + translate.x;
-		final float tY = mPosition.y + translate.y;
+		float tX = mPosition.x + translate.x;
+		float tY = mPosition.y + translate.y;
 		float six = ox;
 		float siy = oy;
 
 		if (mMirror[0]) {
-			six += sx;
+			six *= -1;
 			sx *= -1;
 		}
 		
 		if (mMirror[1]) {
-			siy += sy;
+			siy *= -1;
 			sy *= -1;
 		}
 

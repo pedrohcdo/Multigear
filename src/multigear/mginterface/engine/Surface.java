@@ -33,10 +33,11 @@ public class Surface {
 		// Create GL Surface
 		mGLSurfaceView = new GLSurfaceView(engine.getActivity());
 		mGLSurfaceView.setEGLContextClientVersion(2);
+		mGLSurfaceView.setEGLConfigChooser(8, 8, 8, 0, 0, 8);
 		
 		// Preserve Context
 		if (Build.VERSION.SDK_INT >= 11)
-			mGLSurfaceView.setPreserveEGLContextOnPause(true);
+			mGLSurfaceView.setPreserveEGLContextOnPause(false);
 		// Create Renderer
 		mRenderer = new multigear.mginterface.graphics.opengl.Renderer(engine);
 
