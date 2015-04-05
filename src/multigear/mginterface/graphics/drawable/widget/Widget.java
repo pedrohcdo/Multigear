@@ -170,7 +170,6 @@ public class Widget implements Drawable, Touchable, Component {
 	protected Vector2 mPosition = new Vector2(0, 0);
 	protected Vector2 mSize = new Vector2(32, 32);
 	protected Vector2 mCenter = new Vector2(0, 0);
-	protected Vector2 mScroll = new Vector2(0, 0);
 	protected float mAngle = 0;
 	protected float mOpacity = 1;
 	protected boolean mTouchable = true;
@@ -301,7 +300,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @param size
 	 *            Draw texture dest Size
 	 */
-	final public void setSize(final Vector2 size) {
+	public void setSize(final Vector2 size) {
 		mSize = size.clone();
 	}
 	
@@ -311,7 +310,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @param center
 	 *            {@link Vector2} Center
 	 */
-	final public void setCenter(final Vector2 center) {
+	public void setCenter(final Vector2 center) {
 		mCenter = center.clone();
 	}
 	
@@ -321,19 +320,10 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @param angle
 	 *            {@link Vector2} Angle
 	 */
-	final public void setAngle(final float angle) {
+	public void setAngle(final float angle) {
 		mAngle = angle;
 	}
-	
-	/**
-	 * Set Scroll.
-	 * 
-	 * @param center
-	 *            {@link Vector2} Scroll
-	 */
-	final public void setScroll(final Vector2 scroll) {
-		mScroll = scroll.clone();
-	}
+
 	
 	/**
 	 * Set Touchable.
@@ -341,7 +331,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @param touchable
 	 *            Boolean Touchable
 	 */
-	final public void setTouchable(final boolean touchable) {
+	public void setTouchable(final boolean touchable) {
 		mTouchable = touchable;
 		if(!mTouchable) {
 			mPointers.clear();
@@ -354,7 +344,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @param fixed
 	 *            Boolean Fixed
 	 */
-	final public void setFixedSpace(final boolean fixed) {
+	public void setFixedSpace(final boolean fixed) {
 		mFixedSpace = fixed;
 	}
 	
@@ -396,7 +386,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * Get Listener
 	 * @return
 	 */
-	final protected BaseListener getListener() {
+	protected BaseListener getListener() {
 		return mListener;
 	}
 	
@@ -405,14 +395,14 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @param inverted
 	 */
-	final public boolean[] getMirror() {
+	public boolean[] getMirror() {
 		return mMirror.clone();
 	}
 	
 	/**
 	 * Get Viewport
 	 */
-	final public Rect getViewport() {
+	public Rect getViewport() {
 		return mViewport;
 	}
 	
@@ -421,14 +411,14 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @return Get Blend Func
 	 */
-	final public BlendFunc getBlendFunc() {
+	public BlendFunc getBlendFunc() {
 		return mBlendFunc;
 	}
 	
 	/**
 	 * Get Scale
 	 */
-	final public Vector2 getScale() {
+	public Vector2 getScale() {
 		return mScale.clone();
 	}
 	
@@ -437,7 +427,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @return {@link Vector2} Position
 	 */
-	final public Vector2 getPosition() {
+	public Vector2 getPosition() {
 		return mPosition.clone();
 	}
 	
@@ -460,7 +450,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @return {@link Vector2} Size
 	 */
-	final public Vector2 getSize() {
+	public Vector2 getSize() {
 		return mSize.clone();
 	}
 	
@@ -469,7 +459,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @return Return drawable opacity
 	 */
-	final public float getOpacity() {
+	public float getOpacity() {
 		return mOpacity;
 	}
 	
@@ -478,7 +468,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @return {@link Vector2} Center
 	 */
-	final public Vector2 getCenter() {
+	public Vector2 getCenter() {
 		return mCenter.clone();
 	}
 	
@@ -487,17 +477,8 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @return {@link Vector2} Angle
 	 */
-	final public float getAngle() {
+	public float getAngle() {
 		return mAngle;
-	}
-	
-	/**
-	 * Get Scroll.
-	 * 
-	 * @return {@link Vector2} Scroll
-	 */
-	final public Vector2 getScroll() {
-		return mScroll.clone();
 	}
 	
 	/**
@@ -505,7 +486,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @return Boolean Touchable
 	 */
-	final public boolean getTouchable() {
+	public boolean getTouchable() {
 		return mTouchable;
 	}
 	
@@ -515,7 +496,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @param fixed
 	 *            Boolean Fixed
 	 */
-	final public boolean getFixedSpace() {
+	public boolean getFixedSpace() {
 		return mFixedSpace;
 	}
 	
@@ -568,7 +549,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * Get state of Static Touch
 	 * @return True/False
 	 */
-	final public boolean getStaticTouch() {
+	public boolean getStaticTouch() {
 		return mStaticTouch;
 	}
 	
@@ -678,6 +659,13 @@ public class Widget implements Drawable, Touchable, Component {
 		
 		// Prepare Animations
 		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		
+		// Opacity
+		final float opacity = animationSet.getOpacity() * getOpacity();
+		
+		// Invisible
+		if(opacity <= 0)
+			return;
 				
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
@@ -712,8 +700,6 @@ public class Widget implements Drawable, Touchable, Component {
 		// Order Layers
 		Collections.sort(mComponents, mLayersComparatorDraw);
 		
-		// Opacity
-		final float opacity = animationSet.getOpacity() * getOpacity();
 		
 		// Enable Viewport
 		drawer.begin();

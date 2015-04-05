@@ -19,14 +19,15 @@ final public class ObjectMessageBuilder {
 	 * Construtor
 	 */
 	protected ObjectMessageBuilder(final int code) {
-		mMessage = "code:" + code;
+		mMessage = "code:".concat(code + "");
 	}
 	
 	/*
 	 * Adiciona para a fila de Mensagens
 	 */
 	final private void addToStackMessages(final String message) {
-		mMessage += ";" + message;
+		mMessage = mMessage.concat(";");
+		mMessage = mMessage.concat(message);
 	}
 	
 	/**
@@ -35,7 +36,7 @@ final public class ObjectMessageBuilder {
 	 * @return This ObjectMessage reference
 	 */
 	final public ObjectMessageBuilder add(final short value) {
-		addToStackMessages("short:" + value);
+		addToStackMessages(new StringBuilder("short:").append(value).toString());
 		return this;
 	}
 	
@@ -45,7 +46,7 @@ final public class ObjectMessageBuilder {
 	 * @return This ObjectMessage reference
 	 */
 	final public ObjectMessageBuilder add(final int value) {
-		addToStackMessages("int:" + value);
+		addToStackMessages(new StringBuilder("int:").append(value).toString());
 		return this;
 	}
 	
@@ -55,7 +56,7 @@ final public class ObjectMessageBuilder {
 	 * @return This ObjectMessage reference
 	 */
 	final public ObjectMessageBuilder add(final long value) {
-		addToStackMessages("long:" + value);
+		addToStackMessages(new StringBuilder("long:").append(value).toString());
 		return this;
 	}
 	
@@ -65,7 +66,7 @@ final public class ObjectMessageBuilder {
 	 * @return This ObjectMessage reference
 	 */
 	final public ObjectMessageBuilder add(final float value) {
-		addToStackMessages("float:" + value);
+		addToStackMessages(new StringBuilder("float:").append(value).toString());
 		return this;
 	}
 	
@@ -75,7 +76,7 @@ final public class ObjectMessageBuilder {
 	 * @return This ObjectMessage reference
 	 */
 	final public ObjectMessageBuilder add(final double value) {
-		addToStackMessages("double:" + value);
+		addToStackMessages(new StringBuilder("double:").append(value).toString());
 		return this;
 	}
 	
@@ -85,7 +86,7 @@ final public class ObjectMessageBuilder {
 	 * @return This ObjectMessage reference
 	 */
 	final public ObjectMessageBuilder add(final boolean value) {
-		addToStackMessages("bool:" + value);
+		addToStackMessages(new StringBuilder("bool:").append(value).toString());
 		return this;
 	}
 	
@@ -99,11 +100,11 @@ final public class ObjectMessageBuilder {
 		boolean first = true;
 		for(byte b : value.getBytes()) {
 			if(!first)
-				byteValues += ".";
-			byteValues += "" + b;
+				byteValues = byteValues.concat(".");
+			byteValues = byteValues.concat("" + b);
 			first = false;
 		}
-		addToStackMessages("str:" + byteValues);
+		addToStackMessages("str:".concat(byteValues));
 		return this;
 	}
 	
@@ -113,7 +114,7 @@ final public class ObjectMessageBuilder {
 	 * @return This ObjectMessage reference
 	 */
 	final public ObjectMessageBuilder add(final Vector2 value) {
-		addToStackMessages("ref2d:" + value.x + "," + value.y);
+		addToStackMessages(new StringBuilder("ref2d:").append(value.x).append(",").append(value.y).toString());
 		return this;
 	}
 	
@@ -127,11 +128,11 @@ final public class ObjectMessageBuilder {
 		boolean first = true;
 		for(byte b : message.getMessage().getBytes()) {
 			if(!first)
-				byteValues += ".";
-			byteValues += "" + b;
+				byteValues = byteValues.concat(".");
+			byteValues = byteValues.concat("" + b);
 			first = false;
 		}
-		addToStackMessages("message:" + byteValues);
+		addToStackMessages("message:".concat(byteValues));
 		return this;
 	}
 	

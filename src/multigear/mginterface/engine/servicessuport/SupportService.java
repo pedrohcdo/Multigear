@@ -11,6 +11,7 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -53,6 +54,7 @@ public class SupportService extends Service {
 	private volatile boolean mEngineInitialized;
 	private volatile boolean mEngineResumed;
 	private boolean mNotificationShowed;
+	private WifiLock mWifiLock;
 	
 	// Used for extra protection of support thread process used to kill app
 	private boolean mAlive;
@@ -168,17 +170,21 @@ public class SupportService extends Service {
 	}
 	
 	/**
-	 * Called when the engine was recently initialized.
+	 * Prepare Engine
 	 */
-	final public void engineInitialized() {
-		// Set Alive protection
-		synchronized(mAliveLock) {
-			mAlive = true;
-		}
+	final public void enginePrepare() {
 		// Kill all Support Thread
 		if (!mSupportThreadGroup.killSupportThread(SupportThread.SUPPORT_DESROYER))
 			mDedicatedServices.saveState();
+	}
+	
+	/**
+	 * Called when the engine was recently initialized.
+	 */
+	final public void engineInitialized(final WifiLock wifiLock) {
 		// Set Engine Initialized
+		mWifiLock = wifiLock;
+		mWifiLock.acquire();
 		mEngineInitialized = true;
 	}
 	
@@ -206,22 +212,26 @@ public class SupportService extends Service {
 	final public void engineDestroyedInternal(final SupportThread supportThread) {
 		// Destroy if initialized
 		if (mEngineInitialized) {
-			// Alive Protection
-			synchronized(mAliveLock) {
-				mAlive = true;
-			}
+			
+			// Release WifiLock
+			mWifiLock.release();
+			
 			// Engine destroyed
 			mEngineInitialized = false;
+			
 			// Restore State
 			mDedicatedServices.restoreState(supportThread);
+			
 			// If restored
 			hideNotification();
+			
 			// If not started
-			if(!supportThread.hasInterrupted() || !mAlive) {
+			if(!supportThread.hasInterrupted()) {
 				// Kill this service
 				stopSelf();
 				Log.d("LogTest", "S Stoped");
 			}
+			
 		}
 	}
 	

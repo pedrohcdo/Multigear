@@ -15,5 +15,5 @@ public interface TouchableListener {
 	 * Evento de toque
 	 * @param motionEvent
 	 */
-	public void onTouch(final Scene scene, final MotionEvent motionEvent);
+	public boolean onTouch(final Scene scene, final MotionEvent motionEvent);
 }

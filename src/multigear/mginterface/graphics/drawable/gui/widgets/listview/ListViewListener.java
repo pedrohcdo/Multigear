@@ -1,4 +1,4 @@
-package multigear.mginterface.graphics.drawable.gui.widgets.List;
+package multigear.mginterface.graphics.drawable.gui.widgets.listview;
 
 /**
  * Select Listener

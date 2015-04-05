@@ -13,7 +13,7 @@ import android.graphics.Bitmap;
  * 
  *         Property Createlier.
  */
-final public class Texture extends CacheComponent {
+final public class Texture implements CacheComponent {
 	
 	/**
 	 * Default Texture Map 
@@ -134,5 +134,12 @@ final public class Texture extends CacheComponent {
 	 */
 	final public TextureMap getMapper() {
 		return mTextureMap;
+	}
+	
+	/**
+	 * Clone Texture
+	 */
+	final public Texture clone() {
+		return new Texture(mHandle, -1, mSize.clone(), mResourceSize.clone(), mUpdater);
 	}
 }

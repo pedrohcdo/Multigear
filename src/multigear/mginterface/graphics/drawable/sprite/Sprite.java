@@ -1,5 +1,6 @@
 package multigear.mginterface.graphics.drawable.sprite;
 
+import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
@@ -28,20 +29,21 @@ public class Sprite implements Drawable, Component {
 	final private AnimationStack mAnimationStack;
 	
 	// Private Variables
-	protected Rect mViewport;
+	private Rect mViewport;
 	private Texture mTexture;
 	
 	// Public Variables
-	protected Vector2 mScale = new Vector2(1, 1);
-	protected Vector2 mPosition = new Vector2(0, 0);
-	protected Vector2 mSize = new Vector2(32, 32);
-	protected Vector2 mCenter = new Vector2(0, 0);
-	protected float mAngle = 0;
-	protected float mOpacity = 1;
-	protected boolean mMirror[] = { false, false };
-	protected int mZ = 0;
-	protected int mId = 0;
-	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private Vector2 mScale = new Vector2(1, 1);
+	private Vector2 mPosition = new Vector2(0, 0);
+	private Vector2 mSize = new Vector2(32, 32);
+	private Vector2 mCenter = new Vector2(0, 0);
+	private float mAngle = 0;
+	private float mOpacity = 1;
+	private boolean mMirror[] = { false, false };
+	private int mZ = 0;
+	private int mId = 0;
+	private Color mColor = Color.WHITE;
+	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
 	
 	/**
 	 * Constructor
@@ -206,6 +208,15 @@ public class Sprite implements Drawable, Component {
 	}
 	
 	/**
+	 * Set Color
+	 * 
+	 * @param color Color
+	 */
+	final public void setColor(final Color color) {
+		mColor = color;
+	}
+	
+	/**
 	 * Get Texture
 	 */
 	final public Texture getTexture() {
@@ -321,6 +332,15 @@ public class Sprite implements Drawable, Component {
 		return mAngle;
 	}
 	
+	/**
+	 * Get Color
+	 * 
+	 * @return Color
+	 */
+	final public Color getColor() {
+		return mColor;
+	}
+	
 	/*
 	 * Prepara para desenho. Utiliza AnimationStack.
 	 */
@@ -392,6 +412,7 @@ public class Sprite implements Drawable, Component {
 		// Set Texture
 		drawer.begin();
 		drawer.setTexture(usedTexture);
+		drawer.setColor(mColor);
 		drawer.setOpacity(opacity);
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.snip(mViewport);

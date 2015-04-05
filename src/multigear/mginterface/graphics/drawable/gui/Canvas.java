@@ -2,6 +2,8 @@ package multigear.mginterface.graphics.drawable.gui;
 
 import java.nio.FloatBuffer;
 
+import android.util.Log;
+
 import multigear.general.utils.Color;
 import multigear.general.utils.Vector2;
 import multigear.general.utils.buffers.GlobalFloatBuffer;
@@ -59,6 +61,25 @@ public class Canvas {
 		mWorldMatrix.preTranslatef(position.x, position.y);
 		mDrawer.begin();
 		mDrawer.setTexture(texture);
+		mDrawer.setTextureVertexFilled();
+		mDrawer.drawRectangle(size);
+		mDrawer.end();
+		mWorldMatrix.pop();
+	}
+	
+	/**
+	 * Draw Texture
+	 * 
+	 * @param texture
+	 * @param position
+	 */
+	final public void drawTexture(final Texture texture, final Color color, final Vector2 position, final Vector2 size) {
+		mWorldMatrix.push();
+		mWorldMatrix.preTranslatef(position.x, position.y);
+		mDrawer.begin();
+		mDrawer.setColor(color);
+		mDrawer.setTexture(texture);
+		mDrawer.setTextureVertexFilled();
 		mDrawer.drawRectangle(size);
 		mDrawer.end();
 		mWorldMatrix.pop();
@@ -123,14 +144,14 @@ public class Canvas {
 		
 		
 		mDrawer.begin();
-		mDrawer.setColor(color);
+
 		
 		// Detail
 		final double detail = Math.PI / 180.0f;
 		
 		// Obtain buffer
 		int verticesCount = (int)Math.ceil((Math.PI*2) / detail);
-		FloatBuffer buffer = GlobalFloatBuffer.obtain(verticesCount + 1);
+		FloatBuffer buffer = GlobalFloatBuffer.obtain(verticesCount * 2 + 10);
 		verticesCount = 0;
 		
 		// Put vertices
@@ -175,5 +196,89 @@ public class Canvas {
 		
 		// Release
 		GlobalFloatBuffer.release(buffer);
+	}
+	
+	/**
+	 * Draw Rect
+	 * @param texture
+	 * @param position
+	 * @param size
+	 */
+	final public void drawRoundedRect(final Texture texture, final Vector2 position, final Vector2 size, final float radius) {
+		mWorldMatrix.push();
+		mWorldMatrix.preTranslatef(position.x, position.y);
+		
+		
+		mDrawer.begin();
+		mDrawer.setTexture(texture);
+		
+		// Detail
+		final double detail = Math.PI / 180.0f;
+		
+		// Obtain buffer
+		int verticesCount = (int)Math.ceil((Math.PI*2) / detail);
+		FloatBuffer elementBuffer = GlobalFloatBuffer.obtain(verticesCount * 2 + 10);
+		FloatBuffer textureBuffer = GlobalFloatBuffer.obtain(verticesCount * 2 + 10);
+		
+		// 726
+		elementBuffer.position(0);
+		textureBuffer.position(0);
+		
+		verticesCount = 0;
+		
+		// Put vertices
+		for(double i=0; i<Math.PI/2; i+=detail) {
+			final float x = (float)(Math.cos(i) * radius) + (size.x - radius);
+			final float y = (float)(((Math.sin(i) * -1) + 1) * radius);
+			elementBuffer.put(x);
+			elementBuffer.put(y);
+			textureBuffer.put(x / size.x);
+			textureBuffer.put(y / size.y);
+			verticesCount++;
+		}
+		for(double i=Math.PI/2; i<Math.PI; i+=detail) {
+			final float x = (float)((Math.cos(i) + 1) * radius);
+			final float y = (float)(((Math.sin(i) * -1) + 1) * radius);
+			elementBuffer.put(x);
+			elementBuffer.put(y);
+			textureBuffer.put(x / size.x);
+			textureBuffer.put(y / size.y);
+			verticesCount++;
+		}
+		for(double i=Math.PI; i<Math.PI*1.5; i+=detail) {
+			final float x = (float)((Math.cos(i) + 1) * radius);
+			final float y = (float)(Math.sin(i) * radius * -1) + (size.y - radius);
+			elementBuffer.put(x);
+			elementBuffer.put(y);
+			textureBuffer.put(x / size.x);
+			textureBuffer.put(y / size.y);
+			verticesCount++;
+		}
+		for(double i=Math.PI*1.5; i<Math.PI*2; i+=detail) {
+			final float x = (float)(Math.cos(i) * radius) + (size.x - radius);
+			final float y = (float)(Math.sin(i) * radius * -1) + (size.y - radius);
+			elementBuffer.put(x);
+			elementBuffer.put(y);
+			textureBuffer.put(x / size.x);
+			textureBuffer.put(y / size.y);
+			verticesCount++;
+		}
+
+		// Set
+		elementBuffer.position(0);
+		textureBuffer.position(0);
+		
+		// Set Vertexes
+		mDrawer.setElementVertex(elementBuffer);
+		mDrawer.setTextureVertex(textureBuffer);
+		
+		// Draw
+		mDrawer.drawPolygon(verticesCount);
+		mDrawer.end();
+		mWorldMatrix.pop();
+		
+		// Release
+		GlobalFloatBuffer.release(elementBuffer);
+		GlobalFloatBuffer.release(textureBuffer);
 	}
 }

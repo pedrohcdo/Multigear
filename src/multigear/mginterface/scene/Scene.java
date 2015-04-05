@@ -693,13 +693,15 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	 * Evento de toque
 	 */
 	@Override
-	final public void touch(final MotionEvent motionEvent) {
-		if (hasUninstalling() || isUninstalled())
-			return;
+	final public boolean touch(final MotionEvent motionEvent) {
+		if (hasUninstalling() || isUninstalled() || !mTouchable)
+			return false;
 		// Not Touch If Uninstalled
-		mInstallManager.touch(motionEvent);
-		onTouch(motionEvent);
-		touchSceneComponent(motionEvent);
+		if(mInstallManager.touch(motionEvent))
+			return true;
+		if(touchSceneComponent(motionEvent))
+			return true;
+		return onTouch(motionEvent);
 	}
 	
 	/*
@@ -795,9 +797,12 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	/*
 	 * Desenha os sprites
 	 */
-	final private void touchSceneComponent(final MotionEvent motionEvent) {
-		for(int i=0; i<mTouchableListener.size(); i++)
-			mTouchableListener.get(i).onTouch(this, motionEvent);
+	final private boolean touchSceneComponent(final MotionEvent motionEvent) {
+		for(int i=0; i<mTouchableListener.size(); i++) {
+			if(mTouchableListener.get(i).onTouch(this, motionEvent))
+				return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -955,7 +960,8 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	};
 	
 	/* Evento de toque */
-	public void onTouch(final MotionEvent motionEvent) {
+	public boolean onTouch(final MotionEvent motionEvent) {
+		return false;
 	};
 	
 	/* Evento para Finalizar a Engine */

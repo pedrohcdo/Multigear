@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import android.app.Activity;
 import android.util.Log;
@@ -30,6 +33,10 @@ public class BaseConnected {
 	
 	// Private Variables
 	private boolean mReadBlocked;
+	private Object mLock;
+	private AtomicInteger mControl = new AtomicInteger();
+	
+	List<String> mSends = new ArrayList<String>();
 	
 	/*
 	 * Construtor
@@ -41,6 +48,29 @@ public class BaseConnected {
 		mSocket = socket;
 		mIn = in;
 		mOut = out;
+		Thread mThread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				while(true) {
+					while(mSends.size() > 0) {
+						String send;
+						synchronized(mSends) {
+							send = mSends.remove(0);
+						}
+						mOut.println(send);
+						mOut.flush();
+					}
+					try {
+						Thread.sleep(1);
+					} catch(Exception e) {
+					}
+				}
+			}
+		});
+		mThread.setDaemon(true);
+		mThread.setPriority(3);
+		mThread.start();
 	}
 	
 	/*
@@ -71,8 +101,11 @@ public class BaseConnected {
 		if (message.matches(".*(?:\\[|\\]).*"))
 			Log.d("LogTest", "Client: Warning, do not use any of these characters: []|");
 		final String messageSocket = multigear.communication.tcp.base.Utils.makeSocketMessage(code, message);
-		mOut.println(messageSocket);
-		mOut.flush();
+		//mOut.println(messageSocket);
+		//mOut.flush();
+		synchronized(mSends) {
+			mSends.add(messageSocket);
+		}
 	}
 	
 	/*
@@ -80,8 +113,11 @@ public class BaseConnected {
 	 */
 	final public void sendMessage(final int code) {
 		final String messageSocket = multigear.communication.tcp.base.Utils.makeSocketMessage(code);
-		mOut.println(messageSocket);
-		mOut.flush();
+		//mOut.println(messageSocket);
+		//mOut.flush();
+		synchronized(mSends) {
+			mSends.add(messageSocket);
+		}
 	}
 	
 	/**
@@ -95,8 +131,12 @@ public class BaseConnected {
 	 *            Generic Message
 	 */
 	final public void sendGenericMessage(final String message) {
-		mOut.println(message);
-		mOut.flush();
+		//mOut.println(message);
+		//mOut.flush();
+		
+		synchronized(mSends) {
+			mSends.add(message);
+		}
 	}
 	
 	/*

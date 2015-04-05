@@ -75,8 +75,8 @@ public class MultigearGame {
 	public enum RegisterMode {
 		
 		/* Conts */
-		DYNAMIC,
-		STATIC;
+		FREE,
+		LOCK;
 	}
 	
 	/**
@@ -195,14 +195,6 @@ public class MultigearGame {
 			mGameVariables.update();
 			mGameMonitor.update();
 		}
-	}
-	
-	/**
-	 * Update
-	 */
-	final protected void forceToUpdate() {
-		mScene.getComManager().update();
-		update();
 	}
 	
 	/**

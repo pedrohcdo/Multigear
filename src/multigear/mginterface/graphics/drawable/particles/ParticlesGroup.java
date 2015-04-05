@@ -35,9 +35,10 @@ final public class ParticlesGroup implements Drawable, Component {
 	private Vector2 mPosition = new Vector2(0, 0);
 	private int mId = 0;
 	private int mZ = 0;
-	private float mOpacity = 1;
+	private float mOpacity = 1.0f;
 	private boolean mAutoHelper = true;
 	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private float mScale = 1.0f;
 	
 	// Buffers
 	private FloatBuffer mParticlesBuffer;
@@ -48,7 +49,7 @@ final public class ParticlesGroup implements Drawable, Component {
 	 * @param room
 	 */
 	public ParticlesGroup() {
-		setParticlesLimit(10);
+		setParticlesLimit(100);
 	}
 	
 	/**
@@ -77,6 +78,15 @@ final public class ParticlesGroup implements Drawable, Component {
 	 */
 	final public void setPosition(final Vector2 position) {
 		mPosition = position;
+	}
+	
+	/**
+	 * Set Scale
+	 * 
+	 * @param scale
+	 */
+	final public void setScale(final float scale) {
+		mScale = scale;
 	}
 	
 	/**
@@ -174,6 +184,19 @@ final public class ParticlesGroup implements Drawable, Component {
 	}
 	
 	/**
+	 * Set Particles Buffer same as 'setParticlesLimit(int)'
+	 * Allocates all clearances, for performance reasons it is not
+	 *  recommended to invoke this method often.
+	 * <p>
+	 * 
+	 * @param limit
+	 */
+	final public void setParticlesBuffer(final FloatBuffer buffer) {
+		mParticlesLimit = buffer.limit() / 4;
+		mParticlesBuffer = buffer;
+	}
+	
+	/**
 	 * Get Particle group texture
 	 * 
 	 * @param texture
@@ -189,6 +212,15 @@ final public class ParticlesGroup implements Drawable, Component {
 	 */
 	final public Vector2 getPosition() {
 		return mPosition;
+	}
+	
+	/**
+	 * Get Scale
+	 * 
+	 * @return
+	 */
+	final public float getScale() {
+		return mScale;
 	}
 	
 	/**
@@ -306,7 +338,7 @@ final public class ParticlesGroup implements Drawable, Component {
 			
 			// Get Values
 			final Vector2 position = particle.getPosition();
-			final float scale = particle.getScale();
+			final float scale = particle.getScale() * getScale();
 			final float finalOpacity = particle.getOpacity() * opacityGroup;
 			
 			// Put Vertexes to buffer

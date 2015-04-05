@@ -1,4 +1,4 @@
-package multigear.mginterface.graphics.drawable.gui.widgets.List;
+package multigear.mginterface.graphics.drawable.gui.widgets.listview;
 
 import android.view.MotionEvent;
 import multigear.general.utils.Vector2;
@@ -45,7 +45,7 @@ public interface ListViewAdapter {
 	/**
 	 * Create View
 	 */
-	public ItemHolder createItem(final int index);
+	public ItemHolder createItem(final int index, final ItemHolder reUse);
 	
 	/**
 	 * Get Item count

@@ -1,4 +1,4 @@
-package multigear.mginterface.graphics.drawable.gui.widgets.List;
+package multigear.mginterface.graphics.drawable.gui.widgets.listview;
 
 import java.util.List;
 
@@ -78,7 +78,9 @@ public class ArrayAdapter implements ListViewAdapter {
 	
 	/* Unused */
 	@Override
-	public ItemHolder createItem(final int index) {
+	public ItemHolder createItem(final int index, final ItemHolder reUse) {
+		if(reUse != null)
+			return reUse;
 		return mItems.get(index);
 	}
 	

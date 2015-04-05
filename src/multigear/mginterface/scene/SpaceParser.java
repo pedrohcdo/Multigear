@@ -38,7 +38,7 @@ public class SpaceParser {
 		final float baseDensity = mOptimizedKey.getFloatAttr();
 		// Default Scale
 		if(baseDensity == -1) {
-			scaleFactor = mRoom.getDPI() / mRoom.getRealDPI();
+			scaleFactor = 1;
 		// Calculare Scale Factor
 		}else
 			scaleFactor = mRoom.getDPI() / baseDensity;

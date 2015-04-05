@@ -66,11 +66,22 @@ final public class VirtualPath {
 	// Final Private Variables
 	final private List<PathObject> mPathObjects = new ArrayList<PathObject>();
 	
-	/**
-	 * Constructor
-	 */
-	public VirtualPath() {}
+	// Private Variables
+	private Vector2 mPosition = new Vector2();
 	
+	/**
+	 * Set Virtual Path position offset
+	 */
+	final public void setPosition(final Vector2 position) {
+		mPosition = position;
+	}
+	
+	/**
+	 * Get Virtual Path position offset
+	 */
+	final public Vector2 getPosition() {
+		return mPosition.clone();
+	}
 	
 	/**
 	 * Add Line Path
@@ -90,7 +101,7 @@ final public class VirtualPath {
 	final public Vector2 getPosition(float time) {
 		final float peace = 1.0f / getTotalDistance();
 		float timeLine = 0;
-		Vector2 position = new Vector2();
+		Vector2 position = new Vector2(mPosition);
 		for(final PathObject pathObject : mPathObjects) {
 			final float pathPeace = pathObject.distance() * peace;
 			if(time <= (pathPeace + timeLine)) {

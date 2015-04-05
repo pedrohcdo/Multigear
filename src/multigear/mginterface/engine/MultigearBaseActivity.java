@@ -1,6 +1,7 @@
 package multigear.mginterface.engine;
 
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.Toast;
 

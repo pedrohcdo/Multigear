@@ -29,11 +29,15 @@ final public class Polygon implements Drawable, Component {
 	// For Draw
 	private float mPreparedOpacity;
 
-	// Final Private Static
+	// Final Private Static Variables
 	final private static int POLYGON_MODE_NORMAL = 0;
 	final private static int POLYGON_MODE_OPTIMIZED_CIRCLE = 1;
 	final private static int POLYGON_MODE_OPTIMIZED_ELLIPSE = 2;
 
+	// Final Public Static Variables
+	final public static int TEXTURE_MAP_REPEAT = 0;
+	final public static int TEXTURE_MAP_STRETCH = 1;
+	
 	// Final Private Variables
 	final private float mFinalTransformation[] = new float[] { 0, 0, 0, 0, 0,0, 0, 0, 1 };
 	final private AnimationStack mAnimationStack;
@@ -42,7 +46,8 @@ final public class Polygon implements Drawable, Component {
 	protected Rect mViewport;
 	private Texture mTexture;
 	private Color mColor = Color.WHITE;
-
+	private int mTextureMapMode = TEXTURE_MAP_STRETCH;
+	
 	// Public Variables
 	protected Vector2 mScale = new Vector2(1, 1);
 	protected Vector2 mPosition = new Vector2(0, 0);
@@ -62,7 +67,8 @@ final public class Polygon implements Drawable, Component {
 	protected FloatBuffer mPolygonFloatBufferExtra = null;
 	private int mZ = 0;
 	private int mID = 0;
-
+	private Vector2 mSize = new Vector2();
+	
 	/**
 	 * Constructor
 	 * 
@@ -81,9 +87,9 @@ final public class Polygon implements Drawable, Component {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createRoundedSquare(final float sides, float radius) {
+	final public static Polygon createRoundedSquare(final float sides, float radius, final float detailDeg) {
 		radius = Math.min(radius, sides / 2.0f);
-		final double detail = Math.PI / 180.0f;
+		final double detail = detailDeg * Math.PI / 180.0f;
 		final Polygon roundedSquare = new Polygon();
 		for (double i = 0; i < Math.PI / 2; i += detail) {
 			final float x = (float) (Math.cos(i) * radius) + (sides - radius);
@@ -116,9 +122,9 @@ final public class Polygon implements Drawable, Component {
 	 * @param radius
 	 * @return
 	 */
-	final public static Polygon createRoundedRectangle(final Vector2 size, float radius) {
+	final public static Polygon createRoundedRectangle(final Vector2 size, float radius, final float detailDeg) {
 		radius = Math.min(Math.min(radius, size.x / 2.0f), size.y / 2.0f);
-		final double detail = Math.PI / 180.0f;
+		final double detail = detailDeg * Math.PI / 180.0f;
 		final Polygon roundedRectangle = new Polygon();
 		for (double i = 0; i < Math.PI / 2; i += detail) {
 			final float x = (float) (Math.cos(i) * radius) + (size.x - radius);
@@ -293,11 +299,32 @@ final public class Polygon implements Drawable, Component {
 	}
 
 	/**
+	 * Refresh Polygon Size
+	 * 
+	 * @param vec
+	 */
+	final private void refreshSize(final Vector2 vec) {
+		mSize.x = Math.max(mSize.x, vec.x);
+		mSize.y = Math.max(mSize.y, vec.y);
+	}
+	
+	/**
+	 * Refresh Polygon Size
+	 * 
+	 * @param vec
+	 */
+	final private void refreshSize(final float x, final float y) {
+		mSize.x = Math.max(mSize.x, x);
+		mSize.y = Math.max(mSize.y, y);
+	}
+	
+	/**
 	 * Add Vertice
 	 * 
 	 * @param vector
 	 */
 	final public void addVertice(final Vector2 vector) {
+		refreshSize(vector);
 		mVertices.position(mVerticesCount * 2);
 		mTextureVertex.position(mVerticesCount * 2);
 		if ((mVertices.position() + 2) > mVertices.limit()) {
@@ -358,8 +385,11 @@ final public class Polygon implements Drawable, Component {
 		}
 		polygon.mVertices.position(0);
 		for (int i = 0; i < polygon.mVerticesCount; i++) {
-			mVertices.put(polygon.mVertices.get());
-			mVertices.put(polygon.mVertices.get());
+			final float x = polygon.mVertices.get();
+			final float y = polygon.mVertices.get();
+			refreshSize(x, y);
+			mVertices.put(x);
+			mVertices.put(y);
 		}
 		mVerticesCount += polygon.mVerticesCount;
 		mapTexture();
@@ -415,26 +445,46 @@ final public class Polygon implements Drawable, Component {
 	}
 
 	/**
-	 * Remove Vertice
+	 * Remove Vertices
 	 * 
 	 * @param index
 	 */
 	final public void removeVertices(final int start, final int count) {
 		if (start < 0 || (start + count) > mVerticesCount)
 			throw new IndexOutOfBoundsException();
+		mSize.set(0, 0);
+		mVertices.position(0);
+		for(int i=0; i<start; i++) {
+			final float x = mVertices.get();
+			final float y = mVertices.get();
+			refreshSize(x, y);
+		}
 		mVertices.position(start * 2);
 		for (int i = (start + count); i < mVerticesCount; i++) {
-			mVertices.put(mVertices.get(i * 2));
-			mVertices.put(mVertices.get(i * 2 + 1));
+			final float x = mVertices.get(i * 2);
+			final float y = mVertices.get(i * 2 + 1);
+			refreshSize(x, y);
+			mVertices.put(x);
+			mVertices.put(y);
 		}
 		mVerticesCount -= count;
 		mapTexture();
 	}
 
 	/**
+	 * Remove Vertice
+	 * 
+	 * @param index
+	 */
+	final public void removeVertice(final int index) {
+		removeVertices(index, 1);
+	}
+	
+	/**
 	 * Remove All Vertices
 	 */
 	final public void clearVertices() {
+		mSize.set(0, 0);
 		mVertices.position(0);
 		mVerticesCount = 0;
 	}
@@ -452,6 +502,18 @@ final public class Polygon implements Drawable, Component {
 	}
 
 	/**
+	 * Remap Polygon texture
+	 * 
+	 * @param mode
+	 */
+	final public void setTextureMapMode(final int mode) {
+		if(mode != TEXTURE_MAP_REPEAT && mode != TEXTURE_MAP_STRETCH)
+			throw new IllegalArgumentException("This mode not exist.");
+		mTextureMapMode = mode;
+		mapTexture();
+	}
+	
+	/**
 	 * Map Texture
 	 */
 	final private void mapTexture() {
@@ -462,25 +524,44 @@ final public class Polygon implements Drawable, Component {
 		case POLYGON_MODE_NORMAL:
 			mVertices.position(0);
 			mTextureVertex.position(0);
-			for (int i = 0; i < mVerticesCount; i++) {
-				final float x = mVertices.get() / size.x;
-				final float y = mVertices.get() / size.y;
-				mTextureVertex.put(x);
-				mTextureVertex.put(y);
+			if(mTextureMapMode == TEXTURE_MAP_REPEAT) {
+				for (int i = 0; i < mVerticesCount; i++) {
+					final float x = mVertices.get() / size.x;
+					final float y = mVertices.get() / size.y;
+					mTextureVertex.put(x);
+					mTextureVertex.put(y);
+				}
+			} else if(mTextureMapMode == TEXTURE_MAP_STRETCH) {
+				for (int i = 0; i < mVerticesCount; i++) {
+					final float x = mVertices.get() / mSize.x;
+					final float y = mVertices.get() / mSize.y;
+					mTextureVertex.put(x);
+					mTextureVertex.put(y);
+				}
 			}
 			mTextureVertex.position(0);
 			break;
 		case POLYGON_MODE_OPTIMIZED_CIRCLE:
-			final float xfw = (mPolygonFloatExtra * 2) / size.x;
-			final float yfh = (mPolygonFloatExtra * 2) / size.y;
-			mTextureVertex = GeneralUtils.createFloatBuffer(new float[] { 0, 0,
-					xfw, 0, xfw, yfh, 0, yfh });
+			if(mTextureMapMode == TEXTURE_MAP_REPEAT) {
+				final float xfw = (mPolygonFloatExtra * 2) / size.x;
+				final float yfh = (mPolygonFloatExtra * 2) / size.y;
+				mTextureVertex = GeneralUtils.createFloatBuffer(new float[] { 0, 0, xfw, 0, xfw, yfh, 0, yfh });
+			} else if(mTextureMapMode == TEXTURE_MAP_STRETCH) {
+				final float xfw = (mPolygonFloatExtra * 2) / mSize.x;
+				final float yfh = (mPolygonFloatExtra * 2) / mSize.y;
+				mTextureVertex = GeneralUtils.createFloatBuffer(new float[] { 0, 0, xfw, 0, xfw, yfh, 0, yfh });
+			}
 			break;
 		case POLYGON_MODE_OPTIMIZED_ELLIPSE:
-			final float xvw = (mPolygonVectorExtra.x * 2) / size.x;
-			final float yvh = (mPolygonVectorExtra.y * 2) / size.y;
-			mTextureVertex = GeneralUtils.createFloatBuffer(new float[] { 0, 0,
-					xvw, 0, xvw, yvh, 0, yvh });
+			if(mTextureMapMode == TEXTURE_MAP_REPEAT) {
+				final float xvw = (mPolygonVectorExtra.x * 2) / size.x;
+				final float yvh = (mPolygonVectorExtra.y * 2) / size.y;
+				mTextureVertex = GeneralUtils.createFloatBuffer(new float[] { 0, 0, xvw, 0, xvw, yvh, 0, yvh });
+			} else if(mTextureMapMode == TEXTURE_MAP_STRETCH) {
+				final float xvw = (mPolygonVectorExtra.x * 2) / mSize.x;
+				final float yvh = (mPolygonVectorExtra.y * 2) / mSize.y;
+				mTextureVertex = GeneralUtils.createFloatBuffer(new float[] { 0, 0, xvw, 0, xvw, yvh, 0, yvh });
+			}
 			break;
 		}
 
@@ -808,6 +889,15 @@ final public class Polygon implements Drawable, Component {
 		return mID;
 	}
 
+	/**
+	 * Get texture map mode
+	 * 
+	 * @param mode
+	 */
+	final public int getTextureMapMode() {
+		return mTextureMapMode;
+	}
+	
 	/**
 	 * Set Matrix Transformations for this Layer
 	 * <p>

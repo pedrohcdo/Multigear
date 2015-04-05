@@ -11,13 +11,18 @@ import multigear.mginterface.scene.Scene;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
+import android.app.Service;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -37,6 +42,7 @@ final public class Multigear {
 	final private multigear.mginterface.engine.Surface mSurface;
 	final private multigear.mginterface.engine.Manager mManager;
 	final private multigear.mginterface.engine.eventsmanager.EventHandler mEventHandler;
+	final private WifiLock mWifiLock;
 	
 	final Intent mServiceIntent;
 	
@@ -93,6 +99,11 @@ final public class Multigear {
 		// The bindService () used without startService () may result in the 
 		// closure of the service after all unbindService ().
 		activity.startService(mServiceIntent);
+		
+		// Aquire WifiLock in Full High Perf
+		WifiManager wifiManager = (WifiManager)mActivity.getSystemService(Context.WIFI_SERVICE);
+		mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "MultigearSystem.WIFI_LOCK.WMFHP");
+		mWifiLock.setReferenceCounted(false);
 	}
 	
 	/**
@@ -101,7 +112,7 @@ final public class Multigear {
 	final protected void resume() {
 		mSupportServiceResumed = true;
 		// Binding with Service
-		getActivity().bindService(mServiceIntent, mServiceConnection, 0);
+		getActivity().bindService(mServiceIntent, mServiceConnection, Service.BIND_AUTO_CREATE);
 	}
 	
 	/**
@@ -148,8 +159,11 @@ final public class Multigear {
 		// This case is not necessary, but just in case.
 		if (supportService != null) {
 			// Send to service this engine initialized
-			if (firstOccurrence)
-				supportService.engineInitialized();
+			if (firstOccurrence) {
+				supportService.enginePrepare();
+				mActivity.startService(mServiceIntent);
+				supportService.engineInitialized(mWifiLock);
+			}
 			// Send to service this engine resumed
 			supportService.engineResumed();
 		}

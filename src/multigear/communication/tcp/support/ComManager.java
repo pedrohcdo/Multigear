@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import android.util.Log;
+
 import multigear.communication.tcp.base.BaseConnected;
 import multigear.communication.tcp.base.Message;
 import multigear.communication.tcp.base.Utils;
@@ -124,6 +126,7 @@ final public class ComManager {
 		
 	}
 	
+	
 	/**
 	 * Read Messages.
 	 * Nota: Esta lendo 10 mensagens por frame.
@@ -142,8 +145,6 @@ final public class ComManager {
 			if (messages >= 20)
 				break;
 		}
-		
-	
 	}
 	
 	/**

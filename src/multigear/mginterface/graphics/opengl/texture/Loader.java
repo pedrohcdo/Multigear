@@ -194,7 +194,7 @@ final public class Loader {
 	/*
 	 * Carrega um Bitmap diretamente no OGL
 	 */
-	final private multigear.mginterface.graphics.opengl.texture.Texture load(final Bitmap bitmap, final int id, final Vector2 size) {
+	final public multigear.mginterface.graphics.opengl.texture.Texture load(final Bitmap bitmap, final int id, final Vector2 size) {
 		// Create Handle for texture
 		int[] handleVec = new int[1];
 		GLES20.glGenTextures(1, handleVec, 0);
@@ -204,8 +204,8 @@ final public class Loader {
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureHandle);
 		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
 		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
-		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
 		// Load texture
 		GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
 		// If Hardware not suporte NPOT Textures, scale texture for POT and

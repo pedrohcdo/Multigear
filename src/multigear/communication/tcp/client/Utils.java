@@ -55,7 +55,9 @@ final public class Utils {
 		// Set List Index
 		int index = 0;
 		// Add DNS
+		
 		list[index++] = dns;
+		
 		// Get Sides
 		final int baseAddress = ipAddress[3];
 		int leftSide = baseAddress - 1;

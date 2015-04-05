@@ -100,15 +100,17 @@ public class ComponentBatch {
 		 * @param motionEvent
 		 */
 		@Override
-		public void onTouch(Scene scene, MotionEvent motionEvent) {
+		public boolean onTouch(Scene scene, MotionEvent motionEvent) {
 			for(int i=0; i<mComponents.size(); i++) {
 				final int j = mComponents.size() - i - 1;
 				Component component = mComponents.get(j);
 				if(component instanceof Touchable) {
 					Touchable touchable = (Touchable) component;
-					touchable.touch(motionEvent);
+					if(touchable.touch(motionEvent))
+						return true;
 				}
 			}
+			return false;
 		}
 	}
 	
@@ -178,5 +180,12 @@ public class ComponentBatch {
 		if(mAttachedScene == null)
 			throw new RuntimeException("The object is recycled.");
 		mComponents.remove(component);
+	}
+	
+	/**
+	 * Get Components count
+	 */
+	final public int getCount() {
+		return mComponents.size();
 	}
 }

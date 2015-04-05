@@ -107,6 +107,40 @@ final public class DedicatedServices {
 		}
 	}
 	
+	final private boolean compareString(String a, String b) {
+		byte[] bytesA = a.getBytes();
+		byte[] bytesB = b.getBytes();
+		if(bytesA.length != bytesB.length)
+			return false;
+		for(int i=0; i<bytesA.length; i++) {
+			if(bytesA[i] != bytesB[i])
+				return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Compare Networks
+	 * @param netA
+	 * @param netB
+	 * @return
+	 */
+	final private boolean compareNetworks(final WifiConfiguration netA, final WifiConfiguration netB) {
+		final String ssidA = netA.SSID;
+		final String ssidB = netB.SSID;
+		if(ssidA != null && ssidB != null) {
+			if(ssidA.equals(ssidB))
+				return true;
+		}
+		final String bssidA = netA.BSSID;
+		final String bssidB = netB.BSSID;
+		if(bssidA != null && bssidB != null) {
+			if(bssidA.equals(bssidB))
+				return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * Restores the last saved state of the service manager. This is valid for
 	 * the following services: Wi-fi, Hotspot, 3G.
@@ -135,43 +169,41 @@ final public class DedicatedServices {
 		if (supportThread.hasInterrupted())
 			return;
 		// Restore Configured Networks
-		final List<Integer> foundNetworkList = new ArrayList<Integer>();
-		for (final WifiConfiguration savedNetworkConfiguration : restoreDataBase.ConfiguredNetworks) {
-			// Stop process if interrupted
-			if (supportThread.hasInterrupted())
-				return;
-			final WifiConfiguration findConfiguredNetwork = getConfiguredNetworkBSSID(savedNetworkConfiguration.BSSID, savedNetworkConfiguration.SSID);
-			if (findConfiguredNetwork != null) {
-	
-				// Stop process if interrupted
-				if (supportThread.hasInterrupted())
-					return;
-				foundNetworkList.add(findConfiguredNetwork.networkId);
-				// Stop process if interrupted
-				if (supportThread.hasInterrupted())
-					return;
-				if (savedNetworkConfiguration.status == android.net.wifi.WifiConfiguration.Status.CURRENT || savedNetworkConfiguration.status == android.net.wifi.WifiConfiguration.Status.ENABLED) {
-					mWifiManager.enableNetwork(findConfiguredNetwork.networkId, false);
-				} else {
-					mWifiManager.disableNetwork(findConfiguredNetwork.networkId);
-				}
-			}
-		}
+		mWifiManager.disconnect();
 		boolean refresh = false;
 		for (final WifiConfiguration configuredNetwork : getConfiguredNetworksSafety()) {
-			if (!foundNetworkList.contains(configuredNetwork.networkId)) {
-				//Log.d("LogTest", "Non Sei: " + configuredNetwork.SSID + " ID: " + configuredNetwork.networkId);
+			boolean found = false;
+			// find
+			for(final WifiConfiguration savedNetwork : restoreDataBase.ConfiguredNetworks) {
+				if(compareNetworks(configuredNetwork, savedNetwork)) {
+					found = true;
+					if (savedNetwork.status == android.net.wifi.WifiConfiguration.Status.CURRENT || savedNetwork.status == android.net.wifi.WifiConfiguration.Status.ENABLED) {
+						mWifiManager.enableNetwork(configuredNetwork.networkId, false);
+					} else {
+						mWifiManager.disableNetwork(configuredNetwork.networkId);
+					}
+					break;
+				}
+			}
+			// Remove
+			if(!found) {
 				mWifiManager.removeNetwork(configuredNetwork.networkId);
 				refresh = true;
 			}
 			// Prevents interrupt
-			if (supportThread.hasInterrupted())
+			if (supportThread.hasInterrupted()) {
+				if(refresh)
+					mWifiManager.saveConfiguration();
+				mWifiManager.reconnect();
+				mWifiManager.reassociate();
 				return;
+			}
 		}
-		if (refresh) {
-			
+		// If Refresh
+		if (refresh) 
 			mWifiManager.saveConfiguration();
-		}
+		mWifiManager.reconnect();
+		mWifiManager.reassociate();
 		// Prevents interrupt
 		if (supportThread.hasInterrupted())
 			return;

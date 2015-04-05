@@ -159,7 +159,7 @@ abstract public class Installation {
 	/*
 	 * Evento de toque
 	 */
-	abstract public void touch(final MotionEvent motionEvent);
+	abstract public boolean touch(final MotionEvent motionEvent);
 
 	/*
 	 * Evento para finalizar a Engine

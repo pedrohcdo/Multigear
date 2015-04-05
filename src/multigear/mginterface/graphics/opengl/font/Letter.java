@@ -27,6 +27,12 @@ final public class Letter {
 	 */
 	public Letter() {
 		mLetterDrawer = new LetterDrawer();
+		write(new LetterWriter() {
+			
+			@Override
+			public void onDraw(FontMap fontMap, LetterDrawer letterDrawer) {
+			}
+		});
 	}
 	
 	/**

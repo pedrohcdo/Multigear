@@ -7,5 +7,5 @@ package multigear.cache;
  *
  * Property Createlier.
  */
-public class CacheComponent {
+public interface CacheComponent {
 }

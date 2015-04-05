@@ -1,6 +1,10 @@
 package multigear.communication.tcp.base;
 
+import android.annotation.SuppressLint;
+import android.util.Log;
+
 import java.io.BufferedReader;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,6 +15,7 @@ import java.util.regex.Pattern;
  *
  * Property Createlier.
  */
+@SuppressLint("DefaultLocale") 
 final public class Utils {
 	
 	// Constants
@@ -26,23 +31,17 @@ final public class Utils {
 	
 	// Final Private Variables
 	final static private Pattern mPattern = Pattern.compile("\\[[ ]*code[ ]*\\:[ ]*((?:-|\\+)?\\d*)[ ]*\\|[ ]*msg[ ]*\\:[ ]*([^\\]]*)\\]");
-	final static public String EXTRA_SOCKET_BUFF;
 	final static public int SOCKET_SEND_BUFFER_SIZE = 7000;
 	final static public int SOCKET_RECV_BUFFER_SIZE = 100000;
 	
-	// Set Final Extra Buff
-	static {
-		String buff = "";
-		for(int i=0; i<30; i++)
-			buff += "_";
-		EXTRA_SOCKET_BUFF = buff;
-	}
-	
+
 	/*
 	 * Cria uma nova mensagem para ser enviada por Socket
 	 */
 	final static public String makeSocketMessage(final int code, final String message) {
-		return "[code:" + code + "|msg:" + message + "]" + EXTRA_SOCKET_BUFF;
+		final String codeString = String.format(Locale.US, "%12d", code);
+		
+		return codeString + ":" + message;
 	}
 	
 	/*
@@ -56,20 +55,18 @@ final public class Utils {
 	 * Traduz o código de comunicação para objetos Message
 	 */
 	final static public Message translateSocketMessages(final String socketMessages) {
-		final Matcher matcher = mPattern.matcher(socketMessages);
-		Message lastMessage = null;
-		Message firstMessage = null;
-		while(matcher.find()) {
-			final int code = Integer.parseInt(matcher.group(1));
-			final String messageString = matcher.group(2);
-			final multigear.communication.tcp.base.Message message = new multigear.communication.tcp.base.Message(code, messageString);
-			if(lastMessage != null)
-				lastMessage.setNext(message);
-			if(firstMessage == null)
-				firstMessage = message;
-			lastMessage = message;
-		}
-		return firstMessage;
+		
+		if(socketMessages.length() < 13)
+			return null;
+		
+		final int code = Integer.parseInt(socketMessages.substring(0, 12).trim());
+		String messageString = "";
+		
+		if(socketMessages.length() > 13)
+			messageString = socketMessages.substring(13, socketMessages.length());
+
+		
+		return new multigear.communication.tcp.base.Message(code, messageString);
 	}
 	
 	/*

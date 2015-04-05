@@ -29,8 +29,9 @@ final public class SharedTouch {
 		 * Touch
 		 */
 		@Override
-		public void onTouch(Scene scene, MotionEvent motionEvent) {
+		public boolean onTouch(Scene scene, MotionEvent motionEvent) {
 			touch(motionEvent);
+			return false;
 		}
 	};
 	

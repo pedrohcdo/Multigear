@@ -34,8 +34,9 @@ final public class Camera {
 		 * On Touch Event
 		 */
 		@Override
-		public void onTouch(Scene scene, MotionEvent motionEvent) {
+		public boolean onTouch(Scene scene, MotionEvent motionEvent) {
 			touch(motionEvent);
+			return false;
 		}
 	};
 	

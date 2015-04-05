@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -26,7 +27,7 @@ public class ConnectionAttempt {
 	 * 
 	 *         Property Createlier.
 	 */
-	final public class Result {
+	final public static class Result {
 		
 		// Final Private Variables
 		final private boolean mSuccess;
@@ -82,6 +83,10 @@ public class ConnectionAttempt {
 		if (multigear.general.utils.KernelUtils.DEBUG)
 			Log.d("LogTest", "Attemping Openned");
 		try {
+			
+
+			
+			
 			InetAddress address = InetAddress.getByName(mHost);
 			if (address.isReachable(300)) {
 				final Socket socket = new Socket(mHost, mPort);

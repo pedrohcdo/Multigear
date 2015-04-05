@@ -63,6 +63,44 @@ final public class GameVariables {
 		RegisterMode mode;
 		Object value;
 		Player adm;
+		
+		/**
+		 * Set Default Value
+		 * @param type
+		 */
+		final private void setDefault(final VariableType type) {
+			switch(type) {
+			case BOOLEAN:
+				value = false;
+				break;
+			case BYTE:
+				value = (byte)0;
+				break;
+			case CHAR:
+				value = (char)0;
+				break;
+			case DOUBLE:
+				value = (double)0;
+				break;
+			case FLOAT:
+				value = (float)0;
+				break;
+			case INTEGER:
+				value = (int)0;
+				break;
+			case LONG:
+				value = (long)0;
+				break;
+			case SHORT:
+				value = (short)0;
+				break;
+			case VECTOR2:
+				value = new Vector2();
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	
 	// Conts
@@ -94,6 +132,7 @@ final public class GameVariables {
 		if(getMonitorVariable(group, id) != null)
 			throw new RuntimeException("This id already in use");
 		final MonitorVariable variable = new MonitorVariable();
+		variable.setDefault(type);
 		variable.group = group;
 		variable.id = id;
 		variable.type = type;
@@ -218,7 +257,7 @@ final public class GameVariables {
 	 * @return
 	 */
 	final private boolean freeToModify(final MonitorVariable variable) {
-		if(variable.adm == mMultigearGame.getState().getPlayer() || variable.mode == RegisterMode.DYNAMIC)
+		if(variable.adm == mMultigearGame.getState().getPlayer() || variable.mode == RegisterMode.FREE)
 			return true;
 		return false;
 	}

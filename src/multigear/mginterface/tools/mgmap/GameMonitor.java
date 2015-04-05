@@ -58,7 +58,8 @@ final public class GameMonitor {
 		mMultigearGame.sendMessage(mMultigearGame.prepareMonitorMessage(SYNC_PLAYERS_FRAME).build());
 		while(mSyncPlayersFrame) {
 			// Force update
-			mMultigearGame.forceToUpdate();
+			mMultigearGame.getScene().getComManager().update();
+			update();
 			// Search message
 			final Iterator<GameMessage> itr = mGameMessages.iterator();
 			brace: while(itr.hasNext()) {
@@ -96,7 +97,8 @@ final public class GameMonitor {
 			// Wait info
 			brace: while(true) {
 				// Force update
-				mMultigearGame.forceToUpdate();
+				mMultigearGame.getScene().getComManager().update();
+				update();
 				// Search message
 				final Iterator<GameMessage> itr = mGameMessages.iterator();
 				while(itr.hasNext()) {

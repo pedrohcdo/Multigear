@@ -1,4 +1,4 @@
-package multigear.mginterface.graphics.drawable.gui.widgets.List;
+package multigear.mginterface.graphics.drawable.gui.widgets.listview;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,7 +9,7 @@ import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.graphics.animations.AnimationOpacity;
 import multigear.mginterface.graphics.drawable.gui.Canvas;
-import multigear.mginterface.graphics.drawable.gui.widgets.List.ListViewAdapter.ItemHolder;
+import multigear.mginterface.graphics.drawable.gui.widgets.listview.ListViewAdapter.ItemHolder;
 import multigear.mginterface.graphics.drawable.polygon.Polygon;
 import multigear.mginterface.graphics.drawable.sprite.Sprite;
 import multigear.mginterface.graphics.drawable.widget.Widget;
@@ -283,6 +283,7 @@ final public class ListView extends Widget {
 	private Orientation mOrientation = Orientation.VERTICAL;
 	private ItemHolder[] mItemsHolder;
 	private int mItemsCount = 0;
+	private boolean mScrollable = true;
 	
 	/**
 	 * Constructor
@@ -313,10 +314,58 @@ final public class ListView extends Widget {
 		mIndex = -1;
 		mPosition = new Vector2(0, 0);
 		mSelectListener = null;
-		mAttributes = attributes;
+		mAttributes.border = attributes.border;
+		mAttributes.padding = attributes.padding;
 		measure(size);
 	}
-
+	
+	/**
+	 * Set Size
+	 * 
+	 */
+	@Override
+	public void setSize(Vector2 size) {
+		measure(size);
+	}
+	
+	/**
+	 * Set Scrollable
+	 * @param scrollable
+	 */
+	final public void setScrollable(final boolean scrollable) {
+		mScrollable = scrollable;
+		if(!mScrollable) {
+			mImpulseDetector.reset();
+			mPullDetector.reset();
+			mTouchEventsDetector.reset();
+		}
+	}
+	
+	/**
+	 * Set Scroll position
+	 */
+	final public void setScrollPosition(float position) {
+		mScroll = Math.max(0, Math.min(position, getMaxScroll())) * -1;
+		mLastScroll = mScroll;
+		updatePosition();
+	}
+	
+	/**
+	 * Get Scroll Position
+	 * @return
+	 */
+	final public float getScrollPosition() {
+		return mScroll * -1;
+	}
+	
+	/**
+	 * Get Scrollable
+	 * @return
+	 */
+	final public boolean getScrollable() {
+		return mScrollable;
+	}
+	
 	/**
 	 * Set List Adapater
 	 * @param adapter
@@ -333,8 +382,27 @@ final public class ListView extends Widget {
 		mItemsCount = mSelectListAdapter.getCount();
 		mItemsHolder = new ItemHolder[mItemsCount];
 		for(int i=0; i<mItemsCount; i++)
-			mItemsHolder[i] = mSelectListAdapter.createItem(i);
+			mItemsHolder[i] = mSelectListAdapter.createItem(i, null);
 		reshapeScroll();
+	}
+	
+	/**
+	 * Reset Adapter and reset items
+	 */
+	final public void resetAdapter() {
+		if(mSelectListAdapter == null)
+			return;
+		mItemsCount = mSelectListAdapter.getCount();
+		final ItemHolder[] lastItemsHolder = mItemsHolder;
+		mItemsHolder = new ItemHolder[mItemsCount];
+		for(int i=0; i<mItemsCount; i++) {
+			if(i < lastItemsHolder.length)
+				mItemsHolder[i] = mSelectListAdapter.createItem(i, lastItemsHolder[i]);
+			else
+				mItemsHolder[i] = mSelectListAdapter.createItem(i, null);
+		}
+		if(lastItemsHolder.length != mItemsCount)
+			reshapeScroll();
 	}
 	
 	/**
@@ -401,6 +469,16 @@ final public class ListView extends Widget {
 	}
 	
 	/**
+	 * Set Background
+	 * @param color
+	 */
+	final public void setBackground(final Color color, float radius, float detail) {
+		final Polygon polygon = Polygon.createRoundedRectangle(mSize, radius, detail);
+		polygon.setColor(color);
+		mBackLayer = polygon;
+	}
+	
+	/**
 	 * Set Scroll Color
 	 * @param color
 	 */
@@ -424,12 +502,12 @@ final public class ListView extends Widget {
 	 *            Size
 	 */
 	final private void measure(final Vector2 size) {
-		setSize(size.clone());
+		super.setSize(size.clone());
 		setupStencil();
 		
 		setupCursor();
 		setupScroll();
-		
+		setBackground(Color.TRANSPARENT);
 	}
 	
 	/*
@@ -450,10 +528,10 @@ final public class ListView extends Widget {
 		mCursorLayer.clearVertices();
 		switch(mOrientation) {
 		case HORIZONTAL:
-			mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(cell, getSize().y - mAttributes.border * 2), mAttributes.border));
+			mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(cell, getSize().y - mAttributes.border * 2), mAttributes.border, 10));
 			break;
 		case VERTICAL:
-			mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(getSize().x - mAttributes.border * 2, cell), mAttributes.border));
+			mCursorLayer.addVertices(Polygon.createRoundedRectangle(new Vector2(getSize().x - mAttributes.border * 2, cell), mAttributes.border, 10));
 			break;
 		
 		}
@@ -477,7 +555,7 @@ final public class ListView extends Widget {
 		case HORIZONTAL:
 			mScrollSize = getSize().x - mAttributes.border * 2;
 			size = new Vector2(mScrollSize, mScene.getDensityParser().smallerValue(10));
-			mScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5));
+			mScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5), 10);
 			mScrollLayer.setPosition(new Vector2(mAttributes.border, getSize().y - (size.y + mAttributes.border)));
 			mScrollLayer.setColor(Color.WHITE);
 			mScrollLayer.setOpacity(0);
@@ -487,7 +565,7 @@ final public class ListView extends Widget {
 		case VERTICAL:
 			mScrollSize = getSize().y - mAttributes.border * 2;
 			size = new Vector2(mScene.getDensityParser().smallerValue(10), mScrollSize);
-			mScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5));
+			mScrollLayer = Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5), 10);
 			mScrollLayer.setPosition(new Vector2(getSize().x - (size.x + mAttributes.border), mAttributes.border));
 			mScrollLayer.setColor(Color.WHITE);
 			mScrollLayer.setOpacity(0);
@@ -518,7 +596,7 @@ final public class ListView extends Widget {
 			size = new Vector2(finalSize, mScene.getDensityParser().smallerValue(10));
 			mScrollLayer.setPosition(new Vector2(mAttributes.border, getSize().y - (size.y + mAttributes.border)));
 			mScrollLayer.clearVertices();
-			mScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5)));
+			mScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5), 10));
 			setScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
 			break;
 		case VERTICAL:
@@ -531,7 +609,7 @@ final public class ListView extends Widget {
 			size = new Vector2(mScene.getDensityParser().smallerValue(10), finalSize);
 			mScrollLayer.setPosition(new Vector2(getSize().x - (size.x + mAttributes.border), mAttributes.border));
 			mScrollLayer.clearVertices();
-			mScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5)));
+			mScrollLayer.addVertices(Polygon.createRoundedRectangle(size, mScene.getDensityParser().smallerValue(5), 10));
 			setScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
 			break;
 		}
@@ -722,7 +800,7 @@ final public class ListView extends Widget {
 			
 		}
 		
-		if(!itemIntercepted) {
+		if(!itemIntercepted && mScrollable) {
 			mTouchEventsDetector.touch(motionEvent);
 			mPullDetector.touch(motionEvent);
 			mImpulseDetector.touch(motionEvent);
@@ -1039,7 +1117,7 @@ final public class ListView extends Widget {
 	 * Get Scroll Max
 	 * @return
 	 */
-	final private float getMaxScroll() {
+	final public float getMaxScroll() {
 		if(mSelectListAdapter == null)
 			return 0;
 		final float filled = (mAttributes.border * 2 + getFilledItemsSize());
@@ -1167,7 +1245,7 @@ final public class ListView extends Widget {
 			float backHeight = getSize().y - mAttributes.border * 2;
 			float itemHeight = backHeight - mAttributes.border * 2;
 			
-			Canvas canvas = new Canvas(drawer);
+			//Canvas canvas = new Canvas(drawer);
 			
 			for(int index=0; index<mItemsCount; index++) {
 				ListViewAdapter.ItemHolder item = mItemsHolder[index];
@@ -1188,8 +1266,8 @@ final public class ListView extends Widget {
 				} else
 					matrix.preTranslatef(mAttributes.padding * 2 + item.getHeight(), 0);
 				
-				if(index < (mItemsCount - 1))
-					canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(2, backHeight));
+				//if(index < (mItemsCount - 1))
+				//	canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(2, backHeight));
 
 				
 				filling += cellSize;
@@ -1208,7 +1286,7 @@ final public class ListView extends Widget {
 			float backWidth = getSize().x - mAttributes.border * 2;
 			float itemWidth = backWidth - mAttributes.border * 2;
 			
-			Canvas canvas = new Canvas(drawer);
+			//Canvas canvas = new Canvas(drawer);
 			
 			for(int index=0; index<mItemsCount; index++) {
 				ListViewAdapter.ItemHolder item = mItemsHolder[index];
@@ -1229,8 +1307,8 @@ final public class ListView extends Widget {
 				} else
 					matrix.preTranslatef(0, mAttributes.padding + item.getHeight() + mAttributes.padding);
 				
-				if(index < (mItemsCount - 1))
-					canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(backWidth, 2));
+				//if(index < (mItemsCount - 1))
+				//	canvas.drawRect(Color.BLACK, new Vector2(), new Vector2(backWidth, 2));
 
 				
 				filling += cellSize;

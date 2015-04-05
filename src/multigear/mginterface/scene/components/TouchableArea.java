@@ -67,6 +67,16 @@ public class TouchableArea implements Touchable, Component {
 			final float right, final float bottom) {
 		mRect.set(left, top, right, bottom);
 	}
+	
+	/**
+	 * Set Area
+	 * 
+	 * @param size
+	 *            Draw texture dest Size
+	 */
+	final public void setArea(final RectF area) {
+		mRect.set(area);
+	}
 
 	/**
 	 * Set depth

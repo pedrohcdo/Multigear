@@ -102,7 +102,7 @@ public abstract class Timer extends Installation {
 	
 	/** Unused */
 	@Override
-	public void touch(MotionEvent motionEvent) {}
+	public boolean touch(MotionEvent motionEvent) { return false;}
 	
 	/** Unused */
 	@Override

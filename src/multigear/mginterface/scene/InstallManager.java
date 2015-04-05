@@ -325,9 +325,12 @@ final public class InstallManager {
 	/*
 	 * Evento de toque
 	 */
-	final protected void touch(final MotionEvent motionEvent) {
-		for (int index = 0; index < mInstallationList.size(); index++)
-			mInstallationList.get(index).touch(motionEvent);
+	final protected boolean touch(final MotionEvent motionEvent) {
+		for (int index = 0; index < mInstallationList.size(); index++) {
+			if(mInstallationList.get(index).touch(motionEvent))
+				return true;
+		}
+		return false;
 	}
 	
 	/*

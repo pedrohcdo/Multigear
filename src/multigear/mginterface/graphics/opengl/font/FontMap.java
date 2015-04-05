@@ -27,7 +27,7 @@ import android.opengl.GLES20;
  * 
  *         Property Createlier.
  */
-final public class FontMap extends CacheComponent {
+final public class FontMap implements CacheComponent {
 
 	/**
 	 * FontMap Metrics
