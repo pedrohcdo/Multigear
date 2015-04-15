@@ -14,7 +14,6 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 /**
  * Connection Manager
@@ -107,18 +106,6 @@ final public class DedicatedServices {
 		}
 	}
 	
-	final private boolean compareString(String a, String b) {
-		byte[] bytesA = a.getBytes();
-		byte[] bytesB = b.getBytes();
-		if(bytesA.length != bytesB.length)
-			return false;
-		for(int i=0; i<bytesA.length; i++) {
-			if(bytesA[i] != bytesB[i])
-				return false;
-		}
-		return true;
-	}
-	
 	/**
 	 * Compare Networks
 	 * @param netA
@@ -160,50 +147,58 @@ final public class DedicatedServices {
 		// Prevents interrupt
 		if (supportThread.hasInterrupted())
 			return;
+		setHotspotConfiguration(restoreDataBase.HotspotConfiguration, supportThread);
+		// Wait for Established
+		establishConnections();
 		// Restore Wifi State
 		if (restoreDataBase.WifiEnabled)
 			enableWifi(supportThread);
 		else
 			disableWifi(supportThread);
+		// Wait for Established
+		establishConnections();
 		// Prevents interrupt
 		if (supportThread.hasInterrupted())
 			return;
 		// Restore Configured Networks
-		mWifiManager.disconnect();
 		boolean refresh = false;
+		boolean reassociate = false;
 		for (final WifiConfiguration configuredNetwork : getConfiguredNetworksSafety()) {
 			boolean found = false;
 			// find
 			for(final WifiConfiguration savedNetwork : restoreDataBase.ConfiguredNetworks) {
 				if(compareNetworks(configuredNetwork, savedNetwork)) {
 					found = true;
-					if (savedNetwork.status == android.net.wifi.WifiConfiguration.Status.CURRENT || savedNetwork.status == android.net.wifi.WifiConfiguration.Status.ENABLED) {
-						mWifiManager.enableNetwork(configuredNetwork.networkId, false);
-					} else {
-						mWifiManager.disableNetwork(configuredNetwork.networkId);
+					if(savedNetwork.status != configuredNetwork.status) {
+						reassociate = true;
+						if (savedNetwork.status == android.net.wifi.WifiConfiguration.Status.CURRENT || savedNetwork.status == android.net.wifi.WifiConfiguration.Status.ENABLED) {
+							mWifiManager.enableNetwork(configuredNetwork.networkId, true);
+						} else {
+							mWifiManager.disableNetwork(configuredNetwork.networkId);
+						}
 					}
 					break;
 				}
 			}
 			// Remove
 			if(!found) {
-				mWifiManager.removeNetwork(configuredNetwork.networkId);
+				reassociate = true; // testing ..
+				mWifiManager.disableNetwork(configuredNetwork.networkId);
 				refresh = true;
 			}
 			// Prevents interrupt
-			if (supportThread.hasInterrupted()) {
-				if(refresh)
-					mWifiManager.saveConfiguration();
-				mWifiManager.reconnect();
-				mWifiManager.reassociate();
+			if (supportThread.hasInterrupted())
 				return;
-			}
 		}
+		
 		// If Refresh
-		if (refresh) 
-			mWifiManager.saveConfiguration();
-		mWifiManager.reconnect();
-		mWifiManager.reassociate();
+		//if(refresh)
+		//	mWifiManager.saveConfiguration();
+		if(reassociate || refresh) {
+			//mWifiManager.reconnect();
+			//mWifiManager.reassociate();
+			return;
+		}
 		// Prevents interrupt
 		if (supportThread.hasInterrupted())
 			return;
@@ -212,7 +207,6 @@ final public class DedicatedServices {
 			enableHotspot(restoreDataBase.HotspotConfiguration, supportThread);
 		else {
 			disableHotspot(supportThread);
-			setHotspotConfiguration(restoreDataBase.HotspotConfiguration, supportThread);
 		}
 		// Prevents interrupt
 		if (supportThread.hasInterrupted())

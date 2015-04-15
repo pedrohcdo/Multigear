@@ -75,11 +75,4 @@ public class GeneralEvents {
 		mHandled = false;
 		GlobalClock.unhandle();
 	}
-	
-	/*
-	 * Evento para finalizar a Engine
-	 */
-	final protected void finish() {
-		mMainRoom.finish();
-	}
 }

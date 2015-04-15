@@ -59,7 +59,7 @@ public class MultigearBaseActivity extends ActionBarActivity {
 		// TODO Auto-generated method stub
 		super.onWindowFocusChanged(hasFocus);
 		if (mMultigear != null)
-			mMultigear.sync().setupActivity().unsync();
+			mMultigear.setupActivity();
 	}
 	
 	/**
@@ -68,7 +68,7 @@ public class MultigearBaseActivity extends ActionBarActivity {
 	@Override
 	protected void onPause() {
 		if (mMultigear != null)
-			mMultigear.sync().pause().unsync();
+			mMultigear.onPause();
 		super.onPause();
 	}
 	
@@ -79,7 +79,7 @@ public class MultigearBaseActivity extends ActionBarActivity {
 	protected void onResume() {
 		super.onResume();
 		if (mMultigear != null)
-			mMultigear.sync().resume().unsync();
+			mMultigear.onResume();
 	}
 	
 	/**
@@ -88,7 +88,7 @@ public class MultigearBaseActivity extends ActionBarActivity {
 	@Override
 	protected void onDestroy() {
 		if (mMultigear != null)
-			mMultigear.sync().destroy().unsync();
+			mMultigear.onDestroy();
 		mMultigear = null;
 		super.onDestroy();
 	}

@@ -22,6 +22,7 @@ public class ServiceThread extends Thread {
 	 */
 	protected ServiceThread(final ServicesThreadGroup servicesGroup, final ServiceRunnable serviceRunnable) {
 		super(servicesGroup, "MGServiceThread");
+		//setDaemon(true);
 		mServicesManager = servicesGroup.getServicesManager();
 		mServiceRunnable = serviceRunnable;
 		mServiceControl = new ServiceControl(this, mServicesManager);

@@ -105,11 +105,4 @@ final public class EventHandler {
 	final public void sendUnhandle() {
 		mGeneralEvents.unhandle();
 	}
-	
-	/*
-	 * Envia um evento para finalizar a Engine
-	 */
-	final public void sendFinish() {
-		mGeneralEvents.finish();
-	}
 }

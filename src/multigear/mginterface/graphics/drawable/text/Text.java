@@ -386,19 +386,21 @@ public class Text implements Drawable, Component {
 		final float oy = mCenter.y * scale.y;
 		float sx = scale.x;
 		float sy = scale.y;
-		final float tX = mPosition.x + translate.x;
-		final float tY = mPosition.y + translate.y;
+		float tX = mPosition.x + translate.x;
+		float tY = mPosition.y + translate.y;
 		float six = ox;
 		float siy = oy;
 
 		if (mMirror[0]) {
 			six *= -1;
 			sx *= -1;
+			tX -= sx - six * 2;
 		}
 		
 		if (mMirror[1]) {
 			siy *= -1;
 			sy *= -1;
+			tY -= sy - siy * 2;
 		}
 
 

@@ -121,7 +121,9 @@ final public class TransitionTextureRenderer extends BaseProgram {
 	 * @param transitionTexture
 	 * @param finalTexture
 	 */
-	final public void setTextures(final Texture transitionTexture, final Texture finalTexture) {
+	final public void setTextures(final Texture startTexture, final Texture transitionTexture, final Texture finalTexture) {
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, startTexture.getHandle());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, transitionTexture.getHandle());
 		GLES20.glActiveTexture(GLES20.GL_TEXTURE2);

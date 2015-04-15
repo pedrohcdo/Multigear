@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import android.util.Log;
@@ -83,64 +84,57 @@ public class ConnectionAttempt {
 		if (multigear.general.utils.KernelUtils.DEBUG)
 			Log.d("LogTest", "Attemping Openned");
 		try {
+			final Socket socket = new Socket();
+			socket.connect(new InetSocketAddress(mHost, mPort), 200);
 			
-
-			
-			
-			InetAddress address = InetAddress.getByName(mHost);
-			if (address.isReachable(300)) {
-				final Socket socket = new Socket(mHost, mPort);
-				socket.setTcpNoDelay(true);
-				if(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE > 0)
-					socket.setReceiveBufferSize(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE);
-				if(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE > 0)
-					socket.setSendBufferSize(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE);
+			socket.setTcpNoDelay(true);
+			socket.setSoTimeout(1000);;
+			if(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE > 0)
+				socket.setReceiveBufferSize(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE);
+			if(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE > 0)
+				socket.setSendBufferSize(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE);
 				
 			
 				
-				// Create outputStream
-				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+			// Create outputStream
+			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 				
-				// Create buffered Reader
-				final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			// Create buffered Reader
+			final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			
+			// Send request for Server
+			out.println(multigear.communication.tcp.base.Utils.makeSocketMessage(multigear.communication.tcp.base.Utils.CODE_SERVER_GETNAME));
+			out.flush();
 				
-				// Send request for Server
-				out.println(multigear.communication.tcp.base.Utils.makeSocketMessage(multigear.communication.tcp.base.Utils.CODE_SERVER_GETNAME));
-				out.flush();
-				
-				// If Any Error
-				if (out.checkError()) {
-					socket.close();
-					out.close();
-					in.close();
-					return new ConnectionAttempt.Result(false);
-				}
-				
-				// ..
-				if (multigear.general.utils.KernelUtils.DEBUG)
-					Log.d("LogTest", "Client: Listed to server. Sent command to server. Waiting for name.");
-				
-				// Get Server Name
-				String serverName = getServerName(out, in, socket);
-				
-				// Close Stream and Socket
-				in.close();
-				out.close();
+			// If Any Error
+			if (out.checkError()) {
 				socket.close();
-				
-				// If Server no Wait for Connection
-				if (serverName == null) {
-					return new ConnectionAttempt.Result(false);
-				}
-				
-				if (multigear.general.utils.KernelUtils.DEBUG)
-					Log.d("LogTest", "Client: Getted Name and close socket.");
-				return new ConnectionAttempt.Result(true, serverName);
-			} else {
-				if (multigear.general.utils.KernelUtils.DEBUG)
-					Log.d("LogTest", "Attemping Closed Not Founded");
+				out.close();
+				in.close();
 				return new ConnectionAttempt.Result(false);
 			}
+				
+			// ..
+			if (multigear.general.utils.KernelUtils.DEBUG)
+				Log.d("LogTest", "Client: Listed to server. Sent command to server. Waiting for name.");
+				
+			// Get Server Name
+			String serverName = getServerName(out, in, socket);
+				
+			// Close Stream and Socket
+			in.close();
+			out.close();
+			socket.close();
+				
+			// If Server no Wait for Connection
+			if (serverName == null) {
+				return new ConnectionAttempt.Result(false);
+			}
+				
+			if (multigear.general.utils.KernelUtils.DEBUG)
+				Log.d("LogTest", "Client: Getted Name and close socket.");
+			return new ConnectionAttempt.Result(true, serverName);
+
 		} catch (Exception e) {
 			if (multigear.general.utils.KernelUtils.DEBUG)
 				Log.d("LogTest", "Attemping Closed With Error");

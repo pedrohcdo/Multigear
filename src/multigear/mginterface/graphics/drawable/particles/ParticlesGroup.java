@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
@@ -15,6 +16,7 @@ import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.scene.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
+import android.util.Log;
 
 /**
  * 
@@ -23,6 +25,19 @@ import android.graphics.Rect;
  *         Property Createlier.
  */
 final public class ParticlesGroup implements Drawable, Component {
+	
+	// 
+	/** 
+	 * This mode uses the same structure as a sprite for each particle released. For a high amount of particles it is not recommended.
+	 */
+	final public static int MODE_SPRITE = 1;
+	/**
+	 * This mode uses a fast structure for a greater amount of particle, as it is composed of only one point does not support particles rotation.
+	 */
+	final public static int MODE_POINT = 2;
+	
+	// Final Private Variables
+	final public int mMode;
 	
 	// Private Variables
 	private Texture mTexture;
@@ -37,8 +52,9 @@ final public class ParticlesGroup implements Drawable, Component {
 	private int mZ = 0;
 	private float mOpacity = 1.0f;
 	private boolean mAutoHelper = true;
-	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
 	private float mScale = 1.0f;
+	private Color mColor = Color.WHITE;
 	
 	// Buffers
 	private FloatBuffer mParticlesBuffer;
@@ -48,7 +64,10 @@ final public class ParticlesGroup implements Drawable, Component {
 	 * 
 	 * @param room
 	 */
-	public ParticlesGroup() {
+	public ParticlesGroup(final int mode) {
+		mMode = mode;
+		if(mMode != MODE_POINT && mMode != MODE_SPRITE)
+			throw new IllegalArgumentException("This mode does not exist.");
 		setParticlesLimit(100);
 	}
 	
@@ -121,7 +140,7 @@ final public class ParticlesGroup implements Drawable, Component {
 	 * 
 	 * @param fps
 	 */
-	final public void setHelperFrequency(final int fps) {
+	final public void setHelperFrequency(final float fps) {
 		mHelperFrequency = 1000.0f / fps;
 	}
 	
@@ -153,6 +172,15 @@ final public class ParticlesGroup implements Drawable, Component {
 	}
 	
 	/**
+	 * Set Color
+	 * 
+	 * @param color Color
+	 */
+	final public void setColor(final Color color) {
+		mColor = color;
+	}
+	
+	/**
 	 * Disable Auto Helper.
 	 * <p>
 	 * Note: To call Helper invoke "requestHelper()".
@@ -165,6 +193,7 @@ final public class ParticlesGroup implements Drawable, Component {
 	 * Enable Auto Helper.
 	 */
 	final public void enableAutoHelper() {
+		mLastTime = GlobalClock.currentTimeMillis();
 		mAutoHelper = true;
 	}
 	
@@ -179,20 +208,36 @@ final public class ParticlesGroup implements Drawable, Component {
 	final public void setParticlesLimit(final int limit) {
 		if(limit < 0)
 			throw new IllegalArgumentException("The amount can not be negative.");
-		mParticlesLimit = limit;
-		mParticlesBuffer = GeneralUtils.createFloatBuffer(limit * 4);
+		switch(mMode) {
+		default:
+		case MODE_POINT:
+			mParticlesLimit = limit;
+			mParticlesBuffer = GeneralUtils.createFloatBuffer(limit * 4);
+			break;
+		case MODE_SPRITE:
+			mParticlesLimit = limit;
+			mParticlesBuffer = GeneralUtils.createFloatBuffer(limit * 48);
+		}
+		
 	}
 	
 	/**
-	 * Set Particles Buffer same as 'setParticlesLimit(int)'
-	 * Allocates all clearances, for performance reasons it is not
-	 *  recommended to invoke this method often.
+	 * Set Particles Buffer same as 'setParticlesLimit(int)'. The amount of particles is 
+	 * calculated from the operating mode, if the points mode, this will be "buffer.Length () / 4", 
+	 * but if you are in sprite mode shall be calculated as "buffer.Length () / 48".
 	 * <p>
 	 * 
 	 * @param limit
 	 */
 	final public void setParticlesBuffer(final FloatBuffer buffer) {
-		mParticlesLimit = buffer.limit() / 4;
+		switch(mMode) {
+		default:
+		case MODE_POINT:
+			mParticlesLimit = buffer.limit() / 4;
+			break;
+		case MODE_SPRITE:
+			mParticlesLimit = buffer.limit() / 48;
+		}
 		mParticlesBuffer = buffer;
 	}
 	
@@ -270,6 +315,15 @@ final public class ParticlesGroup implements Drawable, Component {
 	}
 
 	/**
+	 * Get Color
+	 * 
+	 * @param color Color
+	 */
+	final public Color getColor() {
+		return mColor;
+	}
+	
+	/**
 	 * Get Depth
 	 * 
 	 * @return Depth
@@ -337,19 +391,86 @@ final public class ParticlesGroup implements Drawable, Component {
 			particle.update();
 			
 			// Get Values
-			final Vector2 position = particle.getPosition();
-			final float scale = particle.getScale() * getScale();
+			final Vector2 position = particle.getFinalPosition();
 			final float finalOpacity = particle.getOpacity() * opacityGroup;
+
+			float scale = particle.getScale() * getScale() * mTexture.getSize().x;
 			
-			// Put Vertexes to buffer
-			mParticlesBuffer.put(position.x);
-			mParticlesBuffer.put(position.y);
-			
-			// Put Opacity to buffer
-			mParticlesBuffer.put(finalOpacity);
-			
-			// Put Scale to buffer
-			mParticlesBuffer.put(mTexture.getSize().x * scale);
+			switch(mMode) {
+			default:
+			case MODE_POINT:
+				// Put Vertexes to buffer
+				mParticlesBuffer.put(position.x);
+				mParticlesBuffer.put(position.y);
+				
+				// Put Opacity to buffer
+				mParticlesBuffer.put(finalOpacity);
+				
+				// Put Scale to buffer
+				mParticlesBuffer.put(scale);
+				
+				break;
+			case MODE_SPRITE:
+				scale /= 2;
+				
+				float angle = particle.getAngle();
+				
+				mParticlesBuffer.put(-scale);
+				mParticlesBuffer.put(-scale);
+				mParticlesBuffer.put(position.x);
+				mParticlesBuffer.put(position.y);
+				mParticlesBuffer.put(0);
+				mParticlesBuffer.put(0);
+				mParticlesBuffer.put(finalOpacity);
+				mParticlesBuffer.put(angle);
+				
+				mParticlesBuffer.put(scale);
+				mParticlesBuffer.put(-scale);
+				mParticlesBuffer.put(position.x);
+				mParticlesBuffer.put(position.y);
+				mParticlesBuffer.put(1);
+				mParticlesBuffer.put(0);
+				mParticlesBuffer.put(finalOpacity);
+				mParticlesBuffer.put(angle);
+				
+				mParticlesBuffer.put(scale);
+				mParticlesBuffer.put(scale);
+				mParticlesBuffer.put(position.x);
+				mParticlesBuffer.put(position.y);
+				mParticlesBuffer.put(1);
+				mParticlesBuffer.put(1);
+				mParticlesBuffer.put(finalOpacity);
+				mParticlesBuffer.put(angle);
+				
+				
+				mParticlesBuffer.put(-scale);
+				mParticlesBuffer.put(-scale);
+				mParticlesBuffer.put(position.x);
+				mParticlesBuffer.put(position.y);
+				mParticlesBuffer.put(0);
+				mParticlesBuffer.put(0);
+				mParticlesBuffer.put(finalOpacity);
+				mParticlesBuffer.put(angle);
+				
+				mParticlesBuffer.put(-scale);
+				mParticlesBuffer.put(scale);
+				mParticlesBuffer.put(position.x);
+				mParticlesBuffer.put(position.y);
+				mParticlesBuffer.put(0);
+				mParticlesBuffer.put(1);
+				mParticlesBuffer.put(finalOpacity);
+				mParticlesBuffer.put(angle);
+				
+				mParticlesBuffer.put(scale);
+				mParticlesBuffer.put(scale);
+				mParticlesBuffer.put(position.x);
+				mParticlesBuffer.put(position.y);
+				mParticlesBuffer.put(1);
+				mParticlesBuffer.put(1);
+				mParticlesBuffer.put(finalOpacity);
+				mParticlesBuffer.put(angle);
+				
+			}
 		}
 		
 		// Set Buffers Position
@@ -361,10 +482,18 @@ final public class ParticlesGroup implements Drawable, Component {
 		drawer.setOpacity(1);
 		drawer.setBlendFunc(mBlendFunc);
 		drawer.setElementVertex(mParticlesBuffer);
+		drawer.setColor(mColor);
 		drawer.snip(mViewport);
 		
 		// Set Begin
-		drawer.drawParticles(mParticles.size());
+		switch(mMode) {
+		default:
+		case MODE_POINT:
+			drawer.drawPointParticles(mParticles.size());
+			break;
+		case MODE_SPRITE:
+			drawer.drawSpriteParticles(mParticles.size());
+		}
 		
 		// End
 		drawer.end();
@@ -407,7 +536,7 @@ final public class ParticlesGroup implements Drawable, Component {
 	 */
 	final public void requestHelper() {
 		mParticlesHelper.onGenerate(this);
-		mLastTime = System.currentTimeMillis();
+		mLastTime = GlobalClock.currentTimeMillis();
 	}
 	
 	/**

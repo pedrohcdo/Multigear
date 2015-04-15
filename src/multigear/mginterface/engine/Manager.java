@@ -146,15 +146,38 @@ public class Manager {
 	 */
 	final protected void update() {
 		mComManager.update();
+		
 		mProportionParser.update();
 		mServicesManager.update();
+	}
+	
+	/**
+	 * Pause Manager
+	 */
+	final protected void pause() {
+		mComManager.pause();
+	}
+	
+	/**
+	 * Resume Manager
+	 */
+	final protected void resume() {
+		mComManager.resume();
 	}
 	
 	/**
 	 * Finish Manager
 	 */
 	final protected void destroy() {
-		mServicesManager.finish();
+		mAudioManager.finish();
 		mComManager.finish();
+		mServicesManager.finish();
+	}
+	
+	/**
+	 * Unregister All intents of manager
+	 */
+	final protected void unregisterIntents() {
+		mServicesManager.unregisterIntents();
 	}
 }

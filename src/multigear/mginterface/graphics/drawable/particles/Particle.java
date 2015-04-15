@@ -10,10 +10,48 @@ import multigear.general.utils.Vector2;
  * 
  *         Property Createlier.
  */
-public class Particle {
+final public class Particle {
+	
+	/**
+	 * Custom Modifier
+	 * 
+	 * @author user
+	 *
+	 */
+	public interface ParticleModifier {
+		
+		/**
+		 * Get opacity
+		 * @return
+		 */
+		public float getOpacity(final float delta);
+		
+		/**
+		 * Get Scale
+		 * @return
+		 */
+		public float getScale(final float delta);
+		
+		/**
+		 * Get Angle
+		 * @return
+		 */
+		public float getAngle(final float delta);
+		
+		/**
+		 * Get Position
+		 * 
+		 * @return
+		 */
+		public Vector2 getPosition(final float delta);
+	}
+	
+	// Constants
+	final public static int UNLIMITED_TIME = -1;
 	
 	// Final Private Variables
 	final private int mDuration;
+	final private ParticleModifier mModifier;
 	
 	// Private Variables
 	private Vector2 mPosition = new Vector2(0, 0);
@@ -29,12 +67,24 @@ public class Particle {
 	// Modifiers
 	private float mOpacityModifier[] = { 1.0f, 1.0f };
 	private float mScaleModifier[] = { 1.0f, 1.0f };
+	private float mAngleModifier[] = {0, 0};
 	
 	/**
 	 * Constructor
 	 */
 	public Particle(final int durationInMillis) {
 		mDuration = durationInMillis;
+		mModifier = null;
+	}
+	
+	/**
+	 * Construct with a custom modifier
+	 * @param durationInMillis
+	 * @param modifier
+	 */
+	public Particle(final int durationInMillis, final ParticleModifier modifier) {
+		mDuration = durationInMillis;
+		mModifier = modifier;
 	}
 	
 	/**
@@ -74,7 +124,16 @@ public class Particle {
 		mScaleModifier = new float[] { start, end };
 	}
 	
-
+	/**
+	 * Set Angle Modifier
+	 * 
+	 * @param start
+	 * @param end
+	 */
+	final public void setAngleModifier(final float start, final float end) {
+		mAngleModifier = new float[] { start, end };
+	}
+	
 	/**
 	 * Set Forces
 	 * <p>
@@ -136,6 +195,16 @@ public class Particle {
 	}
 	
 	/**
+	 * Get Angle Modifier
+	 * 
+	 * @param start
+	 * @param end
+	 */
+	final public float[] getAngleModifier() {
+		return mScaleModifier.clone();
+	}
+	
+	/**
 	 * Get Forces
 	 * <p>
 	 * 
@@ -179,7 +248,20 @@ public class Particle {
 	 * 
 	 * @return
 	 */
+	final protected Vector2 getFinalPosition() {
+		if(mModifier != null)
+			return mModifier.getPosition(mTimeDelta);
+		return mPosition;
+	}
+	
+	/**
+	 * Get Frame Opacity
+	 * 
+	 * @return
+	 */
 	final protected float getOpacity() {
+		if(mModifier != null)
+			return mModifier.getOpacity(mTimeDelta);
 		return (mOpacityModifier[0] - mOpacityModifier[0] * mTimeDelta) + (mTimeDelta * mOpacityModifier[1]);
 	}
 
@@ -189,15 +271,30 @@ public class Particle {
 	 * @return
 	 */
 	final protected float getScale() {
+		if(mModifier != null)
+			return mModifier.getScale(mTimeDelta);
 		return (mScaleModifier[0] - mScaleModifier[0] * mTimeDelta) + (mTimeDelta * mScaleModifier[1]);
+	}
+	
+	/**
+	 * Get Frame Angle
+	 * 
+	 * @return
+	 */
+	final protected float getAngle() {
+		if(mModifier != null)
+			return mModifier.getAngle(mTimeDelta);
+		return (mAngleModifier[0] - mAngleModifier[0] * mTimeDelta) + (mTimeDelta * mAngleModifier[1]);
 	}
 	
 	/**
 	 * Update this Particle
 	 */
 	final protected void update() {
-		mAccelerations.sum(mForces);
-		mPosition.sum(mAccelerations);
+		if(mModifier == null) {
+			mAccelerations.sum(mForces);
+			mPosition.sum(mAccelerations);
+		}
 	}
 	
 	/**
@@ -216,7 +313,7 @@ public class Particle {
 	 * @return
 	 */
 	protected Particle prepareToInsert() {
-		final Particle copy = new Particle(mDuration);
+		final Particle copy = new Particle(mDuration, mModifier);
 		copy.mAccelerations = mAccelerations.clone();
 		copy.mCreatedTime = mCreatedTime;
 		copy.mFixedSpace = mFixedSpace;
@@ -224,6 +321,7 @@ public class Particle {
 		copy.mPosition = mPosition.clone();
 		copy.mOpacityModifier = mOpacityModifier.clone();
 		copy.mScaleModifier = mScaleModifier.clone();
+		copy.mAngleModifier = mAngleModifier.clone();
 		return copy;
 	}
 }

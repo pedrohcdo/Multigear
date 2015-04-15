@@ -255,6 +255,7 @@ final public class ListView extends Widget {
 	
 	// Final Private Variables
 	private Drawable mBackLayer;
+	private Polygon mLimitLayerTop, mLimitLayerBottom;
 	private ListViewAdapter mSelectListAdapter;
 	private Polygon mCursorLayer, mScrollLayer;
 	private Polygon mStencil;
@@ -424,6 +425,14 @@ final public class ListView extends Widget {
 	}
 	
 	/**
+	 * Get Adapter
+	 * @return
+	 */
+	final public ListViewAdapter getAdapter() {
+		return mSelectListAdapter;
+	}
+	
+	/**
 	 * Get list type
 	 * @param type
 	 */
@@ -437,6 +446,26 @@ final public class ListView extends Widget {
 	 */
 	final public Orientation getOrientation() {
 		return mOrientation;
+	}
+	
+	/**
+	 * Set Limit Drawable Layer
+	 * @param drawable
+	 */
+	final public void setLimitTexture(final Texture texture) {
+		float b = mAttributes.border;
+		float w = getSize().x - mAttributes.border * 2;
+		float h = w / texture.getSize().aspectRatio();
+		
+		mLimitLayerTop = Polygon.createRectangle(new Vector2(w, h));
+		mLimitLayerBottom = Polygon.createRectangle(new Vector2(w, h));
+		mLimitLayerBottom.setMirror(false, true);
+		
+		mLimitLayerTop.setTexture(texture);
+		mLimitLayerBottom.setTexture(texture);
+		
+		mLimitLayerTop.setPosition(new Vector2(b, b));
+		mLimitLayerBottom.setPosition(new Vector2(b, getSize().y - h - b));
 	}
 	
 	/**
@@ -1319,7 +1348,19 @@ final public class ListView extends Widget {
 			
 		matrix.pop();
 		
+		
+		if(mLimitLayerTop != null) {
+			
+			mLimitLayerTop.draw(drawer);
+			mLimitLayerBottom.draw(drawer);
+			
+			
+			
+		}
+		
 		drawer.eraseStencil(mStencil);
+		
+		
 		
 		mScrollLayer.draw(drawer);
 	}

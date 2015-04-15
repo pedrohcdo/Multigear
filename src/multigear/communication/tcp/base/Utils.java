@@ -31,8 +31,8 @@ final public class Utils {
 	
 	// Final Private Variables
 	final static private Pattern mPattern = Pattern.compile("\\[[ ]*code[ ]*\\:[ ]*((?:-|\\+)?\\d*)[ ]*\\|[ ]*msg[ ]*\\:[ ]*([^\\]]*)\\]");
-	final static public int SOCKET_SEND_BUFFER_SIZE = 7000;
-	final static public int SOCKET_RECV_BUFFER_SIZE = 100000;
+	final static public int SOCKET_SEND_BUFFER_SIZE = 8192;
+	final static public int SOCKET_RECV_BUFFER_SIZE = 8192;
 	
 
 	/*

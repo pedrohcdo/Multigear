@@ -190,16 +190,52 @@ final public class TextureContainer {
 	 * Blit texture recipient to destination.
 	 */
 	final public void bltUnsized(final BltGroup bltGroup, final Vector2 textureSize) {
-		final float[] elementsBufferPack = new float[bltGroup.mGroup.size() * 8];
-		final float[] textureBufferPack = new float[bltGroup.mGroup.size() * 8];
+		final int size = bltGroup.mGroup.size();
+		final float[] elementsBufferPack = new float[size * 6 * 2];
+		final float[] textureBufferPack = new float[size * 6 * 2];
+		final float tW = textureSize.x;
+		final float tH = textureSize.y;
 		for(int i=0; i<bltGroup.mGroup.size(); i++) {
 			BltGroup.GroupSet group = bltGroup.mGroup.get(i);
-			GeneralUtils.mapRectToFloat(group.mDest, elementsBufferPack, i * 8);
-			GeneralUtils.mapRectToFloat(group.mSource, textureSize, textureBufferPack, i* 8);
+			RectF src = group.mSource;
+			RectF dst = group.mDest;
+			// Incr
+			int src_incr = i * 12;
+			int dst_incr = i * 12;
+			// Left/ Bottom
+			textureBufferPack[src_incr++] = src.left / tW;
+			textureBufferPack[src_incr++] = src.bottom / tH;
+			elementsBufferPack[dst_incr++] = dst.left;
+			elementsBufferPack[dst_incr++] = dst.bottom;
+			// Left/ Top
+			textureBufferPack[src_incr++] = src.left / tW;
+			textureBufferPack[src_incr++] = src.top / tH;
+			elementsBufferPack[dst_incr++] = dst.left;
+			elementsBufferPack[dst_incr++] = dst.top;
+			// Right/ Top
+			textureBufferPack[src_incr++] = src.right / tW;
+			textureBufferPack[src_incr++] = src.top / tH;
+			elementsBufferPack[dst_incr++] = dst.right;
+			elementsBufferPack[dst_incr++] = dst.top;
+			// Right/ Top
+			textureBufferPack[src_incr++] = src.right / tW;
+			textureBufferPack[src_incr++] = src.top / tH;
+			elementsBufferPack[dst_incr++] = dst.right;
+			elementsBufferPack[dst_incr++] = dst.top;
+			// Right/ Bottom
+			textureBufferPack[src_incr++] = src.right / tW;
+			textureBufferPack[src_incr++] = src.bottom / tH;
+			elementsBufferPack[dst_incr++] = dst.right;
+			elementsBufferPack[dst_incr++] = dst.bottom;
+			// Left/ Bottom
+			textureBufferPack[src_incr++] = src.left / tW;
+			textureBufferPack[src_incr++] = src.bottom / tH;
+			elementsBufferPack[dst_incr++] = dst.left;
+			elementsBufferPack[dst_incr++] = dst.bottom;
 		}
 		StretchTextureRenderer renderer = (StretchTextureRenderer)mDrawer.begin(Renderer.STRETCH_TEXTURE_RENDERER, mBlendColor);
 		renderer.setBuffers(elementsBufferPack, textureBufferPack);
-		renderer.render(bltGroup.mGroup.size() * 4);
+		renderer.renderTriangles(size * 6);
 	}
 	
 	/**
@@ -235,7 +271,7 @@ final public class TextureContainer {
 	 */
 	final public void transitionTo(final Texture transtionTexture, final Texture finalTexture, final float deltaTime) {
 		TransitionTextureRenderer renderer = (TransitionTextureRenderer)mDrawer.begin(Renderer.TRANSITION_TEXTURE_RENDERER, mBlendColor);
-		renderer.setTextures(transtionTexture, finalTexture);
+		renderer.setTextures(mRecipientTexture, transtionTexture, finalTexture);
 		renderer.render(Math.max(0, Math.min(1.0f, deltaTime)));
 	}
 	

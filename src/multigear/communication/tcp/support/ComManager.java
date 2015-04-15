@@ -41,6 +41,8 @@ final public class ComManager {
 	private int mConnectionPort;
 	private boolean mOpenedFlow;
 	
+	Message[] mMessagesOutput = new Message[20];
+	
 	/*
 	 * Construtor
 	 */
@@ -99,6 +101,15 @@ final public class ComManager {
 		mSupportList.add(baseConnected);
 	}
 	
+	/**
+	 * Get Connection
+	 * @param index
+	 * @return
+	 */
+	final public BaseConnected getConnection(final int index) {
+		return mSupportList.get(index);
+	}
+	
 	/*
 	 * Retorna quantidade de conexões
 	 */
@@ -126,7 +137,6 @@ final public class ComManager {
 		
 	}
 	
-	
 	/**
 	 * Read Messages.
 	 * Nota: Esta lendo 10 mensagens por frame.
@@ -134,16 +144,12 @@ final public class ComManager {
 	 * @param connection
 	 */
 	final private void updateConnection(final BaseConnected connection) {
-		
-		multigear.communication.tcp.base.Message message;
-		//long time = System.currentTimeMillis();
-		long messages = 0;
-		while ((message = connection.readMessage()) != null) {
-			messages++;
-			recvSupportMessage(connection, message);
-			message = message.next();
-			if (messages >= 20)
-				break;
+		// Read Messages
+		int count = connection.readMessage(mMessagesOutput);
+		// Delivery all messages
+		for(int i=0; i<count; i++) {
+			// Delivery message
+			recvSupportMessage(connection, mMessagesOutput[i]);
 		}
 	}
 	
@@ -250,6 +256,26 @@ final public class ComManager {
 	}
 	
 	/**
+	 * Pause ComManager
+	 */
+	final public void pause() {
+		// Finish Supports
+		for (final BaseConnected connected : mSupportList) {
+			connected.pause();
+		}
+	}
+	
+	/**
+	 * Resume ComManager
+	 */
+	final public void resume() {
+		// Finish Supports
+		for (final BaseConnected connected : mSupportList) {
+			connected.resume();
+		}
+	}
+	
+	/**
 	 * This method called by Engine System.
 	 */
 	final public void finish() {
@@ -260,10 +286,6 @@ final public class ComManager {
 		// Finish Clients
 		for (ClientSupport clientSupport : mClientSupportList) {
 			clientSupport.finish();
-		}
-		// Finish Supports
-		for (final BaseConnected connected : mSupportList) {
-			connected.close();
 		}
 	}
 }

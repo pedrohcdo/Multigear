@@ -705,16 +705,6 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	}
 	
 	/*
-	 * Evento para finalizar a Engine
-	 */
-	@Override
-	final public void finish() {
-		mInstallManager.prevFinish();
-		onFinish();
-		mInstallManager.finish();
-	}
-	
-	/*
 	 * Retorna o tempo atual
 	 */
 	final public long getThisTime() {
@@ -962,9 +952,5 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	/* Evento de toque */
 	public boolean onTouch(final MotionEvent motionEvent) {
 		return false;
-	};
-	
-	/* Evento para Finalizar a Engine */
-	public void onFinish() {
 	};
 }

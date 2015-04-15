@@ -3,6 +3,7 @@ package multigear.communication.tcp.server;
 import java.net.ServerSocket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import multigear.communication.tcp.base.Utils;
 import android.app.Activity;
 import android.util.Log;
 
@@ -59,12 +60,12 @@ public class Server {
 			return;
 		}
 		mServerSocket = serverSocket;
-		//try {
-		//	if(multigear.communication.comu.Utils.SOCKET_RECV_BUFFER_SIZE > 0)
-		//		mServerSocket.setReceiveBufferSize(multigear.communication.comu.Utils.SOCKET_RECV_BUFFER_SIZE);
-		//} catch(Exception e) {
-		//	Log.d("LogTest", "Error To Set Buffer Size");
-		//}
+		try {
+			if(Utils.SOCKET_RECV_BUFFER_SIZE > 0)
+				mServerSocket.setReceiveBufferSize(Utils.SOCKET_RECV_BUFFER_SIZE);
+		} catch(Exception e) {
+			Log.d("LogTest", "Error To Set Buffer Size");
+		}
 		if(mListener != null)
 			mListener.onStartServer();
 		if(multigear.general.utils.KernelUtils.DEBUG)

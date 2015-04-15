@@ -90,6 +90,7 @@ final public class ValidateClientThread extends Thread {
 				// Wait a new Client
 				client = mServerSocket.accept();
 				client.setTcpNoDelay(true);
+				client.setSoTimeout(1000);
 				if(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE > 0)
 					client.setReceiveBufferSize(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE);
 				if(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE > 0)

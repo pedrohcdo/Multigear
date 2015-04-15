@@ -64,9 +64,6 @@ final public class InstallManager {
 					// Prevent Uninstalling
 					mUninstallingInstances.add(mInstallation);
 					if (mInstallationList.remove(mInstallation)) {
-						// Finish State
-						if (mLifeStep < 4)
-							mInstallation.finish();
 						// Call Uninstalled
 						mInstallation.onUninstalled();
 					} else {
@@ -177,8 +174,6 @@ final public class InstallManager {
 			installation.screen();
 		if (mLifeStep >= 3 && 3 > steped)
 			installation.cache();
-		if (mLifeStep == 4 && 4 > steped)
-			installation.finish();
 	}
 	
 	/**
@@ -366,21 +361,5 @@ final public class InstallManager {
 			mProcedures.clear();
 			// Log.d("LogTest", "Start");
 		}
-	}
-	
-	/*
-	 * Evento para finalizar a Engine
-	 */
-	final protected void prevFinish() {
-		mLifeStep = 4;
-	}
-	
-	/*
-	 * Evento para finalizar a Engine
-	 */
-	final protected void finish() {
-		mLifeStep = 4;
-		for (int index = 0; index < mInstallationList.size(); index++)
-			mInstallationList.get(index).finish();
 	}
 }

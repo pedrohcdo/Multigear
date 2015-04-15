@@ -231,8 +231,11 @@ public class GameObjects {
 			//
 			if(mDeleted)
 				throw new RuntimeException("This object was deleted anteriormente");
+			
+			
 			// If player in this side
-			if(mType == RegisterMode.FREE || mPlayer == mMonitor.getPlayer()) {
+			if(mType == RegisterMode.FREE || mType == RegisterMode.SILENT || mPlayer == mMonitor.getPlayer()) {
+				
 				// Set Position
 				mPosition = position;
 				
@@ -242,7 +245,8 @@ public class GameObjects {
 				
 				// If free and not in side inform to other side control
 				if(mPlayer != mMonitor.getPlayer()) {
-					informPosition(this);
+					if(mType == RegisterMode.FREE)
+						informPosition(this);
 					return;
 				}
 				
@@ -290,7 +294,8 @@ public class GameObjects {
 				throw new RuntimeException("This object was deleted anteriormente");
 			
 			// If player in this side
-			if(mType == RegisterMode.FREE || mPlayer == mMonitor.getPlayer()) {
+			if(mType == RegisterMode.FREE  || mType == RegisterMode.SILENT || mPlayer == mMonitor.getPlayer()) {
+				
 				// Set Position
 				mSize = size;
 				
@@ -300,7 +305,8 @@ public class GameObjects {
 				
 				// If free and not in side inform to other side control
 				if(mPlayer != mMonitor.getPlayer()) {
-					informSize(this);
+					if(mType == RegisterMode.FREE)
+						informSize(this);
 					return;
 				}
 				
@@ -346,7 +352,8 @@ public class GameObjects {
 				throw new RuntimeException("This object was deleted anteriormente");
 			
 			// If player in this side
-			if(mType == RegisterMode.FREE || (mPlayer == mMonitor.getPlayer())) {
+			if(mType == RegisterMode.FREE || mType == RegisterMode.SILENT || (mPlayer == mMonitor.getPlayer())) {	
+				
 				// Set extra package
 				mExtraPackage = extraPackage;
 				
@@ -385,17 +392,17 @@ public class GameObjects {
 			
 			// Set Released
 			mReleased = true;
-			
+						
 			// If player in this side
 			informCreate(this);
 			
-			// If this side or free
-			if(mType == RegisterMode.FREE || (mPlayer == mMonitor.getPlayer())) {
-				// Reset
-				setPosition(mPosition);
-				setSize(mSize);
-				setExtraPackage(mExtraPackage);
-			}
+			// Reset
+			setPosition(mPosition);
+			setSize(mSize);
+			setExtraPackage(mExtraPackage, true);
+			
+			// Release
+			informReleased(this);
 		}
 		
 		/**
@@ -500,6 +507,7 @@ public class GameObjects {
 	final private static int OBJECT_INFORM_TRANSACT = 5;
 	final private static int OBJECT_INFORM_VISIBLE = 6;
 	final private static int OBJECT_INFORM_EXTRA_PACKAGE = 7;
+	final private static int OBJECT_INFORM_RELEASED = 8;
 	
 	// Final Private Variables
 	final private MultigearGame mGame;
@@ -563,22 +571,12 @@ public class GameObjects {
 	 * Delete Object with Id
 	 * @param id
 	 */
-	final public void deleteObjectAt(final int index) {
-		if(index >= mGameObjects.size())
+	final public void deleteObjectAtIndex(final int index) {
+		if(index >= getCount())
 			throw new IndexOutOfBoundsException();
 		
-		final GameObject object = getObjectAt(index);
+		final GameObject object = getObjectAtIndex(index);
 		
-		// Remove Object if not released
-		if(!object.mReleased) {
-			// Set deleted
-			object.mDeleted = true;
-			// Feedback
-			if(mFeedback != null)
-				mFeedback.onObjectDeleted(object);
-			mGameObjects.remove(object);
-			return;
-		}
 		
 		// If object in this side or static
 		if(object.mType == RegisterMode.FREE || (object.mPlayer == mMonitor.getPlayer())) {
@@ -598,19 +596,8 @@ public class GameObjects {
 	 * Delete Object with Id
 	 * @param id
 	 */
-	final public void deleteObject(final int id) {
-		final GameObject object = getObject(id);
-		
-		// Remove Object if not released
-		if(!object.mReleased) {
-			// Set deleted
-			object.mDeleted = true;
-			// Feedback
-			if(mFeedback != null)
-				mFeedback.onObjectDeleted(object);
-			mGameObjects.remove(object);
-			return;
-		}
+	final public void deleteObjectById(final int id) {
+		final GameObject object = getObjectById(id);
 		
 		// If object in this side or static
 		if(object.mType == RegisterMode.FREE || (object.mPlayer == mMonitor.getPlayer())) {
@@ -632,9 +619,20 @@ public class GameObjects {
 	 * @param id
 	 * @return
 	 */
-	final public GameObject getObjectAt(final int index) {
-		if(index >= mGameObjects.size())
+	final public GameObject getObjectAtIndex(final int index) {
+		if(index >= getCount())
 			throw new IndexOutOfBoundsException();
+		int count = 0;
+		// Search
+		for(final GameObject object : mGameObjects) {
+			if(object.mReleased) {
+				// Get object with index
+				if(count == index)
+					return object;
+				//
+				count++;
+			}
+		}
 		return mGameObjects.get(index);
 	}
 	
@@ -644,11 +642,11 @@ public class GameObjects {
 	 * @param id
 	 * @return
 	 */
-	final public GameObject getObject(final int id) {
+	final public GameObject getObjectById(final int id) {
 		for(final GameObject object : mGameObjects)
-			if(object.mId == id)
+			if(object.mId == id && object.mReleased)
 				return object;
-		throw new IllegalArgumentException("This object not exist");
+		throw new IllegalArgumentException("This object not exist or not released");
 	}
 	
 	/**
@@ -657,7 +655,7 @@ public class GameObjects {
 	 * @param id
 	 * @return
 	 */
-	final private GameObject getObjectSafe(final int id) {
+	final private GameObject getObjectByIdSafe(final int id) {
 		for(final GameObject object : mGameObjects)
 			if(object.mId == id)
 				return object;
@@ -669,7 +667,12 @@ public class GameObjects {
 	 * @return
 	 */
 	final public int getCount() {
-		return mGameObjects.size();
+		int count = 0;
+		for(final GameObject object : mGameObjects) {
+			if(object.mReleased)
+				count++;
+		}
+		return count;
 	}
 	
 	/**
@@ -801,6 +804,19 @@ public class GameObjects {
 	}
 	
 	/**
+	 * Inform Object Released
+	 * 
+	 * @param object
+	 */
+	final private void informReleased(final GameObject object) {
+		// Transact
+		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM_RELEASED);
+		builder.add(object.mId);
+		mGame.sendMessage(builder.build());
+	}
+	
+	
+	/**
 	 * On Message
 	 * @param values
 	 */
@@ -814,6 +830,7 @@ public class GameObjects {
 			message.object3 = values.get(2);
 			message.object4 = values.get(3);
 			break;
+		case OBJECT_INFORM_RELEASED:
 		case OBJECT_DELETE:
 		case OBJECT_INFORM_TRANSACT:
 			message.object1 = values.get(0);
@@ -856,8 +873,18 @@ public class GameObjects {
 				object.mType = type;
 				object.mVisibleControl = false;
 				object.mFlags = flags;
-				object.mReleased = true;
+				object.mReleased = false;
 				mGameObjects.add(object);
+				
+				// Remove message
+				itr.remove();
+				
+				break;
+			case OBJECT_INFORM_RELEASED:
+				
+				id = (Integer)message.object1;
+				object = getObjectByIdSafe(id);
+				object.mReleased = true;
 				
 				// Remove message
 				itr.remove();
@@ -865,11 +892,12 @@ public class GameObjects {
 				// Feedback
 				if(mFeedback != null)
 					mFeedback.onObjectCreated(object);
+				
 				break;
 			case OBJECT_DELETE:
 				// Remove object
 				id = (Integer)message.object1;
-				object = getObjectSafe(id);
+				object = getObjectByIdSafe(id);
 				// If has object
 				if(object != null) {
 					object.mDeleted = true;
@@ -888,7 +916,7 @@ public class GameObjects {
 				break;
 			case OBJECT_INFORM_TRANSACT:
 				id = (Integer)message.object1;
-				object = getObjectSafe(id);
+				object = getObjectByIdSafe(id);
 				if(object != null) {
 					object.mPlayer = mMonitor.getPlayer();
 				}
@@ -897,7 +925,7 @@ public class GameObjects {
 				break;
 			case OBJECT_INFORM_POSITION:
 				id = (Integer)message.object1;
-				object = getObjectSafe(id);
+				object = getObjectByIdSafe(id);
 				if(object != null) {
 					object.mPosition = (Vector2)message.object2;
 				}
@@ -906,7 +934,7 @@ public class GameObjects {
 				break;
 			case OBJECT_INFORM_SIZE:
 				id = (Integer)message.object1;
-				object = getObjectSafe(id);
+				object = getObjectByIdSafe(id);
 				if(object != null) {
 					object.mSize = (Vector2)message.object2;
 				}
@@ -915,7 +943,7 @@ public class GameObjects {
 				break;
 			case OBJECT_INFORM_EXTRA_PACKAGE:
 				id = (Integer)message.object1;
-				object = getObjectSafe(id);
+				object = getObjectByIdSafe(id);
 				if(object != null) {
 					object.mExtraPackage = ExtraPackage.create((ObjectMessage)message.object2);
 				}
@@ -924,7 +952,7 @@ public class GameObjects {
 				break;
 			case OBJECT_INFORM_VISIBLE:
 				id = (Integer)message.object1;
-				object = getObjectSafe(id);
+				object = getObjectByIdSafe(id);
 				if(object != null) {
 					object.mVisibleControl = (Boolean)message.object2;
 				}

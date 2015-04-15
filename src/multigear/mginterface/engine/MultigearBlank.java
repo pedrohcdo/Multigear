@@ -134,41 +134,4 @@ final public class MultigearBlank {
 		mEventHandler.sendDraw(drawer);
 		return this;
 	}
-
-	
-	/**
-	 * Resume Engine
-	 */
-	final public multigear.mginterface.engine.MultigearBlank resume() {
-		if(mMultigear.isFinished())
-			return this;
-		mMultigear.resume();
-		mEventHandler.sendHandle();
-		return this;
-	}
-	
-	/**
-	 * Pause Engine
-	 */
-	final public multigear.mginterface.engine.MultigearBlank pause() {
-		if(mMultigear.isFinished())
-			return this;
-		mMultigear.pause();
-		mEventHandler.sendUnhandle();
-		return this;
-	}
-	
-	/**
-	 * Destroy Engine. 
-	 * <p>
-	 * Note: After this call end with '.unsync()' and set the instance to null.
-	 */
-	final public multigear.mginterface.engine.MultigearBlank destroy() {
-		if(mMultigear.isFinished())
-			return this;
-		mMultigear.getManager().destroy();
-		mMultigear.destroy();
-		mEventHandler.sendFinish();
-		return this;
-	}
 }

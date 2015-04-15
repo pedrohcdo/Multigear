@@ -76,7 +76,8 @@ public class MultigearGame {
 		
 		/* Conts */
 		FREE,
-		LOCK;
+		LOCK,
+		SILENT;
 	}
 	
 	/**

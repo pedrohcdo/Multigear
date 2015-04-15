@@ -14,7 +14,7 @@ import android.opengl.Matrix;
  * 
  *         Property Createlier.
  */
-final public class ParticlesTextureRenderer extends BaseProgram {
+final public class PointParticlesRenderer extends BaseProgram {
 	
 	// Private Variables
 	private int mParticleHandle;

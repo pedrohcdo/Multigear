@@ -383,11 +383,13 @@ public class Sprite implements Drawable, Component {
 		if (mMirror[0]) {
 			six *= -1;
 			sx *= -1;
+			tX -= sx - six * 2;
 		}
 		
 		if (mMirror[1]) {
 			siy *= -1;
 			sy *= -1;
+			tY -= sy - siy * 2;
 		}
 
 		// Get Matrix Row

@@ -75,6 +75,7 @@ final public class SupportThreadGroup extends ThreadGroup {
 		// Safe Cache clear
 		while (true) {
 			boolean found = false;
+			
 			for (int i = 0; i < mSupportServiceLaunched.size(); i++) {
 				final SupportThread supportThread = mSupportServiceLaunched.get(i);
 				if (supportThread.isEndWork()) {
@@ -100,7 +101,7 @@ final public class SupportThreadGroup extends ThreadGroup {
 		// Safe Prepare Threads and clear cache
 		while (mSupportServicePreparing.size() > 0) {
 			final SupportThread supportThread = mSupportServicePreparing.remove(0);
-			killSupportThread(supportThread.getCommand());
+			killOrWaitSupportThread(supportThread.getCommand());
 			supportThread.start();
 			mSupportServiceLaunched.add(supportThread);
 		}
@@ -117,7 +118,7 @@ final public class SupportThreadGroup extends ThreadGroup {
 	 *            Support Command
 	 * @return True if found
 	 */
-	final protected boolean killSupportThread(final int command) {
+	final protected boolean killOrWaitSupportThread(final int command) {
 		boolean found = false;
 		// Safe search and clear
 		for (int i = 0; i < mSupportServicePreparing.size(); i++) {
@@ -135,7 +136,9 @@ final public class SupportThreadGroup extends ThreadGroup {
 				if (!supportThread.isEndWork())
 					found = true;
 				// Force close
-				supportThread.close();
+				try {
+					supportThread.join();
+				} catch(Exception e) {};
 				mSupportServiceLaunched.remove(supportThread);
 			}
 		}

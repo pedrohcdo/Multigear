@@ -134,6 +134,8 @@ public class ComponentBatch {
 	 * @param scene
 	 */
 	final public void attach(final Scene scene) {
+		if(mAttachedScene != null)
+			throw new RuntimeException("This object is already attached to another scene.");
 		mAttachedScene = scene;
 		mAttachedScene.addUpdatableListener(mUpdatableHandler);
 		mAttachedScene.addDrawableListener(mDrawableHandler);
@@ -145,7 +147,7 @@ public class ComponentBatch {
 	 */
 	final public void detach() {
 		if(mAttachedScene == null)
-			throw new RuntimeException("This object has already been recycled.");
+			throw new RuntimeException("This object is not attached to any scene.");
 		mAttachedScene.removeUpdatableListener(mUpdatableHandler);
 		mAttachedScene.removeDrawableListener(mDrawableHandler);
 		mAttachedScene.removeTouchableListener(mTouchableHandler);
@@ -166,8 +168,6 @@ public class ComponentBatch {
 	 * @param component
 	 */
 	final public void addComponent(final Component component) {
-		if(mAttachedScene == null)
-			throw new RuntimeException("The object is recycled.");
 		mComponents.add(component);
 	}
 	
@@ -177,8 +177,6 @@ public class ComponentBatch {
 	 * @param component
 	 */
 	final public void removeComponent(final Component component) {
-		if(mAttachedScene == null)
-			throw new RuntimeException("The object is recycled.");
 		mComponents.remove(component);
 	}
 	

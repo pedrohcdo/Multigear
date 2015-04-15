@@ -137,38 +137,14 @@ final public class MultigearSync {
 
 	
 	/**
-	 * Resume Engine
-	 */
-	final public multigear.mginterface.engine.MultigearSync resume() {
-		if(mMultigear.isFinished())
-			return this;
-		mMultigear.resume();
-		mEventHandler.sendHandle();
-		return this;
-	}
-	
-	/**
-	 * Pause Engine
-	 */
-	final public multigear.mginterface.engine.MultigearSync pause() {
-		if(mMultigear.isFinished())
-			return this;
-		mMultigear.pause();
-		mEventHandler.sendUnhandle();
-		return this;
-	}
-	
-	/**
 	 * Destroy Engine. 
 	 * <p>
 	 * Note: After this call end with '.unsync()' and set the instance to null.
 	 */
-	final public multigear.mginterface.engine.MultigearSync destroy() {
+	final public multigear.mginterface.engine.MultigearSync unregisterIntents() {
 		if(mMultigear.isFinished())
 			return this;
-		mMultigear.getManager().destroy();
-		mMultigear.destroy();
-		mEventHandler.sendFinish();
+		mMultigear.getManager().unregisterIntents();
 		return this;
 	}
 	

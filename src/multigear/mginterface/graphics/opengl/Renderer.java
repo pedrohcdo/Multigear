@@ -18,14 +18,15 @@ import android.opengl.GLES20;
 public class Renderer extends BaseRenderer {
 	
 	// Conts
-	final public static int STRETCH_TEXTURE_RENDERER = 0;
-	final public static int REPEAT_TEXTURE_RENDERER = 1;
-	final public static int TRANSITION_TEXTURE_RENDERER = 2;
-	final public static int PARTICLES_RENDERER = 3;
-	final public static int UNIFORM_COLOR_RENDERER = 4;
-	final public static int OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER = 5;
-	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = 6;
-	final public static int LETTER_RENDERER = 7;
+	final public static int STRETCH_TEXTURE_RENDERER = ProgramsManager.STRETCH_TEXTURE_RENDERER_PROGRAM;
+	final public static int REPEAT_TEXTURE_RENDERER = ProgramsManager.REPEAT_TEXTURE_RENDERER_PROGRAM;
+	final public static int TRANSITION_TEXTURE_RENDERER = ProgramsManager.TRANSITION_TEXTURE_RENDERER_PROGRAM;
+	final public static int POINT_PARTICLES_RENDERER = ProgramsManager.POINT_PARTICLES_RENDERER_PROGRAM;
+	final public static int UNIFORM_COLOR_RENDERER = ProgramsManager.UNIFORM_COLOR_RENDERER;
+	final public static int OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER = ProgramsManager.OPTIMIZED_ELLIPSE_UNIFORM_COLOR_RENDERER;
+	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = ProgramsManager.OPTIMIZED_ELLIPSE_TEXTURED_RENDERER;
+	final public static int LETTER_RENDERER = ProgramsManager.LETTER_RENDERER;
+	final public static int SPRITE_PARTICLES_RENDERER = ProgramsManager.SPRITE_PARTICLES_RENDERER_PROGRAM;
 	
 	// Final private Variables
 	final private multigear.mginterface.engine.Configuration.OptimizedKey mOptimizedKey;

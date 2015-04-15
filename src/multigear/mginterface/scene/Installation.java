@@ -161,10 +161,6 @@ abstract public class Installation {
 	 */
 	abstract public boolean touch(final MotionEvent motionEvent);
 
-	/*
-	 * Evento para finalizar a Engine
-	 */
-	abstract public void finish();
 	
 	/* Evento de intalação completa */
 	public void onInstalled() {};

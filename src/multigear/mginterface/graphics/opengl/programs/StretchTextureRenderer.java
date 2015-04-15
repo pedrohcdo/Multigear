@@ -159,15 +159,14 @@ final public class StretchTextureRenderer extends BaseProgram {
 	 * You will not be possible to render with this program while another is
 	 * being used.
 	 */
-	final public void render(int size) {
+	final public void renderTriangles(int size) {
 		// Enable Attributes
 		GLES20.glEnableVertexAttribArray(mElementVerticesHandle);
 		GLES20.glEnableVertexAttribArray(mTextureVerticesHandle);
 		// Initialize Uniform Locations
 		GLES20.glUniform1i(mTextureSampleHandle, 0);
 		// Draw Triangles
-		for(int i=0; i<size/4; i++)
-			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, i*4, 4);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, size);
 		// Disable Attributes
 		GLES20.glDisableVertexAttribArray(mElementVerticesHandle);
 		GLES20.glDisableVertexAttribArray(mTextureVerticesHandle);

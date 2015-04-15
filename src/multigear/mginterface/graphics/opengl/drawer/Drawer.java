@@ -19,7 +19,8 @@ import multigear.mginterface.graphics.opengl.programs.BaseProgram;
 import multigear.mginterface.graphics.opengl.programs.LetterRenderer;
 import multigear.mginterface.graphics.opengl.programs.OptimizedEllipseTexturedRenderer;
 import multigear.mginterface.graphics.opengl.programs.OptimizedEllipseUniformColorRenderer;
-import multigear.mginterface.graphics.opengl.programs.ParticlesTextureRenderer;
+import multigear.mginterface.graphics.opengl.programs.PointParticlesRenderer;
+import multigear.mginterface.graphics.opengl.programs.SpriteParticlesRenderer;
 import multigear.mginterface.graphics.opengl.programs.StretchTextureRenderer;
 import multigear.mginterface.graphics.opengl.programs.UniformColorRenderer;
 import multigear.mginterface.graphics.opengl.texture.Texture;
@@ -393,23 +394,43 @@ final public class Drawer {
 	}
 	
 	/**
-	 * Draw Particles
+	 * Draw Point Particles
 	 * 
 	 * @param particlesCount Amount of particles
 	 * @param particleBuffer Information of each particle, with organizational pattern like this:<br>
 	 * <i>[x1, y1, opacity1, size1, x2, y2, opacity2, size2, etc ..</i>
 	 */
-	public void drawParticles(final int particlesCount) {
+	public void drawPointParticles(final int particlesCount) {
 		// Copy matrix
 		mMatrixRow.swap();
 		mMatrixRow.copyValues(mTransformMatrix);
 		// Get Scale
 		final Vector2 scale = mSceneDrawerState.getScale();
 		// Swap Buffers
-		ParticlesTextureRenderer renderer = (ParticlesTextureRenderer)begin(Renderer.PARTICLES_RENDERER, Color.TRANSPARENT);
+		PointParticlesRenderer renderer = (PointParticlesRenderer)begin(Renderer.POINT_PARTICLES_RENDERER, mColor);
 		renderer.setScale(Math.min(scale.x, scale.y));
 		renderer.setBuffers(mElementVertex);
 		renderer.render(particlesCount);
+	}
+	
+	/**
+	 * Draw Sprite Particles
+	 * 
+	 * @param particlesCount Amount of particles
+	 * @param particleBuffer Information of each particle, with organizational pattern like this:<br>
+	 * <i>[x1, y1, opacity1, size1, x2, y2, opacity2, size2, etc ..</i>
+	 */
+	public void drawSpriteParticles(final int particlesCount) {
+		// Copy matrix
+		mMatrixRow.swap();
+		mMatrixRow.copyValues(mTransformMatrix);
+		// Get Scale
+		final Vector2 scale = mSceneDrawerState.getScale();
+		// Swap Buffers
+		SpriteParticlesRenderer renderer = (SpriteParticlesRenderer)begin(Renderer.SPRITE_PARTICLES_RENDERER, mColor);
+		renderer.setScale(Math.min(scale.x, scale.y));
+		renderer.setBuffers(mElementVertex);
+		renderer.render(particlesCount * 6);
 	}
 	
 	/**
@@ -688,7 +709,8 @@ final public class Drawer {
 	final public BaseProgram begin(final int rendererProgram, final Color color) {
 		final BaseProgram baseProgram = mRenderer.useRenderer(rendererProgram);
 		final float opacity = mDrawingStates[mDrawingIndex].getOpacity() * mSceneDrawerState.getOpacity() * color.getAlpha();
-		final float[] renderOpacity = new float[] { opacity * color.getRed(), opacity * color.getGreen(), opacity * color.getBlue(), opacity};
+		// final alpha not influent because src blend mode is ONE, src * 1 = src (GL uses RGB component and dispense Alpha)
+		final float[] renderOpacity = new float[] { opacity * color.getRed(), opacity * color.getGreen(), opacity * color.getBlue(), opacity}; 
 		baseProgram.onPrepare(mTransformMatrix, renderOpacity);
 		return baseProgram;
 	}

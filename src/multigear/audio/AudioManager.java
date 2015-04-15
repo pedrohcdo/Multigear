@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import android.media.MediaPlayer;
 import android.media.SoundPool;
 
 /**
@@ -23,6 +24,8 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 	
 	// Private Variables
 	private SoundPool mSoundPool;
+	private MediaPlayer mMediaPlayer;
+	
 	private multigear.audio.Listener mListener;
 	private float mLeftVol = 1f, mRightVol = 1f, mRate = 1f;
 	
@@ -84,7 +87,7 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 	/*
 	 * Carrega um arquivo de audio
 	 */
-	final public void loadAudio(final int resourceId, final Runnable postExecute) {
+	final public void loadEffx(final int resourceId, final Runnable postExecute) {
 		final int audioId = mSoundPool.load(mManager.getEngine().getActivity(), resourceId, 1);
 		mPreCache.preArchive(audioId, resourceId, postExecute);		
 	}
@@ -92,7 +95,7 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 	/*
 	 * Carrega um arquivo de audio
 	 */
-	final public void loadAudio(final int resourceId) {
+	final public void loadEffx(final int resourceId) {
 		final int audioId = mSoundPool.load(mManager.getEngine().getActivity(), resourceId, 1);
 		mPreCache.preArchive(audioId, resourceId, new Runnable() {
 			@Override
@@ -107,7 +110,7 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 	 * @param resourceId Resource Id
 	 * @param loop Loop count. -1 = Infinity
 	 */
-	final public void playSe(final int resourceId, final int loop) {
+	final public void playEffx(final int resourceId, final int loop) {
 		final int audioId = mCache.getArchiveId(resourceId);
 		if(audioId != -1)
 			mStreamsSeId.add(mSoundPool.play(audioId, mLeftVol, mRightVol, 1, loop, mRate));
@@ -116,7 +119,7 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 			final float lastLeftVol = mLeftVol;
 			final float lastRightVol = mRightVol;
 			final float lastRate = mRate;
-			loadAudio(resourceId, new Runnable() {
+			loadEffx(resourceId, new Runnable() {
 				
 				/*
 				 * Post Runnable Audio Execute
@@ -133,7 +136,7 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 	/**
 	 * Stop Se Streams.
 	 */
-	final public void stopSe() {
+	final public void stopEffx() {
 		Iterator<Integer> itr = mStreamsSeId.iterator();
 		while(itr.hasNext()) {
 			final Integer streamId = itr.next();
@@ -142,11 +145,26 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 		}
 	}
 	
+	/**
+	 * Pause Audio Manager
+	 */
+	final public void pause() {
+		stopEffx();
+		mSoundPool.autoPause();
+	}
+	
+	/**
+	 * Resume Audio Manager
+	 */
+	final public void resume() {
+		mSoundPool.autoResume();
+	}
+	
 	/*
 	 * Finish This Support
 	 */
 	final public void finish() {
-		stopSe();
+		stopEffx();
 		mSoundPool.release();
 		mSoundPool = null;
 	}

@@ -48,6 +48,7 @@ final public class ConnectionThread extends Thread {
 			try {
 				final Socket socket = new Socket(mServerInfo.Address, mPort);
 				socket.setTcpNoDelay(true);
+				socket.setSoTimeout(0);
 				if(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE > 0)
 					socket.setReceiveBufferSize(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE);
 				if(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE > 0)

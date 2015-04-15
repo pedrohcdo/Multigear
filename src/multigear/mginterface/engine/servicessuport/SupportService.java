@@ -110,6 +110,7 @@ public class SupportService extends Service {
 	 * Show Notification and set this Service to Foreground.
 	 */
 	final private void showNotification(Notification notification) {
+		
 		// Lock
 		//synchronized (mNotificationLock) {
 			// If notification Showed
@@ -162,7 +163,7 @@ public class SupportService extends Service {
 		ActivityManager activityService = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 		List<ActivityManager.RunningTaskInfo> runningTaskInfoList = activityService.getRunningTasks(Integer.MAX_VALUE);
 		for (final RunningTaskInfo runningTaskInfo : runningTaskInfoList) {
-			final ComponentName componentName = runningTaskInfo.topActivity;
+			final ComponentName componentName = runningTaskInfo.baseActivity;
 			if (componentName.getPackageName().equals(getPackageName()))
 				return true;
 		}
@@ -174,8 +175,7 @@ public class SupportService extends Service {
 	 */
 	final public void enginePrepare() {
 		// Kill all Support Thread
-		if (!mSupportThreadGroup.killSupportThread(SupportThread.SUPPORT_DESROYER))
-			mDedicatedServices.saveState();
+		mSupportThreadGroup.killOrWaitSupportThread(SupportThread.SUPPORT_DESROYER);
 	}
 	
 	/**
@@ -183,6 +183,7 @@ public class SupportService extends Service {
 	 */
 	final public void engineInitialized(final WifiLock wifiLock) {
 		// Set Engine Initialized
+		mDedicatedServices.saveState();
 		mWifiLock = wifiLock;
 		mWifiLock.acquire();
 		mEngineInitialized = true;
@@ -194,7 +195,7 @@ public class SupportService extends Service {
 	final public void engineResumed() {
 		hideNotification();
 		mEngineResumed = true;
-		mSupportThreadGroup.killSupportThread(SupportThread.SUPPORT_DESROYER);
+		mSupportThreadGroup.killOrWaitSupportThread(SupportThread.SUPPORT_DESROYER);
 	}
 	
 	/**

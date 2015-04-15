@@ -1,5 +1,7 @@
 package multigear.mginterface.engine;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import multigear.cache.CacheManager;
@@ -16,13 +18,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.ActivityInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -35,6 +35,48 @@ import android.view.WindowManager;
 @SuppressLint("NewApi")
 final public class Multigear {
 	
+	/**
+	 * On Engine Destroy Interface
+	 * @author user
+	 *
+	 */
+	public interface OnDestroyListener {
+		
+		/** 
+		 * On Destroy.<br>
+		 * <b>Note:</b> This function called in UI Thread and not GL Thread.
+		 */
+		public void onDestroy();
+	}
+	
+	/**
+	 * On Engine Paused Interface.
+	 * @author user
+	 *
+	 */
+	public interface OnPauseListener {
+		
+		/** 
+		 * On Pause.<br>
+		 * <b>Note:</b> This function called in UI Thread and not GL Thread.
+		 */
+		public void onPause();
+	}
+	
+	/**
+	 * On Engine Resume Interface.
+	 * @author user
+	 *
+	 */
+	public interface OnResumeListener {
+		
+		/** 
+		 * On Pause.<br>
+		 * <b>Note:</b> This function called in UI Thread and not GL Thread.
+		 */
+		public void onResume();
+	}
+	
 	// Private Variables
 	final private Activity mActivity;
 	final private multigear.mginterface.engine.Configuration mConfiguration;
@@ -43,6 +85,9 @@ final public class Multigear {
 	final private multigear.mginterface.engine.Manager mManager;
 	final private multigear.mginterface.engine.eventsmanager.EventHandler mEventHandler;
 	final private WifiLock mWifiLock;
+	final private List<OnDestroyListener> mOnDestroyListeners = new ArrayList<OnDestroyListener>();
+	final private List<OnPauseListener> mOnPauseListeners = new ArrayList<OnPauseListener>();
+	final private List<OnResumeListener> mOnResumeListeners = new ArrayList<OnResumeListener>();
 	
 	final Intent mServiceIntent;
 	
@@ -107,18 +152,71 @@ final public class Multigear {
 	}
 	
 	/**
+	 * Add On Destroy Listener
+	 * @param listener
+	 */
+	final public void addOnDestroyListener(final OnDestroyListener listener) {
+		mOnDestroyListeners.add(listener);
+	}
+	
+	/**
+	 * Add On Pause Listener
+	 * @param listener
+	 */
+	final public void addOnPauseListener(final OnPauseListener listener) {
+		mOnPauseListeners.add(listener);
+	}
+	
+	/**
+	 * Add On Resume Listener
+	 * @param listener
+	 */
+	final public void addOnResumeListener(final OnResumeListener listener) {
+		mOnResumeListeners.add(listener);
+	}
+	
+	/**
+	 * Add On Destroy Listener
+	 * @param listener
+	 */
+	final public void removeOnDestroyListener(final OnDestroyListener listener) {
+		mOnDestroyListeners.remove(listener);
+	}
+	
+	/**
+	 * Add On Pause Listener
+	 * @param listener
+	 */
+	final public void removeOnPauseListener(final OnPauseListener listener) {
+		mOnPauseListeners.remove(listener);
+	}
+	
+	/**
+	 * Add On Resume Listener
+	 * @param listener
+	 */
+	final public void removeOnResumeListener(final OnResumeListener listener) {
+		mOnResumeListeners.remove(listener);
+	}
+	
+	/**
 	 * Resume Engine
 	 */
-	final protected void resume() {
+	final public void onResume() {
 		mSupportServiceResumed = true;
 		// Binding with Service
 		getActivity().bindService(mServiceIntent, mServiceConnection, Service.BIND_AUTO_CREATE);
+		mManager.resume();
+		mEventHandler.sendHandle();
+		// Call listeners
+		for(final OnResumeListener listener : mOnResumeListeners) 
+			listener.onResume();
 	}
 	
 	/**
 	 * Pause Engine
 	 */
-	final protected void pause() {
+	final public void onPause() {
 		// Submit a notice to pause() before
 		final SupportService supportService = getSupportService();
 		// If the service is bound
@@ -134,6 +232,12 @@ final public class Multigear {
 		// Unbind Service Connection
 		if (mSupportService != null)
 			getActivity().unbindService(mServiceConnection);
+		
+		mManager.pause();
+		mEventHandler.sendUnhandle();
+		// Call listeners
+		for(final OnPauseListener listener : mOnPauseListeners) 
+			listener.onPause();
 	}
 	
 	/**
@@ -146,9 +250,12 @@ final public class Multigear {
 	/**
 	 * Destroy Engine
 	 */
-	final public void destroy() {
-		mFinished = true;
+	final public void onDestroy() {
 		mSurface.destroy();
+		mManager.destroy();
+		for(final OnDestroyListener listener : mOnDestroyListeners) 
+			listener.onDestroy();
+		mFinished = true;
 	}
 	
 	/**
@@ -211,7 +318,7 @@ final public class Multigear {
 	@SuppressLint("NewApi")
 	final protected void setupActivity() {
 		// Disable Rotaition
-		mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		//mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		// Disable Title Bar
 		// mActivity.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		// Hide Action Bar

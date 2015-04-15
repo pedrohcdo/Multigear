@@ -47,10 +47,6 @@ public abstract class Updater extends Installation {
 	@Override
 	public boolean touch(MotionEvent motionEvent) { return false; }
 	
-	/** Unused */
-	@Override
-	public void finish() {}
-	
 	/**
 	 * Updater
 	 */

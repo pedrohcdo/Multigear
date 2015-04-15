@@ -18,26 +18,30 @@ final public class Message {
 	final static public int WIFI_ENABLE_ERROR = 3;
 	/** Wifi Disable Error */
 	final static public int WIFI_DISABLE_ERROR = 4;
-	/**  Access Points Result. */
+	/** Access Points Result. */
 	final static public int SCAN_ACCESS_POINT_COMPLETED = 5;
+	/** Scan Access Point error. */
+	final static public int SCAN_ACCESS_POINT_ERROR = 6;
 	/** Wifi Connected. */
-	final static public int WIFI_CONNECTED = 6;
+	final static public int WIFI_CONNECTED = 7;
 	/** Hotspot Correctly Enabled. */
-	final static public int HOTSPOT_ENABLED = 7;
+	final static public int HOTSPOT_ENABLED = 8;
 	/** Hotspot Disabled. */
-	final static public int HOTSPOT_DISABLED = 8;
+	final static public int HOTSPOT_DISABLED = 9;
 	/** Hotspot Enable Error */
-	final static public int HOTSPOT_ENABLE_ERROR = 9;
+	final static public int HOTSPOT_ENABLE_ERROR = 10;
 	/** Hotspot Disable Error */
-	final static public int HOTSPOT_DISABLE_ERROR = 10;
+	final static public int HOTSPOT_DISABLE_ERROR = 11;
 	/** Services Data Restored. */
-	final static public int DATA_SERVICES_RESTORED = 11;
+	final static public int DATA_SERVICES_RESTORED = 12;
 	/** State Restored. */
-	final static public int STATE_RESTORED = 12;
+	final static public int STATE_RESTORED = 13;
 	/** Mobile Data Enabled. */
-	final static public int MOBILEDATA_ENABLE = 13;
+	final static public int MOBILEDATA_ENABLE = 14;
 	/** Mobile Data Disabled. */
-	final static public int MOBILEDATA_DISABLED = 14;
+	final static public int MOBILEDATA_DISABLED = 15;
+	/** Extra service result. */
+	final static public int DISCOVERY_RESULT_AVAILABLE = 16;
 	
 	
 	// Final Private Variables
