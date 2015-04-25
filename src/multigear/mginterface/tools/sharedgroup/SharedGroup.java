@@ -83,7 +83,7 @@ final public class SharedGroup {
 		switch(message.Message) {
 		case SupportMessage.SERVER_STARTED:
 			ServerSupport serverSupport = (ServerSupport) message.Object;
-			serverSupport.waitForClient();
+			serverSupport.startWaitForClient();
 			break;
 		case SupportMessage.SERVER_CLIENTCONNECTED:
 			

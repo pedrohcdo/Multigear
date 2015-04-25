@@ -24,6 +24,9 @@ import multigear.communication.tcp.support.objectmessage.ObjectMessage;
 import multigear.general.utils.SafetyLock;
 import multigear.general.utils.SafetyLock.Interception;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
+import multigear.mginterface.engine.servicessuport.DedicatedServices;
+import multigear.mginterface.engine.servicessuport.SupportThread;
+import multigear.mginterface.engine.servicessuport.DedicatedServices.Database;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -47,7 +50,7 @@ import android.util.Log;
  * 
  *         Property Createlier.
  */
-final public class ServicesManager implements multigear.communication.tcp.support.listener.Listener {
+@SuppressLint("NewApi") final public class ServicesManager implements multigear.communication.tcp.support.listener.Listener {
 	
 	/**
 	 * Access Point Security
@@ -171,7 +174,64 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 			return mDevice;
 		}
 	}
+	
+	/**
+	 * Scan Result
+	 * 
+	 * @author user
+	 *
+	 */
+	final public class FilteredScanResult {
+		
+		final List<ScanResult> mScanResults;
+		final List<ServersList> mServers;
+		
+		/**
+		 * Constructor
+		 * 
+		 * @param scans
+		 * @param servers
+		 */
+		private FilteredScanResult(final List<ScanResult> scans, final List<ServersList> servers) {
+			mScanResults = scans;
+			mServers = servers;
+		}
+		
+		/**
+		 * Get Scan Results
+		 * @return
+		 */
+		final public List<ScanResult> getScanResults() {
+			return mScanResults;
+		}
+		
+		/**
+		 * 
+		 * @param id
+		 * @return
+		 */
+		final public ServersList getServersListOn(final int id) {
+			return mServers.get(id);
+		}
+	}
 
+	/**
+	 * Used for save and restore the state of ServicesManager.
+	 * 
+	 * @author PedroH, RaphaelB
+	 * 
+	 *         Property Createlier.
+	 */
+	final public class Database {
+		
+		// Private Variables
+		private boolean WifiEnabled;
+		private boolean HotspotEnabled;
+		private boolean MobileDataEnabled;
+		private List<WifiConfiguration> ConfiguredNetworks;
+		private WifiConfiguration HotspotConfiguration;
+	}
+	
 	/**
 	 * This service is used to find addresses that are on the same network.<br>
 	 * On call 'startExtraService' set 'configLong' attribute to prefer discovery mode, are they:<br>
@@ -191,8 +251,6 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	final private List<multigear.services.Message> mMessages;
 	final private WifiManager mWifiManager;
 	final private ConnectivityManager mConnectivityManager;
-	final private Object mHotspotLock;
-	final private Object mScanLock;
 	final private multigear.services.ServicesThreadGroup mServicesGroup;
 	final private multigear.communication.tcp.support.ComManager mComManager;
 	final private List<DelayService> mDelayServices;
@@ -201,6 +259,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	private multigear.services.Listener mListener;
 	private boolean mImmediateAction;
 	private List<ScanResult> mScanWifiAccessPointsList;
+	private FilteredScanResult mFilteredScanWifiAccessPointsList;
 	private multigear.services.AccessPointsFilter mScanFilter;
 	private multigear.communication.tcp.client.ServersList mServersList;
 	private int mConnectionPort = 5555;
@@ -212,6 +271,10 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	private volatile AtomicBoolean mDiscoveryStarted = new AtomicBoolean(false);
 	private List<String> mDiscoveryResult;
 	private Object mDiscoveryResultLock = new Object();
+	
+	// Private Variables
+	private Database mDatabase;
+	
 	
 	/**
 	 * Construtor
@@ -229,14 +292,129 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 		mConnectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
 		mListener = null;
 		mServicesGroup = new multigear.services.ServicesThreadGroup(this);
-		mHotspotLock = new Object();
-		mScanLock = new Object();
 		mImmediateAction = false;
 		mComManager = new ComManager(manager);
 		mComManager.setListener(this);
 		mDelayServices = new ArrayList<ServicesManager.DelayService>();
 		mServersList = null;
 		mScanFilter = null;
+		// Save State
+		saveState();
+	}
+	
+	/**
+	 * Saves the current state of the service manager. This is valid for the
+	 * following services: Wi-fi, Hotspot, 3G.
+	 */
+	final private void saveState() {
+		mDatabase = new Database();
+		mDatabase.WifiEnabled = isWifiEnabled();
+		mDatabase.HotspotEnabled = isHotspotEnabled();
+		mDatabase.MobileDataEnabled = isMobileDataEnabled();
+		mDatabase.ConfiguredNetworks = getConfiguredNetworksSafety();
+		mDatabase.HotspotConfiguration = getHotspotConfiguration();
+	}
+	
+	/**
+	 * Restores the start state. This is valid for
+	 * the following services: Wi-fi, Hotspot, 3G.
+	 */
+	final public ServiceRunnable restoreState() {
+		ServiceRunnable runnable = new ServiceRunnable() {
+			
+			@Override
+			public void run(ServiceControl serviceControl) {
+				// Restore Wifi State
+				if (mDatabase.WifiEnabled)
+					enableWifi(true, serviceControl);
+				else
+					disableWifi(true, serviceControl);
+				// If end Service
+				if(serviceControl.isEndService())
+					return;
+				// Restore Configured Networks
+				boolean refresh = false;
+				for (final WifiConfiguration configuredNetwork : getConfiguredNetworksSafety()) {
+					boolean found = false;
+					// find
+					for(final WifiConfiguration savedNetwork : mDatabase.ConfiguredNetworks) {
+						if(compareNetworks(configuredNetwork, savedNetwork)) {
+							found = true;
+							if(savedNetwork.status != configuredNetwork.status) {
+								if (savedNetwork.status == android.net.wifi.WifiConfiguration.Status.CURRENT || savedNetwork.status == android.net.wifi.WifiConfiguration.Status.ENABLED) {
+									mWifiManager.enableNetwork(configuredNetwork.networkId, true);
+								} else {
+									mWifiManager.disableNetwork(configuredNetwork.networkId);
+								}
+							}
+							break;
+						}
+					}
+					// Remove
+					if(!found) {
+						mWifiManager.removeNetwork(configuredNetwork.networkId);
+						refresh = true;
+					}
+					// Prevents interrupt
+					if (serviceControl.isEndService())
+						return;
+				}
+				
+				// If Refresh
+				//if(refresh)
+				//	mWifiManager.saveConfiguration();
+				if(refresh) {
+					mWifiManager.saveConfiguration();
+					return;
+				}
+				// Prevents interrupt
+				if (serviceControl.isEndService())
+					return;
+				// Restore Hotspot State
+				if (mDatabase.HotspotEnabled && !mDatabase.WifiEnabled)
+					enableHotspot(mDatabase.HotspotConfiguration, true, serviceControl);
+				else {
+					setHotspotConfiguration(mDatabase.HotspotConfiguration, serviceControl);
+					disableHotspot(true, serviceControl);
+				}
+				// Prevents interrupt
+				if (serviceControl.isEndService())
+					return;
+				// Restore Mobile Data State
+				if (mDatabase.MobileDataEnabled)
+					enableMobileData(true, serviceControl);
+				else
+					disableMobileData(true, serviceControl);
+				// Services restored
+				postMessage(multigear.services.Message.SERVICES_STATE_RESTORED);
+			}
+		};
+		// Start Service
+		addService(runnable);
+		// Return Service for management
+		return runnable;
+	}
+	
+	/**
+	 * Compare Networks
+	 * @param netA
+	 * @param netB
+	 * @return
+	 */
+	final private boolean compareNetworks(final WifiConfiguration netA, final WifiConfiguration netB) {
+		final String ssidA = netA.SSID;
+		final String ssidB = netB.SSID;
+		if(ssidA != null && ssidB != null) {
+			if(ssidA.equals(ssidB))
+				return true;
+		}
+		final String bssidA = netA.BSSID;
+		final String bssidB = netB.BSSID;
+		if(bssidA != null && bssidB != null) {
+			if(bssidA.equals(bssidB))
+				return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -557,6 +735,8 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 			public boolean onIntercept() {
 				if(control != null && control.isEndService())
 					return true;
+				if(Thread.currentThread().isInterrupted())
+					return true;
 				return !(mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING || mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLING);
 			}
 		});
@@ -568,6 +748,8 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
     			public boolean onIntercept() {
     				if(control != null && control.isEndService())
     					return true;
+					if(Thread.currentThread().isInterrupted())
+						return true;
     				return !(wifi.getState() == NetworkInfo.State.CONNECTING || wifi.getState() == NetworkInfo.State.DISCONNECTING);
     			}
     		});
@@ -592,7 +774,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 			if (isWifiEnabled())
 				return null;
 			// Disable Mobile Data Immediate
-			disableMobileData(true);
+			disableMobileData(true, control);
 			// Immediate Disable Hotspot
 			disableHotspot(true, control);
 			// Enable Wifi
@@ -604,6 +786,8 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				public boolean onIntercept() {
 					// TODO Auto-generated method stub
 					if(control != null &&  control.isEndService())
+						return true;
+					if(Thread.currentThread().isInterrupted())
 						return true;
 					return mWifiManager.isWifiEnabled();
 				}
@@ -617,6 +801,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				/** Runner */
 				@Override
 				public void run(final ServiceControl serviceControl) {
+					
 					// Wait For Wifi States
 					waitForWifiStates(control);
 					// If Wifi Enabled ignore this process
@@ -625,7 +810,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 						return;
 					}
 					// Disable Mobile Data Immediate
-					disableMobileData(true);
+					disableMobileData(true, control);
 					// Immediate Disable Hotspot
 					disableHotspot(true, control);
 					// Enable Wifi
@@ -691,6 +876,8 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				@Override
 				public boolean onIntercept() {
 					if(control != null && control.isEndService())
+						return true;
+					if(Thread.currentThread().isInterrupted())
 						return true;
 					return !mWifiManager.isWifiEnabled();
 				}
@@ -877,19 +1064,29 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	final public WifiConfiguration createOpenedConfiguration(final String ssid, final String bssid) {
 		WifiConfiguration wifiConfiguration = new WifiConfiguration();
 		wifiConfiguration.SSID = "\"" + ssid + "\"";
-		wifiConfiguration.BSSID = bssid;
-		wifiConfiguration.priority = getTopPriority(5);
-		wifiConfiguration.status = WifiConfiguration.Status.ENABLED;
-		wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE, true);
-		wifiConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP, true);
-		wifiConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP, true);
-		wifiConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104, true);
-		wifiConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40, true);
-		wifiConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.NONE, false);
-		wifiConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP, true);
-		wifiConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP, true);
-		wifiConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.WPA, true);
-		wifiConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.RSN, true);
+		wifiConfiguration.BSSID = "any";
+		wifiConfiguration.hiddenSSID = false;
+		wifiConfiguration.preSharedKey = null;
+		wifiConfiguration.status = 0;
+		wifiConfiguration.wepTxKeyIndex = 0;
+		for(int i=0; i<wifiConfiguration.wepKeys.length; i++)
+			wifiConfiguration.wepKeys[i] = null;
+		
+		wifiConfiguration.allowedAuthAlgorithms.clear();
+		wifiConfiguration.allowedGroupCiphers.set(0, true);
+		wifiConfiguration.allowedGroupCiphers.set(1, true);
+		wifiConfiguration.allowedGroupCiphers.set(2, true);
+		wifiConfiguration.allowedGroupCiphers.set(3, true);
+		
+		wifiConfiguration.allowedKeyManagement.set(0);
+		
+		wifiConfiguration.allowedPairwiseCiphers.set(0, false);
+		wifiConfiguration.allowedPairwiseCiphers.set(1, true);
+		wifiConfiguration.allowedPairwiseCiphers.set(2, true);
+		
+		wifiConfiguration.allowedProtocols.set(0, true);
+		wifiConfiguration.allowedProtocols.set(1, true);
+		
 		return wifiConfiguration;
 	}
 	
@@ -925,10 +1122,11 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 		// Wait 10 sec
 		while ((System.currentTimeMillis() - lastTime) < 10000) {
 			// If end service
-			if (serviceControl != null) {
-				if (serviceControl.isEndService() || Thread.currentThread().isInterrupted())
-					break;
-			}
+			if (serviceControl != null && serviceControl.isEndService())
+				break;
+			// If thread has interrupted
+			if(Thread.currentThread().isInterrupted())
+				break;
 			// Get Connection Info
 			final WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
 			final SupplicantState state = wifiInfo.getSupplicantState();
@@ -961,11 +1159,14 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 			}
 			
 			// If end service
-			if (serviceControl != null) {
-				if (serviceControl.isEndService() || Thread.currentThread().isInterrupted()) {
-					Log.d("LogTest", "Connection interrupted by system");
-					break;
-				}
+			if (serviceControl != null && serviceControl.isEndService() ) {
+				Log.d("LogTest", "Connection interrupted by system");
+				break;
+			}
+			// If thread has interrupted
+			if(Thread.currentThread().isInterrupted()) {
+				Log.d("LogTest", "Connection interrupted by system");
+				break;
 			}
 		}
 		Log.d("LogTest", "Tempo decorrido na conexão: " + (System.currentTimeMillis() - lastTime));
@@ -1121,10 +1322,12 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 			}
 			// Set Network to top prioriry
 			final WifiConfiguration wifiConfiguration = getConfiguredNetwork(networkId);
-			wifiConfiguration.priority = getTopWifiPriority() + 10;
+			wifiConfiguration.priority = getTopWifiPriority() + 1000;
 			final int reconfiguredNetId = mWifiManager.updateNetwork(wifiConfiguration);
 			// Connect to network
 			mWifiManager.enableNetwork(reconfiguredNetId, true);
+			//for(WifiConfiguration config : getConfiguredNetworksSafety())
+			//	mWifiManager.disableNetwork(config.networkId);
 			// Wait for Connection Completed
 			if (!waitForWifiConnetionComplete(networkId, control, true)) {
 				Log.d("LogTest", "Connect to " + wifiConfiguration.SSID + " Failed!");
@@ -1275,8 +1478,14 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 					 */
 					@Override
 					public void run(ServiceControl serviceControl) {
-						mScanWifiAccessPointsList = filterScanResult(mWifiManager.getScanResults(), serviceControl);
-						postMessage(multigear.services.Message.SCAN_ACCESS_POINT_COMPLETED);
+						mFilteredScanWifiAccessPointsList = filterScanResult(mWifiManager.getScanResults(), serviceControl);
+						if(mFilteredScanWifiAccessPointsList == null) {
+							mScanWifiAccessPointsList = null;
+							postMessage(multigear.services.Message.SCAN_ACCESS_POINT_ERROR);
+						} else {
+							mScanWifiAccessPointsList = mFilteredScanWifiAccessPointsList.mScanResults;
+							postMessage(multigear.services.Message.SCAN_ACCESS_POINT_COMPLETED);
+						}
 						// Release lock
 						mScanControl.set(false);
 					}
@@ -1300,9 +1509,11 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 * @return
 	 */
 	@SuppressLint("NewApi") 
-	final private List<ScanResult> filterScanResult(final List<ScanResult> scanResultList, final multigear.services.ServiceControl serviceControl) {
+	final private FilteredScanResult filterScanResult(final List<ScanResult> scanResultList, final multigear.services.ServiceControl serviceControl) {
 		// Create Filtered Scan Result List
-		final List<ScanResult> filteredScanResultList = new ArrayList<ScanResult>();
+		final List<ScanResult> scans = new ArrayList<ScanResult>();
+		final List<ServersList> servers = new ArrayList<ServersList>();
+		
 		
 		// Save Networks Priority
 		final List<WifiConfiguration> savedNetworksPriority = saveNetoworksPriority();
@@ -1327,10 +1538,13 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				
 				// Get Configured Network by BSSID or default by SSID
 				WifiConfiguration preWifiConfiguration = getConfiguredNetworkBSSID(scanResult.BSSID, scanResult.SSID);
-				if (preWifiConfiguration != null)
+				if (preWifiConfiguration != null) {
 					netExist = true;
-				// Not configurated
-				else
+					
+					Log.d("LogTest", "Founded");
+					//logWifiConfiguration("CONNECTION", preWifiConfiguration);
+				  // Not configurated
+				} else
 					preWifiConfiguration = createOpenedConfiguration(scanResult.SSID, scanResult.BSSID);
 					
 				
@@ -1377,6 +1591,8 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 					
 					Log.d("LogTest", "	-> Wait for wifi complete");
 					
+					if(serviceControl.isEndService())
+						return null;
 					
 					// Wait and check if connected
 					if (waitForWifiConnetionComplete(netId, serviceControl, false)) {
@@ -1385,22 +1601,25 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 						// Clear Servers List
 						mServersList = null;
 						// List Servers in range ....<5..0..5>...
-						mComManager.createClient("TestClient").listServers(10);
+						mComManager.createClient("TestClient").listServers(0);
 						// Wait for a new list of Servers
 						SafetyLock.lock(new Interception() {
 							
 							@Override
 							public boolean onIntercept() {
+								if(serviceControl.isEndService())
+									return true;
 								// TODO Auto-generated method stub
 								return mServersList != null;
 							}
 						});
 						// If interrupted , return empty list
-						if(Thread.currentThread().isInterrupted())
-							return new ArrayList<ScanResult>();
+						if(Thread.currentThread().isInterrupted() || serviceControl.isEndService())
+							return null;
 						//
 						if (mScanFilter.isValidServers(mServersList)) {
-							filteredScanResultList.add(scanResult);
+							servers.add(mServersList);
+							scans.add(scanResult);
 						}
 						Log.d("LogTest", "	-> Server end");
 						Log.d("LogTest", "Time to Filter Con" + (System.currentTimeMillis() - time));
@@ -1431,7 +1650,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 		 */
 		
 		// Return Filtered Scan Result List
-		return filteredScanResultList;
+		return new FilteredScanResult(scans, servers);
 	}
 	
 	/** No Used */
@@ -1468,6 +1687,16 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	}
 	
 	/**
+	 * 
+	 * @return
+	 */
+	final public FilteredScanResult getFilteredScanResult() {
+		if (mFilteredScanWifiAccessPointsList == null)
+			throw new multigear.services.ServiceException("Was not possible to capture the scan list. Because no research has been done previously.");
+		return mFilteredScanWifiAccessPointsList;
+	}
+	
+	/**
 	 * Wait for Hotspot Connect or Disconnect
 	 * 
 	 * @return
@@ -1487,6 +1716,8 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				@Override
 				public boolean onIntercept() {
 					if(control != null && control.isEndService())
+						return true;
+					if(Thread.currentThread().isInterrupted())
 						return true;
 					try {
 						int state = (Integer) getWifiApState.invoke(mWifiManager);
@@ -1512,17 +1743,19 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 */
 	final private boolean enableHotspot(final ServiceControl control, final WifiConfiguration configuration) {
 		// Immediate Disable Wi-fi
-		disableWifi(true, control);
+		// disableWifi(true, control);
 		
 		// Wait Hotspot States
-		waitForHotspotState(control);
-			
+		//waitForHotspotState(control);
+		
+		// Disable Wifi
+		mWifiManager.setWifiEnabled(false);
+		
+		
 		// If Hotspot Enabled
-		if (isHotspotEnabled()) {
-			configuration.status = Status.ENABLED;
-			setHotspotConfiguration(configuration, control);
-			return true;
-		}
+		if (isHotspotEnabled())
+			disableHotspot(true, control);
+		
 		
 		// Check exception
 		try {
@@ -1542,7 +1775,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				waitForHotspotState(control);
 				
 				// Wait for Hotspot started
-				boolean intercepted = SafetyLock.lock(5000, new Interception() {
+				boolean intercepted = SafetyLock.lock(8000, new Interception() {
 					
 					@Override
 					public boolean onIntercept() {
@@ -1551,7 +1784,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 							enabled = (Boolean) isWifiApEnabled.invoke(mWifiManager);
 						} catch(Exception e) {}
 						// TODO Auto-generated method stub
-						return enabled || control.isEndService();
+						return enabled || (control != null && control.isEndService()) || Thread.currentThread().isInterrupted();
 					}
 				});
 				
@@ -1581,36 +1814,33 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 */
 	final private ServiceRunnable enableHotspot(final WifiConfiguration hotspotConfiguration, final boolean immediate, final ServiceControl control) {
 		
-		// Lock
-		synchronized (mHotspotLock) {
-			// If Immediate Action
-			if (immediate) {
-				enableHotspot(control, hotspotConfiguration);
-				// No Service Launched
-				return null;
-			} else {
-				/** Runnable */
-				final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
-					
-					/**
-					 * Runner
-					 */
-					@Override
-					public void run(final multigear.services.ServiceControl serviceControl) {
-						// Enabled state
-						boolean enabled = enableHotspot(serviceControl, hotspotConfiguration);
-						// Lock
-						if (enabled)
-							postMessage(multigear.services.Message.HOTSPOT_ENABLED);
-						else
-							postMessage(multigear.services.Message.HOTSPOT_ENABLE_ERROR);
-					}
-				};
-				// Add Service
-				addService(serviceRunnable);
-				// Return Launched Service
-				return serviceRunnable;
-			}
+		// If Immediate Action
+		if (immediate) {
+			enableHotspot(control, hotspotConfiguration);
+			// No Service Launched
+			return null;
+		} else {
+			/** Runnable */
+			final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
+				
+				/**
+				 * Runner
+				 */
+				@Override
+				public void run(final multigear.services.ServiceControl serviceControl) {
+					// Enabled state
+					boolean enabled = enableHotspot(serviceControl, hotspotConfiguration);
+					// Lock
+					if (enabled)
+						postMessage(multigear.services.Message.HOTSPOT_ENABLED);
+					else
+						postMessage(multigear.services.Message.HOTSPOT_ENABLE_ERROR);
+				}
+			};
+			// Add Service
+			addService(serviceRunnable);
+			// Return Launched Service
+			return serviceRunnable;
 		}
 	}
 	
@@ -1651,76 +1881,73 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 *         will be returned to instantiate the service launched.
 	 */
 	final private multigear.services.ServiceRunnable enableHotspot(final String name, final String password, final boolean immediate, final ServiceControl control) {
-		// Lock
-		synchronized (mHotspotLock) {
-			// Immediate Action
-			if (immediate) {
+		// Immediate Action
+		if (immediate) {
+			
+			// Create Configuration
+			final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
+			hotspotConfiguration.SSID = name;
+			hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE, false);
+			hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+			hotspotConfiguration.preSharedKey = password;
+			hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+			hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+			hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+			hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+			hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.NONE, false);
+			hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+			hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+			//hotspotConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+			hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+			hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+			
+			// Enable
+			enableHotspot(control, hotspotConfiguration);
+			// No Service Launched
+			return null;
+		} else {
+			/** Runnable */
+			final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
 				
-				// Create Configuration
-				final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
-				hotspotConfiguration.SSID = name;
-				hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE, false);
-				hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-				hotspotConfiguration.preSharedKey = password;
-				hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-				hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-				hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
-				hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
-				hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.NONE, false);
-				hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-				hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-				//hotspotConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-				hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-				hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-				
-				// Enable
-				enableHotspot(control, hotspotConfiguration);
-				// No Service Launched
-				return null;
-			} else {
-				/** Runnable */
-				final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
+				/**
+				 * Runner
+				 */
+				@Override
+				public void run(final multigear.services.ServiceControl serviceControl) {
 					
-					/**
-					 * Runner
-					 */
-					@Override
-					public void run(final multigear.services.ServiceControl serviceControl) {
 						
+					// Create Configuration
+					final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
+					
+					hotspotConfiguration.SSID = name;
+					hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE, false);
+					hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+					hotspotConfiguration.preSharedKey = password;
+					hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+					hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+					hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+					hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+					hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.NONE, false);
+					hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+					hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+					//hotspotConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+					hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+					hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+					
+					// Get result
+					final boolean enabled = enableHotspot(serviceControl, hotspotConfiguration);
 						
-						// Create Configuration
-						final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
-						
-						hotspotConfiguration.SSID = name;
-						hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE, false);
-						hotspotConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-						hotspotConfiguration.preSharedKey = password;
-						hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-						hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-						hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
-						hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
-						hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.NONE, false);
-						hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-						hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-						//hotspotConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-						hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-						hotspotConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-						
-						// Get result
-						final boolean enabled = enableHotspot(serviceControl, hotspotConfiguration);
-						
-						// Lock
-						if (enabled)
-							postMessage(multigear.services.Message.HOTSPOT_ENABLED);
-						else
-							postMessage(multigear.services.Message.HOTSPOT_ENABLE_ERROR);
-					}
-				};
-				// Add Service
-				addService(serviceRunnable);
-				// Return Launched Service
-				return serviceRunnable;
-			}
+					// Lock
+					if (enabled)
+						postMessage(multigear.services.Message.HOTSPOT_ENABLED);
+					else
+						postMessage(multigear.services.Message.HOTSPOT_ENABLE_ERROR);
+				}
+			};
+			// Add Service
+			addService(serviceRunnable);
+			// Return Launched Service
+			return serviceRunnable;
 		}
 	}
 	
@@ -1745,6 +1972,46 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	}
 	
 	/**
+	 * Log Wifi COnfiguration
+	 */
+	final private void logWifiConfiguration(final String tag, final WifiConfiguration config) {
+		Log.d("LogTest", "Wifi Configuration: " + tag);
+		Log.d("LogTest", "	SSID:" + config.SSID);
+		Log.d("LogTest", "	BSSID:" + config.BSSID);
+		Log.d("LogTest", "	HIDDEN_SSID:" + config.hiddenSSID);
+		Log.d("LogTest", "	NET_ID:" + config.networkId);
+		Log.d("LogTest", "	PRE_SHARED_KEY:" + config.preSharedKey);
+		Log.d("LogTest", "	PRIORITY:" + config.priority);
+		Log.d("LogTest", "	STATUS:" + config.status);
+		Log.d("LogTest", "	WEPTX_KEY_INDEX:" + config.wepTxKeyIndex);
+		
+		for(final String key : config.wepKeys)
+			Log.d("LogTest", "		-> WEP_KEY:" + key);
+		
+		Log.d("LogTest", "	ALLOWED_AUTH_ALGORITHMS:");
+		for(int i=0; i<config.allowedAuthAlgorithms.length(); i++)
+			Log.d("LogTest", "		" + config.allowedAuthAlgorithms.get(i));
+		
+		Log.d("LogTest", "	ALLOWED_GROUP_CIPHERS:");
+		for(int i=0; i<config.allowedGroupCiphers.length(); i++)
+			Log.d("LogTest", "		" + config.allowedGroupCiphers.get(i));
+		
+		Log.d("LogTest", "	ALLOWED_KEY_MANAGEMENT:");
+		for(int i=0; i<config.allowedKeyManagement.length(); i++)
+			Log.d("LogTest", "		" + config.allowedKeyManagement.get(i));
+		
+		Log.d("LogTest", "	ALLOWED_APIRWISE_CIPHERS:");
+		for(int i=0; i<config.allowedPairwiseCiphers.length(); i++)
+			Log.d("LogTest", "		" + config.allowedPairwiseCiphers.get(i));
+		
+		Log.d("LogTest", "	ALLOWED_PROTOCOLS:");
+		for(int i=0; i<config.allowedProtocols.length(); i++)
+			Log.d("LogTest", "		" + config.allowedProtocols.get(i));
+		
+
+	}
+	
+	/**
 	 * Enable Hotspot with Password
 	 * <p>
 	 * Note: There is immediate. When properly enabled one Message will be sent
@@ -1763,55 +2030,57 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 *         will be returned to instantiate the service launched.
 	 */
 	final private multigear.services.ServiceRunnable enableHotspot(final String name, final boolean immediate, final ServiceControl control) {
-		// Lock
-		synchronized (mHotspotLock) {
-			// Immediate Action
-			if (immediate) {
-				// Create Configuration
-				final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
-				hotspotConfiguration.SSID = name;
-				hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-				hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-				hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-				hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+		// Immediate Action
+		if (immediate) {
+			// Create Configuration
+			final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
+			hotspotConfiguration.SSID = name;
+			// Enable
+			enableHotspot(control, hotspotConfiguration);
+			
+			// No Service Launched
+			return null;
+		} else {
+			/** Runnable */
+			final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
 				
-				// Enable
-				enableHotspot(control, hotspotConfiguration);
-				
-				// No Service Launched
-				return null;
-			} else {
-				/** Runnable */
-				final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
+				/**
+				 * Runner
+				 */
+				@Override
+				public void run(final multigear.services.ServiceControl serviceControl) {
 					
-					/**
-					 * Runner
-					 */
-					@Override
-					public void run(final multigear.services.ServiceControl serviceControl) {
-						// Create Configuration
-						final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
-						hotspotConfiguration.SSID = name;
-						hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-						hotspotConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-						hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-						hotspotConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-						
-						// Get Result
-						final boolean enabled = enableHotspot(serviceControl, hotspotConfiguration);
-						
-						// Lock
-						if (enabled)
-							postMessage(multigear.services.Message.HOTSPOT_ENABLED);
-						else
-							postMessage(multigear.services.Message.HOTSPOT_ENABLE_ERROR);
-					}
-				};
-				// Add Service
-				addService(serviceRunnable);
-				// Return Launched Service
-				return serviceRunnable;
-			}
+					// Create Configuration
+					final WifiConfiguration hotspotConfiguration = new WifiConfiguration();
+					hotspotConfiguration.SSID = name;
+					hotspotConfiguration.BSSID = null;
+					hotspotConfiguration.hiddenSSID = false;
+					hotspotConfiguration.networkId = -1;
+					hotspotConfiguration.preSharedKey = null;
+					hotspotConfiguration.priority = 0;
+					hotspotConfiguration.status = 0;
+					for(int i=0; i<hotspotConfiguration.wepKeys.length; i++)
+						hotspotConfiguration.wepKeys[i] = null;
+					hotspotConfiguration.allowedAuthAlgorithms.clear();
+					hotspotConfiguration.allowedGroupCiphers.clear();
+					hotspotConfiguration.allowedKeyManagement.set(0);
+					hotspotConfiguration.allowedPairwiseCiphers.clear();
+					hotspotConfiguration.allowedProtocols.clear();
+					
+					// Get Result
+					final boolean enabled = enableHotspot(serviceControl, hotspotConfiguration);
+					
+					// Lock
+					if (enabled)
+						postMessage(multigear.services.Message.HOTSPOT_ENABLED);
+					else
+						postMessage(multigear.services.Message.HOTSPOT_ENABLE_ERROR);
+				}
+			};
+			// Add Service
+			addService(serviceRunnable);
+			// Return Launched Service
+			return serviceRunnable;
 		}
 	}
 	
@@ -1846,113 +2115,110 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 *         will be returned to instantiate the service launched.
 	 */
 	final private multigear.services.ServiceRunnable disableHotspot(final boolean immediate, final ServiceControl control) {
-		// Lock
-		synchronized (mHotspotLock) {
-			// Immediate Action
-			if (immediate) {				
-				// Wait for hotspot state
-				waitForHotspotState(control);
-				// Return if hotspot enabled
-				if (!isHotspotEnabled())
-					return null;
-				// Check exception
-				try {
-					// Get Enabler Method
-					@SuppressWarnings("rawtypes")
-					final Class[] argsTypes = new Class[2];
-					argsTypes[0] = WifiConfiguration.class;
-					argsTypes[1] = Boolean.TYPE;
-					final Method setWifiApEnabled = mWifiManager.getClass().getMethod("setWifiApEnabled", argsTypes);
-					// Get Check Method
-					final Method isWifiApEnabled = mWifiManager.getClass().getMethod("isWifiApEnabled", new Class[0]);
-					// Enable and get Result
-					boolean result = (Boolean) setWifiApEnabled.invoke(mWifiManager, null, false);
-					// If Ok
-					if (result) {
-						// Wait for Hotspot started
-						SafetyLock.lock(5000, new Interception() {
-								
-							@Override
-							public boolean onIntercept() {
-								if(control != null && control.isEndService())
-									return true;
-								boolean enabled = false;
-								try {
-									enabled = (Boolean) isWifiApEnabled.invoke(mWifiManager);
-								} catch(Exception e) {}
-								return !enabled;
-							}
-						});	
-					}
-				} catch (Exception e) {
-				}
-				// No Service Launched
+		// Immediate Action
+		if (immediate) {				
+			// Wait for hotspot state
+			waitForHotspotState(control);
+			// Return if hotspot enabled
+			if (!isHotspotEnabled())
 				return null;
-			} else {
-				/** Runnable */
-				final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
-					
-					/**
-					 * Runner
-					 */
-					@Override
-					public void run(final multigear.services.ServiceControl serviceControl) {
-						
-						// Wait for hotspot state
-						waitForHotspotState(serviceControl);
+			// Check exception
+			try {
+				// Get Enabler Method
+				@SuppressWarnings("rawtypes")
+				final Class[] argsTypes = new Class[2];
+				argsTypes[0] = WifiConfiguration.class;
+				argsTypes[1] = Boolean.TYPE;
+				final Method setWifiApEnabled = mWifiManager.getClass().getMethod("setWifiApEnabled", argsTypes);
+				// Get Check Method
+				final Method isWifiApEnabled = mWifiManager.getClass().getMethod("isWifiApEnabled", new Class[0]);
+				// Enable and get Result
+				boolean result = (Boolean) setWifiApEnabled.invoke(mWifiManager, null, false);
+				// If Ok
+				if (result) {
+					// Wait for Hotspot started
+					SafetyLock.lock(5000, new Interception() {
 							
-						// Return if hotspot enabled
-						if (!isHotspotEnabled()) {
-							postMessage(multigear.services.Message.HOTSPOT_DISABLED);
-							return;
+						@Override
+						public boolean onIntercept() {
+							if(control != null && control.isEndService())
+								return true;
+							boolean enabled = false;
+							try {
+								enabled = (Boolean) isWifiApEnabled.invoke(mWifiManager);
+							} catch(Exception e) {}
+							return !enabled;
 						}
-							
-						// Check exception
-						try {
-							// Get Enabler Method
-							@SuppressWarnings("rawtypes")
-							final Class[] argsTypes = new Class[2];
-							argsTypes[0] = WifiConfiguration.class;
-							argsTypes[1] = Boolean.TYPE;
-							final Method setWifiApEnabled = mWifiManager.getClass().getMethod("setWifiApEnabled", argsTypes);
-							// Get Check Method
-							final Method isWifiApEnabled = mWifiManager.getClass().getMethod("isWifiApEnabled", new Class[0]);
-							// Enable and get Result
-							boolean result = (Boolean) setWifiApEnabled.invoke(mWifiManager, null, false);
-							// If Ok
-							if (result) {
-								// Wait for Hotspot started
-								boolean intercepted = SafetyLock.lock(5000, new Interception() {
-										
-									@Override
-									public boolean onIntercept() {
-										if(serviceControl != null && serviceControl.isEndService())
-											return true;
-										boolean enabled = false;
-										try {
-											enabled = (Boolean) isWifiApEnabled.invoke(mWifiManager);
-										} catch(Exception e) {}
-										return !enabled;
-									}
-								});
-								
-								// If Disabled
-								if(intercepted) {
-									postMessage(multigear.services.Message.HOTSPOT_DISABLED);
-									return;
-								}
-							}
-						} catch (Exception e) {
-						}
-						// Disable error
-						postMessage(multigear.services.Message.HOTSPOT_DISABLE_ERROR);
-					}
-				};
-				// Add Service
-				addService(serviceRunnable);
-				// Return Launched Service
-				return serviceRunnable;
+					});	
+				}
+			} catch (Exception e) {
 			}
+			// No Service Launched
+			return null;
+		} else {
+			/** Runnable */
+			final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
+					
+				/**
+				 * Runner
+				 */
+				@Override
+				public void run(final multigear.services.ServiceControl serviceControl) {
+						
+					// Wait for hotspot state
+					waitForHotspotState(serviceControl);
+						
+					// Return if hotspot enabled
+					if (!isHotspotEnabled()) {
+						postMessage(multigear.services.Message.HOTSPOT_DISABLED);
+						return;
+					}
+							
+					// Check exception
+					try {
+						// Get Enabler Method
+						@SuppressWarnings("rawtypes")
+						final Class[] argsTypes = new Class[2];
+						argsTypes[0] = WifiConfiguration.class;
+						argsTypes[1] = Boolean.TYPE;
+						final Method setWifiApEnabled = mWifiManager.getClass().getMethod("setWifiApEnabled", argsTypes);
+						// Get Check Method
+						final Method isWifiApEnabled = mWifiManager.getClass().getMethod("isWifiApEnabled", new Class[0]);
+						// Enable and get Result
+						boolean result = (Boolean) setWifiApEnabled.invoke(mWifiManager, null, false);
+						// If Ok
+						if (result) {
+							// Wait for Hotspot started
+							boolean intercepted = SafetyLock.lock(5000, new Interception() {
+									
+								@Override
+								public boolean onIntercept() {
+									if(serviceControl != null && serviceControl.isEndService())
+										return true;
+									boolean enabled = false;
+									try {
+										enabled = (Boolean) isWifiApEnabled.invoke(mWifiManager);
+									} catch(Exception e) {}
+									return !enabled;
+								}
+							});
+							
+							// If Disabled
+							if(intercepted) {
+								postMessage(multigear.services.Message.HOTSPOT_DISABLED);
+								return;
+							}
+						}
+					} catch (Exception e) {
+					}
+					// Disable error
+					postMessage(multigear.services.Message.HOTSPOT_DISABLE_ERROR);
+				}
+			};
+			// Add Service
+			addService(serviceRunnable);
+			// Return Launched Service
+			return serviceRunnable;
 		}
 	}
 	
@@ -2036,7 +2302,7 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 				
 				@Override
 				public boolean onIntercept() {
-					if(serviceControl.isEndService())
+					if(serviceControl != null && serviceControl.isEndService() || Thread.currentThread().isInterrupted())
 						return true;
 					return telephonyManager.getDataState() != TelephonyManager.DATA_CONNECTING;
 				}
@@ -2205,40 +2471,38 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 *         will be returned to instantiate the service launched.
 	 */
 	final private multigear.services.ServiceRunnable enableMobileData(final boolean immediate, final ServiceControl control) {
-		// Lock
-		synchronized (mHotspotLock) {
-			// Immediate Action
-			if (immediate) {
-				// Disable Wifi Immediate
-				disableWifi(true, control);
-				// Enable Mobile Data
-				setMobileData(true, null);
-				// No Service Launched
-				return null;
-			} else {
-				/** Runnable */
-				final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
-					
-					/**
-					 * Runner
-					 */
-					@Override
-					public void run(final multigear.services.ServiceControl serviceControl) {
-						// Disable Wifi Immediate
-						disableWifi(true, serviceControl);
-						// Enable Mobile Data
-						setMobileData(true, serviceControl);
-						// Disabled
-						postMessage(Message.MOBILEDATA_ENABLE);
-					}
-				};
-				// Add Service
-				addService(serviceRunnable);
-				// Return Launched Service
-				return serviceRunnable;
-			}
+		// Immediate Action
+		if (immediate) {
+			// Disable Wifi Immediate
+			disableWifi(true, control);
+			// Enable Mobile Data
+			setMobileData(true, null);
+			// No Service Launched
+			return null;
+		} else {
+			/** Runnable */
+			final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
+				
+				/**
+				 * Runner
+				 */
+				@Override
+				public void run(final multigear.services.ServiceControl serviceControl) {
+					// Disable Wifi Immediate
+					disableWifi(true, serviceControl);
+					// Enable Mobile Data
+					setMobileData(true, serviceControl);
+					// Disabled
+					postMessage(Message.MOBILEDATA_ENABLE);
+				}
+			};
+			// Add Service
+			addService(serviceRunnable);
+			// Return Launched Service
+			return serviceRunnable;
 		}
 	}
+
 	
 	/**
 	 * Enable Mobile Data
@@ -2264,35 +2528,32 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 *         will be null because not released will be no service. Otherwise
 	 *         will be returned to instantiate the service launched.
 	 */
-	final private multigear.services.ServiceRunnable disableMobileData(final boolean immediate) {
-		// Lock
-		synchronized (mHotspotLock) {
-			// Immediate Action
-			if (immediate) {
-				// Enable Mobile Data
-				setMobileData(false, null);
-				// No Service Launched
-				return null;
-			} else {
-				/** Runnable */
-				final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
-					
-					/**
-					 * Runner
-					 */
-					@Override
-					public void run(final multigear.services.ServiceControl serviceControl) {
-						// Enable Mobile Data
-						setMobileData(false, serviceControl);
-						// Disabled
-						postMessage(Message.MOBILEDATA_DISABLED);
-					}
-				};
-				// Add Service
-				addService(serviceRunnable);
-				// Return Launched Service
-				return serviceRunnable;
-			}
+	final private multigear.services.ServiceRunnable disableMobileData(final boolean immediate, final ServiceControl control) {
+		// Immediate Action
+		if (immediate) {
+			// Enable Mobile Data
+			setMobileData(false, control);
+			// No Service Launched
+			return null;
+		} else {
+			/** Runnable */
+			final multigear.services.ServiceRunnable serviceRunnable = new multigear.services.ServiceRunnable() {
+				
+				/**
+				 * Runner
+				 */
+				@Override
+				public void run(final multigear.services.ServiceControl serviceControl) {
+					// Enable Mobile Data
+					setMobileData(false, serviceControl);
+					// Disabled
+					postMessage(Message.MOBILEDATA_DISABLED);
+				}
+			};
+			// Add Service
+			addService(serviceRunnable);
+			// Return Launched Service
+			return serviceRunnable;
 		}
 	}
 	
@@ -2307,20 +2568,17 @@ final public class ServicesManager implements multigear.communication.tcp.suppor
 	 *         will be returned to instantiate the service launched.
 	 */
 	final public multigear.services.ServiceRunnable disableMobileData() {
-		return disableMobileData(mImmediateAction);
+		return disableMobileData(mImmediateAction, null);
 	}
 	
 	/**
 	 * Finish
 	 */
 	final public void finish() {
-		// Finish Communication Manager
+		// Finish extra com manager
 		mComManager.finish();
-		// Lock
-		synchronized (mHotspotLock) {
-			// Interrupt Services Group
-			mServicesGroup.close();
-		}
+		// Interrupt Services Group
+		mServicesGroup.close();
 		// Unregister Receiver
 		unregisterIntents();
 	}

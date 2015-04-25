@@ -174,6 +174,23 @@ final public class TextView extends Widget {
 		mAutomaticScrollTime = GlobalClock.currentTimeMillis();
 		mListView.setScrollPosition(0);
 		writeText();
+		mListView.reset();
+	}
+	
+	/**
+	 * Set Scroll Position
+	 * @param scrollPosition
+	 */
+	final public void setScrollPosition(final float scrollPosition) {
+		mListView.setScrollPosition(scrollPosition);
+	}
+	
+	/**
+	 * Get Scroll Position
+	 * @param scrollPosition
+	 */
+	final public float getScrollPosition() {
+		return mListView.getScrollPosition();
 	}
 	
 	/** 

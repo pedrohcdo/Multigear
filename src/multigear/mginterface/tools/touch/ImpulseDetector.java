@@ -88,8 +88,8 @@ final public class ImpulseDetector {
 	}
 	
 	// Constants
-	final private static int ACCEPT_IMPULSE_TIME = 320;
-	final private static float SCROLL_CONTROL = 25.0f;
+	final private static int ACCEPT_IMPULSE_TIME = 300;
+	final private static float SCROLL_CONTROL = 35.0f;
 	
 	// Final Private Variables
 	final private List<Pointer> mPointers = new ArrayList<Pointer>();

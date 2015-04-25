@@ -1,11 +1,11 @@
 package multigear.communication.tcp.support;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
 import android.util.Log;
-
 import multigear.communication.tcp.base.BaseConnected;
 import multigear.communication.tcp.base.Message;
 import multigear.communication.tcp.base.Utils;
@@ -13,6 +13,7 @@ import multigear.communication.tcp.support.listener.Listener;
 import multigear.communication.tcp.support.objectmessage.ObjectMessage;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.Manager;
+import multigear.mginterface.engine.eventsmanager.GlobalClock;
 
 /**
  * Connection Support
@@ -29,9 +30,10 @@ final public class ComManager {
 	final static public int OBJECT_CODE_PARENTCALIBRATEDATTRIBUTES = -3;
 	
 	// Final Private Variables
-	final private List<BaseConnected> mSupportList;
 	final private List<ServerSupport> mServerSupportList;
 	final private List<ClientSupport> mClientSupportList;
+	
+	
 	final private Manager mManager;
 	final private Vector<SupportMessage> mSupportMessages;
 	final private Vector<MessageInfo> mMessagesInfo;
@@ -41,14 +43,12 @@ final public class ComManager {
 	private int mConnectionPort;
 	private boolean mOpenedFlow;
 	
-	Message[] mMessagesOutput = new Message[20];
-	
 	/*
 	 * Construtor
 	 */
 	public ComManager(final Manager manager) {
+		Log.d("LogTest", "Created CM");
 		mManager = manager;
-		mSupportList = new ArrayList<BaseConnected>();
 		mServerSupportList = new ArrayList<ServerSupport>();
 		mClientSupportList = new ArrayList<ClientSupport>();
 		mSupportMessages = new Vector<SupportMessage>();
@@ -95,62 +95,31 @@ final public class ComManager {
 	}
 	
 	/*
-	 * Adciona um suporte
-	 */
-	final public void addSupport(final BaseConnected baseConnected) {
-		mSupportList.add(baseConnected);
-	}
-	
-	/**
-	 * Get Connection
-	 * @param index
-	 * @return
-	 */
-	final public BaseConnected getConnection(final int index) {
-		return mSupportList.get(index);
-	}
-	
-	/*
-	 * Retorna quantidade de conexões
-	 */
-	final public int getConnectionsSize() {
-		return mSupportList.size();
-	}
-	
-	/*
 	 * Atualiza o suporte
 	 */
 	final public void update() {
-		for (final BaseConnected connection : mSupportList) {
-			updateConnection(connection);
+		// Update Supports
+		for (int i=0; i<mServerSupportList.size(); i++) {
+			ServerSupport serverSupport = mServerSupportList.get(i);
+			serverSupport.update();
+		}
+		for (int i=0; i<mClientSupportList.size(); i++) {
+			ClientSupport clientSupport = mClientSupportList.get(i);
+			clientSupport.update();
+		}
+		// Objects Message
+		while(mMessagesInfo.size() > 0 && mOpenedFlow && mListener != null) {
+			MessageInfo messageInfo = mMessagesInfo.remove(0);
+			mListener.onMessage(messageInfo.getConnectionInfo(), messageInfo.getObjectMessage());
 		}
 		// Safe Messages Read
-		if(mListener != null) {
-			while(mSupportMessages.size() > 0 ) {
-				mListener.onComMessage(mSupportMessages.remove(0));
-			}
-			while(mMessagesInfo.size() > 0 && mOpenedFlow) {
-				MessageInfo messageInfo = mMessagesInfo.remove(0);
-				mListener.onMessage(messageInfo.getConnectionInfo(), messageInfo.getObjectMessage());
-			}
+		while(mSupportMessages.size() > 0 && mListener != null) {
+			SupportMessage message = mSupportMessages.remove(0);
+			mListener.onComMessage(message);
 		}
+
+
 		
-	}
-	
-	/**
-	 * Read Messages.
-	 * Nota: Esta lendo 10 mensagens por frame.
-	 * 
-	 * @param connection
-	 */
-	final private void updateConnection(final BaseConnected connection) {
-		// Read Messages
-		int count = connection.readMessage(mMessagesOutput);
-		// Delivery all messages
-		for(int i=0; i<count; i++) {
-			// Delivery message
-			recvSupportMessage(connection, mMessagesOutput[i]);
-		}
 	}
 	
 	/**
@@ -158,8 +127,28 @@ final public class ComManager {
 	 * @param object
 	 */
 	final public void sendForAll(final ObjectMessage object) {
-		for (final BaseConnected connection : mSupportList) {
-			connection.sendMessage(Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
+		for (int i=0; i<mServerSupportList.size(); i++) {
+			ServerSupport serverSupport = mServerSupportList.get(i);
+			serverSupport.sendForAll(Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
+		}
+		for (int i=0; i<mClientSupportList.size(); i++) {
+			ClientSupport clientSupport = mClientSupportList.get(i);
+			clientSupport.send(Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
+		}
+	}
+	
+	/**
+	 * Send to connection
+	 * @param info
+	 */
+	final public void sendToConnection(final ConnectionInfo info, final ObjectMessage object) {
+		for (int i=0; i<mServerSupportList.size(); i++) {
+			ServerSupport serverSupport = mServerSupportList.get(i);
+			serverSupport.sendToConnection(info, Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
+		}
+		for (int i=0; i<mClientSupportList.size(); i++) {
+			ClientSupport clientSupport = mClientSupportList.get(i);
+			clientSupport.send(info, Utils.CODE_INTERFACE_OBJECTMESSAGE, object.getMessage());
 		}
 	}
 	
@@ -172,6 +161,35 @@ final public class ComManager {
 		final ServerSupport serverSupport = new ServerSupport(this, mManager, name, mConnectionPort);
 		mServerSupportList.add(serverSupport);
 		return serverSupport;
+	}
+	
+	/**
+	 * Close and Delete ServerSupport instance
+	 * @param serverSupport
+	 */
+	final public void deleteServer(final ServerSupport serverSupport) {
+		boolean found = mServerSupportList.remove(serverSupport);
+		if(!found)
+			throw new RuntimeException("This ServerSupport has already been closed or else there .");
+		if(!serverSupport.isClosed())
+			serverSupport.close();
+	}
+	
+	/**
+	 * Get Servers Support Count
+	 * @return
+	 */
+	final public int getServersCount() {
+		return mServerSupportList.size();
+	}
+	
+	/**
+	 * Get Server Support
+	 * @param index
+	 * @return
+	 */
+	final public ServerSupport getServerSupport(final int index) {
+		return mServerSupportList.get(index);
 	}
 	
 	/**
@@ -259,9 +277,13 @@ final public class ComManager {
 	 * Pause ComManager
 	 */
 	final public void pause() {
-		// Finish Supports
-		for (final BaseConnected connected : mSupportList) {
-			connected.pause();
+		for (int i=0; i<mServerSupportList.size(); i++) {
+			ServerSupport serverSupport = mServerSupportList.get(i);
+			serverSupport.pause();
+		}
+		for (int i=0; i<mClientSupportList.size(); i++) {
+			ClientSupport clientSupport = mClientSupportList.get(i);
+			clientSupport.pause();
 		}
 	}
 	
@@ -269,9 +291,13 @@ final public class ComManager {
 	 * Resume ComManager
 	 */
 	final public void resume() {
-		// Finish Supports
-		for (final BaseConnected connected : mSupportList) {
-			connected.resume();
+		for (int i=0; i<mServerSupportList.size(); i++) {
+			ServerSupport serverSupport = mServerSupportList.get(i);
+			serverSupport.resume();
+		}
+		for (int i=0; i<mClientSupportList.size(); i++) {
+			ClientSupport clientSupport = mClientSupportList.get(i);
+			clientSupport.resume();
 		}
 	}
 	
@@ -280,12 +306,16 @@ final public class ComManager {
 	 */
 	final public void finish() {
 		// Finish Servers
-		for (ServerSupport serverSupport : mServerSupportList) {
-			serverSupport.finish();
+		for (int i=0; i<mServerSupportList.size(); i++) {
+			ServerSupport serverSupport = mServerSupportList.get(i);
+			if(!serverSupport.isClosed())
+				serverSupport.close();
 		}
 		// Finish Clients
-		for (ClientSupport clientSupport : mClientSupportList) {
-			clientSupport.finish();
+		for (int i=0; i<mClientSupportList.size(); i++) {
+			ClientSupport clientSupport = mClientSupportList.get(i);
+			if(!clientSupport.isClosed())
+				clientSupport.close();
 		}
 	}
 }

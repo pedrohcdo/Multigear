@@ -33,16 +33,17 @@ public class BaseConnected {
 	
 	// Private Variables
 	private boolean mReadBlocked;
-	List<Message> mMessages = new ArrayList<Message>();
-	List<String> mSends = new ArrayList<String>();
+	
+	final private List<Message> mMessages = new ArrayList<Message>();
+	final private List<String> mSends = new ArrayList<String>();
 	
 	// Worker threads
-	ConducerSendThread mSendThread;
-	ConducerReceiveThread mReceiveThread;
+	private ConducerSendThread mSendThread;
+	private ConducerReceiveThread mReceiveThread;
 	
 	// Security
-	Object mSyncSecurityStackerMessage = new Object();
-	AtomicBoolean mLockSecuritySleep = new AtomicBoolean();
+	final private Object mSyncSecurityStackerMessage = new Object();
+	final private AtomicBoolean mLockSecuritySleep = new AtomicBoolean();
 	
 	
 	/**
@@ -68,6 +69,7 @@ public class BaseConnected {
 			while(true) {
 				// Read All Messages
 				while(mSends.size() > 0) {
+					
 					String send = null;
 					// Sync Security Stacker
 					synchronized(mSyncSecurityStackerMessage) {
@@ -79,8 +81,11 @@ public class BaseConnected {
 					if(send != null) {
 						try {
 							mOut.println(send);
-						} catch (Exception e) {}
+							mOut.flush();
+						} catch (Exception e) {
+						}
 					}
+					
 					// Break if interrupted
 					if(mInterrupted)
 						break;
@@ -102,7 +107,7 @@ public class BaseConnected {
 					
 					// Sleep
 					try {
-						Thread.sleep(100000);
+						Thread.sleep(5000);
 					} catch(InterruptedException e){}
 					
 					// release Lock
@@ -128,8 +133,10 @@ public class BaseConnected {
 				mInterrupted = true;
 				this.interrupt();
 				try {
-					this.join();
-					interrupting = false;
+					this.join(500);
+					if(getState() != State.BLOCKED && getState() != State.TIMED_WAITING && getState() != State.RUNNABLE && getState() != State.WAITING) {
+						interrupting = false;
+					}
 				} catch (InterruptedException e) {}
 			}
 		}
@@ -160,7 +167,8 @@ public class BaseConnected {
 				try {
 					if(mIn.ready())
 						stream = mIn.readLine();
-				} catch(Exception e) {}
+				} catch(IOException e) {
+				}
 				// If valid stream
 				if (stream != null) {
 					Message message = multigear.communication.tcp.base.Utils.translateSocketMessages(stream);
@@ -213,9 +221,20 @@ public class BaseConnected {
 		mReceiveThread = new ConducerReceiveThread();
 		
 		mSendThread.setPriority(Thread.MAX_PRIORITY);
+		mSendThread.setName("Connection Sender: " + name);
 		mReceiveThread.setPriority(Thread.MAX_PRIORITY);
+		mReceiveThread.setName("Connection Receiver: " + name);
+		
 		mSendThread.start();
 		mReceiveThread.start();
+	}
+	
+	/**
+	 * Get Socket
+	 * @return
+	 */
+	final public Socket getSocket() {
+		return mSocket;
 	}
 	
 	/*
@@ -318,6 +337,26 @@ public class BaseConnected {
 	}
 	
 	/**
+	 * Wait for all services<br>
+	 * <b>Note:</b> This method NOT! is thread safe, call only all services is paused
+	 */
+	final public void forceToSendAll() {
+		// Read All Messages
+		while(mSends.size() > 0) {
+			// Get message
+			String send = mSends.remove(0);
+			// If hand on message
+			if(send != null) {
+				try {
+					mOut.println(send);
+					mOut.flush();
+				} catch (Exception e) {
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Pause Connection
 	 * 
 	 */
@@ -336,5 +375,16 @@ public class BaseConnected {
 		mReceiveThread = new ConducerReceiveThread();
 		mSendThread.start();
 		mReceiveThread.start();
+	}
+	
+	/**
+	 * Close connection
+	 */
+	final public void close() {
+		if(!mSocket.isClosed()) {
+			try {
+				mSocket.close();
+			} catch(Exception e) {}
+		}
 	}
 }

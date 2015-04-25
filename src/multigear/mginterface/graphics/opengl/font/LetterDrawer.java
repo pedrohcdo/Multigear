@@ -1,21 +1,15 @@
 package multigear.mginterface.graphics.opengl.font;
 
+import java.lang.annotation.Target;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.graphics.RectF;
-import android.util.Log;
-
 import multigear.general.utils.Color;
+import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
-import multigear.general.utils.buffers.GlobalFloatBuffer;
-import multigear.general.utils.buffers.GlobalIntBuffer;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.graphics.opengl.vbo.VertexBufferObject;
-import multigear.mginterface.graphics.opengl.vbo.VertexBufferObject.Target;
-import multigear.mginterface.graphics.opengl.vbo.VertexBufferObject.Usage;
 
 /**
  * Letter Drawer
@@ -43,8 +37,7 @@ final public class LetterDrawer {
 	private boolean mBegin = false;
 	private Color mColor = Color.WHITE;
 	private List<Script> mScripts = new ArrayList<Script>();
-	protected VertexBufferObject mElementsVBO, mColorsVBO, mTexturesVBO, mIndicesIBO;
-	protected boolean mPrepared = false;
+	protected FloatBuffer mElements, mColors, mTextures;
 	protected int mElementsCount = 0;
 	private FontMap mFontMap;
 	
@@ -59,17 +52,9 @@ final public class LetterDrawer {
 	final protected void clear() {
 		mBegin = false;
 		mScripts.clear();
-		if(mPrepared) {
-			mElementsVBO.destroy();
-			mColorsVBO.destroy();
-			mTexturesVBO.destroy();
-			mIndicesIBO.destroy();
-			mPrepared = false;
-		}
 		mElementsCount = 0;
-		mElementsVBO = null;
-		mTexturesVBO = null;
-		mIndicesIBO = null;
+		mElements = null;
+		mTextures = null;
 	}
 
 	/**
@@ -79,17 +64,9 @@ final public class LetterDrawer {
 		mFontMap = fontMap;
 		mBegin = true;
 		mScripts.clear();
-		if(mPrepared) {
-			mElementsVBO.destroy();
-			mColorsVBO.destroy();
-			mTexturesVBO.destroy();
-			mIndicesIBO.destroy();
-			mPrepared = false;
-		}
 		mElementsCount = 0;
-		mElementsVBO = null;
-		mTexturesVBO = null;
-		mIndicesIBO = null;
+		mElements = null;
+		mTextures = null;
 	}
 
 	/**
@@ -133,7 +110,7 @@ final public class LetterDrawer {
 	final public void drawText(final String text) {
 		drawText(text, new Vector2(0, 0));
 	}
-
+	
 	/**
 	 * Prepare Scripts
 	 */
@@ -149,22 +126,20 @@ final public class LetterDrawer {
 		
 		for (final Script script : mScripts) {
 			final int textLength = script.text.length();
-			vertexElementsLength += textLength * 16;
-			vertexColorsLength += textLength * 16;
-			vertexTextureLength += textLength * 4;
+			vertexElementsLength += textLength * 24;
+			vertexColorsLength += textLength * 24;
+			vertexTextureLength += textLength * 6;
 			indicesLength += textLength * 6;
 		}
 		
 		mElementsCount = indicesLength;
 		
-		FloatBuffer elementsBuffer = GlobalFloatBuffer.obtain(vertexElementsLength);
-		FloatBuffer colorsBuffer = GlobalFloatBuffer.obtain(vertexColorsLength);
-		FloatBuffer textureBuffer = GlobalFloatBuffer.obtain(vertexTextureLength);
-		IntBuffer indicesBuffer = GlobalIntBuffer.obtain(indicesLength);
+		mElements = GeneralUtils.createFloatBuffer(vertexElementsLength);
+		mColors = GeneralUtils.createFloatBuffer(vertexColorsLength);
+		mTextures = GeneralUtils.createFloatBuffer(vertexTextureLength);
+		//IntBuffer indicesBuffer = GeneralUtils.createIntBuffer(indicesLength);
 		
 		// Add all Scripts
-		int indicesCount = 0;
-		
 		for (final Script script : mScripts) {
 			
 			// Uses
@@ -215,62 +190,77 @@ final public class LetterDrawer {
 					 * 
 					 * .    .
 					 */
-					elementsBuffer.put(elementLeft);
-					elementsBuffer.put(elementTop);
-					elementsBuffer.put(textureLeft);
-					elementsBuffer.put(textureTop);
+					mElements.put(elementLeft);
+					mElements.put(elementTop);
+					mElements.put(textureLeft);
+					mElements.put(textureTop);
 					
 					/*
 					 * .   [.]
 					 * 
 					 * .    .
 					 */
-					elementsBuffer.put(elementRight);
-					elementsBuffer.put(elementTop);
-					elementsBuffer.put(textureRight);
-					elementsBuffer.put(textureTop);
+					mElements.put(elementRight);
+					mElements.put(elementTop);
+					mElements.put(textureRight);
+					mElements.put(textureTop);
 					
 					/*
 					 * .    .
 					 * 
 					 * .   [.]
 					 */
-					elementsBuffer.put(elementRight);
-					elementsBuffer.put(elementBottom);
-					elementsBuffer.put(textureRight);
-					elementsBuffer.put(textureBottom);
+					mElements.put(elementRight);
+					mElements.put(elementBottom);
+					mElements.put(textureRight);
+					mElements.put(textureBottom);
 					
 					/*
-					 * .    .
-					 * 
 					 *[.]   .
+					 * 
+					 * .    .
 					 */
-					elementsBuffer.put(elementLeft);
-					elementsBuffer.put(elementBottom);
-					elementsBuffer.put(textureLeft);
-					elementsBuffer.put(textureBottom);
+					mElements.put(elementLeft);
+					mElements.put(elementTop);
+					mElements.put(textureLeft);
+					mElements.put(textureTop);
+					
+					/*
+					 * .    .
+					 * 
+					 * [.]  .
+					 */
+					mElements.put(elementLeft);
+					mElements.put(elementBottom);
+					mElements.put(textureLeft);
+					mElements.put(textureBottom);
+					
+					/*
+					 * .    .
+					 * 
+					 * .   [.]
+					 */
+					mElements.put(elementRight);
+					mElements.put(elementBottom);
+					mElements.put(textureRight);
+					mElements.put(textureBottom);
+				
 					
 					// Colors
-					for(int i=0; i<4; i++) {
-						colorsBuffer.put(color.getRed());
-						colorsBuffer.put(color.getGreen());
-						colorsBuffer.put(color.getBlue());
-						colorsBuffer.put(color.getAlpha());
+					for(int i=0; i<6; i++) {
+						mColors.put(color.getRed());
+						mColors.put(color.getGreen());
+						mColors.put(color.getBlue());
+						mColors.put(color.getAlpha());
 					}
 					
 					// Texture Handle
-					textureBuffer.put(layer.mId);
-					textureBuffer.put(layer.mId);
-					textureBuffer.put(layer.mId);
-					textureBuffer.put(layer.mId);
-
-					// Add Indices
-					indicesBuffer.put(indicesCount);
-					indicesBuffer.put(indicesCount+1);
-					indicesBuffer.put(indicesCount+2);
-					indicesBuffer.put(indicesCount);
-					indicesBuffer.put(indicesCount+3);
-					indicesBuffer.put(indicesCount+2);
+					mTextures.put(layer.mId);
+					mTextures.put(layer.mId);
+					mTextures.put(layer.mId);
+					mTextures.put(layer.mId);
+					mTextures.put(layer.mId);
+					mTextures.put(layer.mId);
 					
 					if(mFontMap.mAttributes.isLinear())
 						x += layer.mMaxWidth;
@@ -279,59 +269,26 @@ final public class LetterDrawer {
 					
 					x += padd.x;
 				} else {
+					
 					// Colors
 					for(int i=0; i<4; i++) {
-						elementsBuffer.put(0);
-						elementsBuffer.put(0);
-						elementsBuffer.put(0);
-						elementsBuffer.put(0);
-						colorsBuffer.put(0);
-						colorsBuffer.put(0);
-						colorsBuffer.put(0);
-						colorsBuffer.put(0);
-						textureBuffer.put(0);
+						mElements.put(0);
+						mElements.put(0);
+						mElements.put(0);
+						mElements.put(0);
+						mColors.put(0);
+						mColors.put(0);
+						mColors.put(0);
+						mColors.put(0);
+						mTextures.put(0);
 					}
-					
-					// Add Indices
-					indicesBuffer.put(indicesCount);
-					indicesBuffer.put(indicesCount+1);
-					indicesBuffer.put(indicesCount+2);
-					indicesBuffer.put(indicesCount);
-					indicesBuffer.put(indicesCount+3);
-					indicesBuffer.put(indicesCount+2);
 				}
-				
-				// Move Indices
-				indicesCount += 4;
 			}
 		}
 		
 		// Finish
-		elementsBuffer.position(0);
-		colorsBuffer.position(0);
-		textureBuffer.position(0);
-		indicesBuffer.position(0);
-		// Create VBOs
-		VertexBufferObject evbo = VertexBufferObject.create(Target.ARRAY_BUFFER, Usage.STATIC_DRAW);
-		VertexBufferObject cvbo = VertexBufferObject.create(Target.ARRAY_BUFFER, Usage.STATIC_DRAW);
-		VertexBufferObject tvbo = VertexBufferObject.create(Target.ARRAY_BUFFER, Usage.STATIC_DRAW);
-		VertexBufferObject ibo = VertexBufferObject.create(Target.ELEMENT_ARRAY_BUFFER, Usage.STATIC_DRAW);
-		// Set VBOs Buffers
-		evbo.setBuffer(elementsBuffer, vertexElementsLength);
-		cvbo.setBuffer(colorsBuffer, vertexColorsLength);
-		tvbo.setBuffer(textureBuffer, vertexTextureLength);
-		ibo.setBuffer(indicesBuffer, indicesLength);
-		// Release Buffers
-		GlobalFloatBuffer.release(elementsBuffer);
-		GlobalFloatBuffer.release(colorsBuffer);
-		GlobalFloatBuffer.release(textureBuffer);
-		GlobalIntBuffer.release(indicesBuffer);
-		// Set VBO
-		mElementsVBO = evbo;
-		mColorsVBO = cvbo;
-		mTexturesVBO = tvbo;
-		mIndicesIBO = ibo;
-		// Prepared
-		mPrepared = true;
+		mElements.position(0);
+		mColors.position(0);
+		mTextures.position(0);
 	}
 }

@@ -32,17 +32,14 @@ final public class Message {
 	final static public int HOTSPOT_ENABLE_ERROR = 10;
 	/** Hotspot Disable Error */
 	final static public int HOTSPOT_DISABLE_ERROR = 11;
-	/** Services Data Restored. */
-	final static public int DATA_SERVICES_RESTORED = 12;
-	/** State Restored. */
-	final static public int STATE_RESTORED = 13;
 	/** Mobile Data Enabled. */
-	final static public int MOBILEDATA_ENABLE = 14;
+	final static public int MOBILEDATA_ENABLE = 12;
 	/** Mobile Data Disabled. */
-	final static public int MOBILEDATA_DISABLED = 15;
+	final static public int MOBILEDATA_DISABLED = 13;
 	/** Extra service result. */
-	final static public int DISCOVERY_RESULT_AVAILABLE = 16;
-	
+	final static public int DISCOVERY_RESULT_AVAILABLE = 14;
+	/** Services Restored */
+	final static public int SERVICES_STATE_RESTORED = 15;
 	
 	// Final Private Variables
 	final private int mMessageCode;

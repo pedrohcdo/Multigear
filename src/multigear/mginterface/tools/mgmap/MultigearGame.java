@@ -101,10 +101,14 @@ public class MultigearGame {
 	final private static int CONNECTION_REQUEST = 0;
 	final private static int CONNECTION_REQUEST_ACCEPTED = 1;
 	final private static int CONNECTION_REQUEST_REJECTED_PLAYER = 2;
+	// :)
+	final private static int TIMESTAMP_SYNC = 3;
+	final private static int TIMESTAMP_RESULT = 4;
+	final private static int TIMESTAMP_END = 5;
 	
-	final private static int GAME_OBJECT_MESSAGE = 3;
-	final private static int GAME_VARIABLES_MESSAGE = 4;
-	final private static int GAME_MONITOR_MESSAGE = 5;
+	final private static int GAME_OBJECT_MESSAGE = 6;
+	final private static int GAME_VARIABLES_MESSAGE = 7;
+	final private static int GAME_MONITOR_MESSAGE = 8;
 	
 	final public static int NO_ERROR = 0;
 	/** Same Players in two side. */
@@ -127,6 +131,14 @@ public class MultigearGame {
 	private boolean mConnecting = false;
 	private Player mPlayer;
 	private int mErrorCode;
+	
+	
+	private int mTimeStampSyncCount = 0;
+	private List<long[]> mTimeStampList = new ArrayList<long[]>();
+	private int mTimeStampSyncResult = -1;
+	private long mTimeStampSyncResultDiff = Long.MAX_VALUE;
+	private long mTimeStampSyncResultP1 = 0;
+	private long mTimeStampSyncResultP2 = 0;
 	
 	/**
 	 * Constructor
@@ -174,6 +186,12 @@ public class MultigearGame {
 		mConnecting = true;
 		mComManager.sendForAll(ObjectMessage.create(mComCode).add(CONNECTION_REQUEST).add(mPlayer.ordinal()).build());
 		mErrorCode = 0;
+		mTimeStampSyncCount = 0;
+		mTimeStampSyncResult = -1;
+		mTimeStampSyncResultDiff = Long.MAX_VALUE;
+		mTimeStampSyncResultP1 = 0;
+		mTimeStampSyncResultP2 = 0;
+		mTimeStampList.clear();
 	}
 	
 	/**
@@ -208,6 +226,9 @@ public class MultigearGame {
 			final ParentAttributes attributes = (ParentAttributes) message.Object;
 			final float thisScreenY = mScene.getPhysicalScreenSize().y;
 			final float parentScreenY = attributes.getPhysicalScreenSize().y;
+			Log.d("LogTest", "This Screen Size: " + thisScreenY);
+			Log.d("LogTest", "Parent Screen Size: " + parentScreenY);
+			
 			Adjust adjust = Adjust.NOT_SET;
 			if(thisScreenY > parentScreenY) {
 				mScene.setBaseDpi(attributes.Dpi);
@@ -275,7 +296,7 @@ public class MultigearGame {
 			}
 			// Connected
 			mConnectionFinish = true;
-			mGameState.prepare(mPlayer, mapSize, screenDivision, adjust, attributes);
+			mGameState.prepare(mPlayer, mapSize, screenDivision, adjust, attributes, mTimeStampSyncResultP1, mTimeStampSyncResultP2);
 			mDuoMapListener.onConnect(true);
 			break;
 		}
@@ -308,9 +329,51 @@ public class MultigearGame {
 					// Connected
 					mConnecting = false;
 					mConnectionEstablished = true;
-					// Send PrepareAttributes and awaits feedback to end connect
+					// Send
+					if(mPlayer == Player.Player1) {
+						mComManager.sendForAll(ObjectMessage.create(mComCode).add(TIMESTAMP_SYNC).add(System.nanoTime()).build());
+					}
+				}
+				break;
+			case TIMESTAMP_SYNC:
+				final long timeStamp = (Long) objectMessage.getValue(1);
+				final long thisTimeStamp = System.nanoTime();
+				mTimeStampList.add(new long[] {timeStamp, thisTimeStamp});
+				mComManager.sendForAll(ObjectMessage.create(mComCode).add(TIMESTAMP_RESULT).add(timeStamp).add(thisTimeStamp).build());
+				break;
+			case TIMESTAMP_RESULT:
+				final long newThisTime = System.nanoTime();
+				final long receivedThis = (Long) objectMessage.getValue(1);
+				final long receivedOther = (Long) objectMessage.getValue(2);
+				final long diff = (newThisTime-receivedThis);
+				if(diff < mTimeStampSyncResultDiff) {
+					mTimeStampSyncResult = mTimeStampSyncCount;
+					mTimeStampSyncResultDiff = diff;
+					mTimeStampSyncResultP1 = receivedThis;
+					mTimeStampSyncResultP2 = receivedOther;
+				}
+				mTimeStampSyncCount++;
+				// Send Again
+				if((mTimeStampSyncCount <= 25 || mTimeStampSyncResultDiff >= 18000000) && mTimeStampSyncCount <= 100) {
+					try {
+						Thread.sleep(2);
+					} catch (Exception e) {}
+					mComManager.sendForAll(ObjectMessage.create(mComCode).add(TIMESTAMP_SYNC).add(System.nanoTime()).build());
+				} else {
+					// End
+					mComManager.sendForAll(ObjectMessage.create(mComCode).add(TIMESTAMP_END).add(mTimeStampSyncResult).build());
 					mComManager.prepareParentsAttributes();
 				}
+				break;
+			// End sync
+			case TIMESTAMP_END:
+				final int resultId = (Integer) objectMessage.getValue(1);
+				long[] result = mTimeStampList.get(resultId);
+				// Set Result
+				mTimeStampSyncResultP1 = result[0];
+				mTimeStampSyncResultP2 = result[1];
+				// Prepare Attributes
+				mComManager.prepareParentsAttributes();
 				break;
 			// Connection Rejected
 			case CONNECTION_REQUEST_REJECTED_PLAYER:

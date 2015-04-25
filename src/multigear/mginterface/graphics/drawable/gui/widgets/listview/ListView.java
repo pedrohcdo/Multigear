@@ -118,8 +118,8 @@ final public class ListView extends Widget {
 					// Cancel items holder touch
 					MotionEvent cancell = MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0, 0, 0);
 					if(mSelectListAdapter != null) {
-						for(final ItemHolder item : mItemsHolder) {
-							item.touch(cancell);
+						for(int i=0; i<mItemsHolder.length; i++) {
+							mItemsHolder[i].touch(cancell);
 						}
 					}
 					cancell.recycle();
@@ -152,8 +152,8 @@ final public class ListView extends Widget {
 					// Cancel items holder touch
 					MotionEvent cancell = MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0, 0, 0);
 					if(mSelectListAdapter != null) {
-						for(final ItemHolder item : mItemsHolder) {
-							item.touch(cancell);
+						for(int i=0; i<mItemsHolder.length; i++) {
+							mItemsHolder[i].touch(cancell);
 						}
 					}
 					cancell.recycle();
@@ -243,7 +243,7 @@ final public class ListView extends Widget {
 
 	// Constants
 	final private float MIN_VERTICAL_SCROLL_SIZE = 30;
-	final private float PRESS_MARK = 25;
+	final private float PRESS_MARK = 10;
 	
 	final private int VERTICAL_SCROLL_ANIM_APPEAR = 0;
 	final private int VERTICAL_SCROLL_ANIM_DISAPPEAR = 1;
@@ -343,12 +343,44 @@ final public class ListView extends Widget {
 	}
 	
 	/**
+	 * Reset
+	 */
+	final public void reset() {
+		mImpulseDetector.reset();
+		mPullDetector.reset();
+		mTouchEventsDetector.reset();
+		mPull = 0;
+		mPullStarted = false;
+		mClickLock = true;
+		mClickLockPhase = 0;
+		mClickLockWait = 0;
+		mCursorLayer.setOpacity(0);
+		reshapeScroll();
+		setScrollAnim(VERTICAL_SCROLL_ANIM_DISAPPEAR);
+		mScrollLayer.getAnimationStack().clear();
+		mScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(1, 0, 0));
+		mScrollLayer.getAnimationStack().start();
+		mPointers.clear();
+	}
+	
+	/**
 	 * Set Scroll position
 	 */
 	final public void setScrollPosition(float position) {
 		mScroll = Math.max(0, Math.min(position, getMaxScroll())) * -1;
 		mLastScroll = mScroll;
 		updatePosition();
+		if(mScrollable)
+			setScrollAnim(VERTICAL_SCROLL_ANIM_APPEAR);
+	}
+	
+	/**
+	 * Get Index
+	 * 
+	 * @return
+	 */
+	final public int getIndex() {
+		return mIndex;
 	}
 	
 	/**

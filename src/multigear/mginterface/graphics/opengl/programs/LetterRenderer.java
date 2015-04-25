@@ -121,10 +121,10 @@ final public class LetterRenderer extends BaseProgram {
 	 * @param elementsBuffer
 	 * @param textureBuffer
 	 */
-	final public void setVBO(final VertexBufferObject elementsVBO, final VertexBufferObject colorsVBO, final VertexBufferObject texturesVBO) {
-		elementsVBO.use(mElementVerticesHandle, 4, false, 0, 0);
-		colorsVBO.use(mColorsVerticesHandle, 4, false, 0, 0);
-		texturesVBO.use(mTextureVerticesHandle, 1, false, 0, 0);
+	final public void setBuffers(final FloatBuffer elements, final FloatBuffer colors, final FloatBuffer textures) {
+		GLES20.glVertexAttribPointer(mElementVerticesHandle, 4, GLES20.GL_FLOAT, false, 0, elements);
+		GLES20.glVertexAttribPointer(mColorsVerticesHandle, 4, GLES20.GL_FLOAT, false, 0, colors);
+		GLES20.glVertexAttribPointer(mTextureVerticesHandle, 1, GLES20.GL_FLOAT, false, 0, textures);
 	}
 	
 	/**
@@ -133,31 +133,25 @@ final public class LetterRenderer extends BaseProgram {
 	 * being used.
 	 */
 	@SuppressLint("NewApi")
-	final public void render(final VertexBufferObject indicesVBO, final int count) {
-
-
-		// Bind Indices
-		indicesVBO.bind();
+	final public void render(final int count) {
 		// Enable Vertexes
 		GLES20.glEnableVertexAttribArray(mElementVerticesHandle);
 		GLES20.glEnableVertexAttribArray(mColorsVerticesHandle);
 		GLES20.glEnableVertexAttribArray(mTextureVerticesHandle);
+		
 		// Set Texture
 		GLES20.glUniform1i(mTextureSampleHandle1, 0);
 		GLES20.glUniform1i(mTextureSampleHandle2, 1);
 		GLES20.glUniform1i(mTextureSampleHandle3, 2);
 		GLES20.glUniform1i(mTextureSampleHandle4, 3);
+		
 		// Draw Triangles
-		GLES20.glDrawElements(GLES20.GL_TRIANGLES, count, GLES20.GL_UNSIGNED_INT, 0);
-
-		//Log.d("LogTest", "Handle: " + mElementVerticesHandle);
-
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, count);
+		
 		// Disable Attributes
 		GLES20.glDisableVertexAttribArray(mElementVerticesHandle);
 		GLES20.glDisableVertexAttribArray(mColorsVerticesHandle);
 		GLES20.glDisableVertexAttribArray(mTextureVerticesHandle);
-		// Unbind Indices
-		indicesVBO.unbind();
 	}
 	
 	/**

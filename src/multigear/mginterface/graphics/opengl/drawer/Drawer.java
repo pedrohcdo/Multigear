@@ -86,9 +86,9 @@ final public class Drawer {
 	public Drawer(final Scene room, final Renderer renderer) {
 		mMainScene = room;
 		mTextureContainer = new TextureContainer(this, mMainScene);
-		mMatrixRow = new WorldMatrix(10);
-		mDrawingStates = new DrawingState[10];
-		for(int i=0; i<10; i++)
+		mMatrixRow = new WorldMatrix(20);
+		mDrawingStates = new DrawingState[20];
+		for(int i=0; i<20; i++)
 			mDrawingStates[i] = new DrawingState();
 		mTransformMatrix = new float[16];
 		mRenderer = renderer;

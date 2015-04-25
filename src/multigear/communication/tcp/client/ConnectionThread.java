@@ -3,7 +3,9 @@ package multigear.communication.tcp.client;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 import android.util.Log;
 
@@ -30,6 +32,7 @@ final public class ConnectionThread extends Thread {
 	 * Construtor
 	 */
 	public ConnectionThread(final multigear.communication.tcp.client.Client client, final multigear.communication.tcp.client.ServersList.ServerInfo serverInfo, final int port, final int attempts) {
+		setName("Client Connection");
 		mClient = client;
 		mServerInfo = serverInfo;
 		mPort = port;
@@ -46,9 +49,10 @@ final public class ConnectionThread extends Thread {
 			if(Thread.currentThread().isInterrupted() || mClosed)
 				break;
 			try {
-				final Socket socket = new Socket(mServerInfo.Address, mPort);
+				final Socket socket = new Socket();
+				socket.connect(new InetSocketAddress(mServerInfo.Address, mPort), 2000);
 				socket.setTcpNoDelay(true);
-				socket.setSoTimeout(0);
+				
 				if(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE > 0)
 					socket.setReceiveBufferSize(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE);
 				if(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE > 0)

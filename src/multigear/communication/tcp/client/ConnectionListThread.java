@@ -25,6 +25,8 @@ public class ConnectionListThread extends Thread {
 	 * Constutor
 	 */
 	public ConnectionListThread(final multigear.communication.tcp.client.Client client, final int connectionAttempts) {
+		setName("Client Listing");
+		
 		mClient = client;
 		mPort = client.getConnectionPort();
 		WifiManager wifiManager = (WifiManager) client.getActivity().getSystemService(Context.WIFI_SERVICE);
@@ -47,8 +49,10 @@ public class ConnectionListThread extends Thread {
 				break;
 			final multigear.communication.tcp.client.ConnectionAttempt connectionAttempt = new multigear.communication.tcp.client.ConnectionAttempt(host, mPort);
 			final multigear.communication.tcp.client.ConnectionAttempt.Result result = connectionAttempt.attemptingConnect();
-			if(result.getSuccess())
+			if(result.getSuccess()) {
 				serverList.addServerInfo(result.getServerName(), host);
+				break;
+			}
 		}
 		mClient.releaseListThread();
 		mClient.onListed(serverList);

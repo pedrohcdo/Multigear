@@ -1,6 +1,9 @@
 package multigear.mginterface.engine.servicessuport;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
@@ -13,6 +16,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -54,7 +58,7 @@ public class SupportService extends Service {
 	private volatile boolean mEngineInitialized;
 	private volatile boolean mEngineResumed;
 	private boolean mNotificationShowed;
-	private WifiLock mWifiLock;
+	private boolean mDestroyedBySystem;
 	
 	// Used for extra protection of support thread process used to kill app
 	private boolean mAlive;
@@ -160,33 +164,77 @@ public class SupportService extends Service {
 	 * @return
 	 */
 	final protected boolean isEngineRunning() {
-		ActivityManager activityService = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-		List<ActivityManager.RunningTaskInfo> runningTaskInfoList = activityService.getRunningTasks(Integer.MAX_VALUE);
-		for (final RunningTaskInfo runningTaskInfo : runningTaskInfoList) {
-			final ComponentName componentName = runningTaskInfo.baseActivity;
-			if (componentName.getPackageName().equals(getPackageName()))
+		if(mDestroyedBySystem)
+			return false;
+		String[] activePackages;
+		activePackages = getActivePackages();
+		for (String activePackage : activePackages)
+			if (activePackage.equals("com.createlier.pongduo"))
 				return true;
-		}
+		activePackages = getActivePackagesCompat();
+		for (String activePackage : activePackages)
+			if (activePackage.equals("com.createlier.pongduo"))
+				return true;
 		return false;
+	}
+	
+	/**
+	 * Get Active Packages Compat
+	 * @return
+	 */
+	final private String[] getActivePackagesCompat() {
+		ActivityManager activityService = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+		final List<ActivityManager.RunningTaskInfo> taskInfo = activityService.getRunningTasks(Integer.MAX_VALUE);
+		final String[] activePackages = new String[taskInfo.size()];
+		int i = 0;
+		for(ActivityManager.RunningTaskInfo info : taskInfo) {
+			if(info.numRunning > 0)
+				activePackages[i++] = info.topActivity.getPackageName();
+		}
+		return activePackages;
+	}
+	
+	/**
+	 * Get Active Packages for KITKAT or Up
+	 * @return
+	 */
+	String[] getActivePackages() {
+		final Set<String> activePackages = new HashSet<String>();
+		ActivityManager activityService = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+		final List<ActivityManager.RunningAppProcessInfo> processInfos = activityService.getRunningAppProcesses();
+		for (ActivityManager.RunningAppProcessInfo processInfo : processInfos) {
+			if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+				activePackages.addAll(Arrays.asList(processInfo.pkgList));
+			}
+		}
+		return activePackages.toArray(new String[activePackages.size()]);
 	}
 	
 	/**
 	 * Prepare Engine
 	 */
 	final public void enginePrepare() {
+		// For interrupt destroyer loop
+		mEngineInitialized = false;
 		// Kill all Support Thread
 		mSupportThreadGroup.killOrWaitSupportThread(SupportThread.SUPPORT_DESROYER);
 	}
 	
 	/**
+	 * When Engine Destroyed
+	 */
+	final public void engineDestroyed() {
+		mDestroyedBySystem = true;
+	}
+	
+	/**
 	 * Called when the engine was recently initialized.
 	 */
-	final public void engineInitialized(final WifiLock wifiLock) {
+	final public void engineInitialized() {
 		// Set Engine Initialized
 		mDedicatedServices.saveState();
-		mWifiLock = wifiLock;
-		mWifiLock.acquire();
 		mEngineInitialized = true;
+		mDestroyedBySystem = false;
 	}
 	
 	/**
@@ -213,9 +261,6 @@ public class SupportService extends Service {
 	final public void engineDestroyedInternal(final SupportThread supportThread) {
 		// Destroy if initialized
 		if (mEngineInitialized) {
-			
-			// Release WifiLock
-			mWifiLock.release();
 			
 			// Engine destroyed
 			mEngineInitialized = false;

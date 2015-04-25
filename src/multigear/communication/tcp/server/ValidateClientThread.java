@@ -67,6 +67,7 @@ final public class ValidateClientThread extends Thread {
 		mServer = server;
 		mServerSocket = server.getServerSocket();
 		mClosed = false;
+		setName("Server Client Holder");
 	}
 	
 	/*
@@ -82,15 +83,16 @@ final public class ValidateClientThread extends Thread {
 		String name = "--";
 		
 		// Labeled loop
-		start: while ((!Thread.currentThread().isInterrupted() && !mClosed)) {
+		start: while ((!Thread.currentThread().isInterrupted() && !mClosed && !mServerSocket.isClosed())) {
 			try {
 				if(multigear.general.utils.KernelUtils.DEBUG)
 					Log.d("LogTest", "Server: Wait For Client ..");
 				
+
 				// Wait a new Client
 				client = mServerSocket.accept();
 				client.setTcpNoDelay(true);
-				client.setSoTimeout(1000);
+				
 				if(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE > 0)
 					client.setReceiveBufferSize(multigear.communication.tcp.base.Utils.SOCKET_RECV_BUFFER_SIZE);
 				if(multigear.communication.tcp.base.Utils.SOCKET_SEND_BUFFER_SIZE > 0)
@@ -153,14 +155,13 @@ final public class ValidateClientThread extends Thread {
 			}
 			
 		}
-		
-		// Release Server Lock
-		mServer.releaseLock();
 				
 		// If client is connected
 		if (connected) {
 			multigear.communication.tcp.base.BaseConnected connectedClient = new multigear.communication.tcp.base.BaseConnected(mServer.getActivity(), name, client, in, out);
 			mServer.onClientConnected(connectedClient);
+		} else {
+			mServer.onClientConnected(null);
 		}
 		
 		
@@ -172,6 +173,7 @@ final public class ValidateClientThread extends Thread {
 	 */
 	final public void close() {
 		mClosed = true;
+		this.interrupt();
 		boolean flag = false;
 		while (!flag) {
 			try {
@@ -188,13 +190,14 @@ final public class ValidateClientThread extends Thread {
 	final private Result getClientCommand(final BufferedReader bufferedReader) {
 		
 		final long startedTime = System.currentTimeMillis();
-		while ((System.currentTimeMillis() - startedTime) <= 10000) {
+		while ((System.currentTimeMillis() - startedTime) <= 1000) {
 			if(multigear.general.utils.KernelUtils.DEBUG)
 				Log.d("LogTest", "Server: Started get Messages Client.");
 			
 			String line = "";
 			try {
-				line = bufferedReader.readLine();
+				if(bufferedReader.ready())
+					line = bufferedReader.readLine();
 			} catch (IOException e) {
 				if(multigear.general.utils.KernelUtils.DEBUG)
 					Log.d("LogTest", "Server: Error on readline. Exception => " + e.getMessage());

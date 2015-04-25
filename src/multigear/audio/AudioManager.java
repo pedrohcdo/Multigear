@@ -6,6 +6,7 @@ import java.util.List;
 
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.util.Log;
 
 /**
  * Audio
@@ -47,6 +48,7 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 	 */
 	@Override
 	public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+		Log.d("LogTest", "Loaded: " + sampleId + " " + status);
 		final PreCache.PreArchive preArchive = mPreCache.getAndRemovePreArchive(sampleId);
 		if(preArchive == null){
 			multigear.general.utils.KernelUtils.error(mManager.getEngine().getActivity(), "AudioSupport: An unexpected error occurred loading an audio file.", 0x12);
@@ -126,7 +128,9 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 				 */
 				@Override
 				public void run() {
+					
 					final int audioId = mCache.getArchiveId(resourceId);
+					Log.d("LogTest", "Playing: " + audioId);
 					mStreamsSeId.add(mSoundPool.play(audioId, lastLeftVol, lastRightVol, 1, loop, lastRate));
 				}
 			});

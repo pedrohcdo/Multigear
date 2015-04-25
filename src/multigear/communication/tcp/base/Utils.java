@@ -28,11 +28,13 @@ final public class Utils {
 	
 	/** Used by ComSupport */
 	final static public int CODE_INTERFACE_OBJECTMESSAGE = -20;
+	final static public int CODE_INTERFACE_KEEPALIVE = -60;
+	final static public int CODE_INTERFACE_PAUSED_AND_CLOSED =  -61;
+	final static public int CODE_INTERFACE_CLOSED =  -62;
 	
 	// Final Private Variables
-	final static private Pattern mPattern = Pattern.compile("\\[[ ]*code[ ]*\\:[ ]*((?:-|\\+)?\\d*)[ ]*\\|[ ]*msg[ ]*\\:[ ]*([^\\]]*)\\]");
-	final static public int SOCKET_SEND_BUFFER_SIZE = 8192;
-	final static public int SOCKET_RECV_BUFFER_SIZE = 8192;
+	final static public int SOCKET_SEND_BUFFER_SIZE = 7000;
+	final static public int SOCKET_RECV_BUFFER_SIZE = 100000;
 	
 
 	/*

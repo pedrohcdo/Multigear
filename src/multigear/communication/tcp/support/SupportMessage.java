@@ -31,13 +31,21 @@ final public class SupportMessage {
 	 */
 	final static public int SERVER_CLIENTCONNECTED = 0x3;
 	/** 
+	 * Client disconnected to Server.<br>
+	 * Cast to ConnectionInfo to get client info.
+	 * <p>
+	 * <b>Example:</b><br>
+	 * (ConnectionInfo) message.Object
+	 */
+	final static public int SERVER_CLIENTDISCONNECTED = 0x4;
+	/** 
 	 * Client Listed Servers.<br>
 	 * Cast to ServersList to acess list.
 	 * <p>
 	 * <b>Example:</b><br>
 	 * (ServersList) message.Object
 	 */
-	final static public int CLIENT_LISTEDSERVERS = 0x4;
+	final static public int CLIENT_LISTEDSERVERS = 0x5;
 	/**
 	 * Cliente has been connected to Server.<br>
 	 * Cast to ConnectionInfo to get server info.
@@ -45,11 +53,16 @@ final public class SupportMessage {
 	 * <b>Example:</b><br>
 	 * (ConnectionInfo) message.Object
 	 */
-	final static public int CLIENT_CONNECTEDTOSERVER = 0x5;
+	final static public int CLIENT_CONNECTEDTOSERVER = 0x6;
 	/**
 	 * Client connect to server failed.
 	 */
-	final static public int CLIENT_CONNECTFAILED = 0x6;
+	final static public int CLIENT_CONNECTFAILED = 0x7;
+	/**
+	 * Client disconnected
+	 * 
+	 */
+	final static public int CLIENT_DISCONNECTED = 0x8;
 	/**
 	 * Client/Server prepared attributes.<br>
 	 * Cast to ClientAttributes to get client/server attributes.
@@ -58,7 +71,7 @@ final public class SupportMessage {
 	 * (ParentAttributes) message.Object
 	 * 
 	 */
-	final static public int PARENT_PREPAREDATTRIBUTES = 0x7;
+	final static public int PARENT_PREPAREDATTRIBUTES = 0x9;
 	/**
 	 * Client/Server prepared attributes.<br>
 	 * Cast to ClientAttributes to get client/server attributes.
@@ -66,7 +79,7 @@ final public class SupportMessage {
 	 * <b>Example:</b><br>
 	 * (ParentAttributes) message.Object
 	 */
-	final static public int PARENT_CALIBRATEDATTRIBUTES = 0x8;
+	final static public int PARENT_CALIBRATEDATTRIBUTES = 0x10;
 	
 	
 	/* Final Public Variables */

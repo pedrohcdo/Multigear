@@ -554,4 +554,11 @@ final public class ParticlesGroup implements Drawable, Component {
 		else
 			mParticles.add(0, particle);
 	}
+	
+	/**
+	 * Clear Particles
+	 */
+	final public void clear() {
+		mParticles.clear();
+	}
 }

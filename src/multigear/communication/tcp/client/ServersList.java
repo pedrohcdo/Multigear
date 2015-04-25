@@ -19,7 +19,7 @@ final public class ServersList {
 	 *
 	 * Property Createlier.
 	 */
-	final public class ServerInfo {
+	final public static class ServerInfo {
 		
 		// Final Public Variables
 		final public String Name;

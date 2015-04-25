@@ -1,8 +1,12 @@
 package multigear.mginterface.graphics.drawable.gui.widgets;
 
+import multigear.audio.AudioManager;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.drawable.sprite.Sprite;
 import multigear.mginterface.graphics.drawable.widget.Widget;
+
+import com.example.multigearlibrary.R;
+
 
 /**
  * Button
@@ -37,16 +41,36 @@ public class Button extends Widget {
 	
 	// Final private Variables
 	final private Sprite mLayer = new Sprite();
+	final private AudioManager mAudioManager;
+	
+	
+	private boolean mAudioPlayed = false;
+	private int mRawId;
+	
+	/*
+	 * Construtor
+	 */
+	public Button(final AudioManager manager, int rawId) {
+		mAudioManager = manager;
+		setStaticTouch(true);
+		Animation.Press = null;
+		Animation.Release = null;
+		mAudioPlayed = false;
+		mRawId = rawId;
+		addComponent(mLayer);
+	}
 	
 	/*
 	 * Construtor
 	 */
 	public Button() {
+		mAudioManager = null;
 		setStaticTouch(true);
 		Animation.Press = null;
 		Animation.Release = null;
 		addComponent(mLayer);
 	}
+	
 	
 	/*
 	 * Estado Alterado
@@ -92,6 +116,19 @@ public class Button extends Widget {
 	@Override
 	protected void onPress() {
 		pressAnimation();
+		if(mAudioManager != null) {
+			mAudioPlayed = true;
+			mAudioManager.preConfig(0.7f, 0.7f, 1.1f);
+			mAudioManager.playEffx(mRawId, 0);
+		}
+	}
+	
+	/**
+	 * Check if audio really played
+	 * @return
+	 */
+	final public boolean isAudioPlayed() {
+		return mAudioPlayed;
 	}
 	
 	/*

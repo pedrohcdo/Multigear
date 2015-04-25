@@ -58,6 +58,7 @@ final public class Particle {
 	private boolean mFixedSpace = false;
 	private Vector2 mForces = new Vector2(0, 0);
 	private Vector2 mAccelerations = new Vector2(0, 0);
+	private Vector2 mFinalPosition = new Vector2();
 	
 	// Runn Variables
 	private long mCreatedTime;
@@ -251,7 +252,7 @@ final public class Particle {
 	final protected Vector2 getFinalPosition() {
 		if(mModifier != null)
 			return mModifier.getPosition(mTimeDelta);
-		return mPosition;
+		return mFinalPosition;
 	}
 	
 	/**
@@ -292,8 +293,13 @@ final public class Particle {
 	 */
 	final protected void update() {
 		if(mModifier == null) {
-			mAccelerations.sum(mForces);
-			mPosition.sum(mAccelerations);
+			//mAccelerations.sum(mForces);
+			//mPosition.sum(mAccelerations);
+			
+			float time = (mTimeDelta * mDuration) / 17.0f;
+			
+			mFinalPosition = Vector2.sum(mPosition, Vector2.sum(Vector2.scale(mAccelerations, time), Vector2.scale(mForces, (time*time) / 2)));
+			
 		}
 	}
 	
@@ -322,6 +328,7 @@ final public class Particle {
 		copy.mOpacityModifier = mOpacityModifier.clone();
 		copy.mScaleModifier = mScaleModifier.clone();
 		copy.mAngleModifier = mAngleModifier.clone();
+		copy.mFinalPosition = mPosition.clone();
 		return copy;
 	}
 }

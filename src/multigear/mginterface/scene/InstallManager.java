@@ -81,6 +81,21 @@ final public class InstallManager {
 	 * Comparador utilisado para ordenamento de sobreposição para todos Sprites
 	 * para fins de Desenho.
 	 */
+	final private Comparator<Installation> mDrawablesComparatorUpdate = new Comparator<Installation>() {
+		
+		/*
+		 * Comparador
+		 */
+		@Override
+		public int compare(Installation lhs, Installation rhs) {
+			return rhs.getZ() - lhs.getZ();
+		}
+	};
+	
+	/**
+	 * Comparador utilisado para ordenamento de sobreposição para todos Sprites
+	 * para fins de Desenho.
+	 */
 	final private Comparator<Installation> mDrawablesComparatorDraw = new Comparator<Installation>() {
 		
 		/*
@@ -302,7 +317,7 @@ final public class InstallManager {
 	 * Atualiza os objetos
 	 */
 	final protected void update() {
-		Collections.sort(mInstallationList, mDrawablesComparatorDraw);
+		Collections.sort(mInstallationList, mDrawablesComparatorUpdate);
 		for (int index = 0; index < mInstallationList.size(); index++)
 			mInstallationList.get(index).update();
 	}
@@ -321,6 +336,7 @@ final public class InstallManager {
 	 * Evento de toque
 	 */
 	final protected boolean touch(final MotionEvent motionEvent) {
+		Collections.sort(mInstallationList, mDrawablesComparatorUpdate);
 		for (int index = 0; index < mInstallationList.size(); index++) {
 			if(mInstallationList.get(index).touch(motionEvent))
 				return true;

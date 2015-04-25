@@ -24,6 +24,7 @@ final public class GameState {
 	private MultigearGame.Adjust mAdjust = MultigearGame.Adjust.NOT_SET;
 	private MultigearGame.Player mPlayer;
 	private ParentAttributes mParentAttributes;
+	private long mP1Time, mP2Time;
 	
 	/**
 	 * Private Constructor
@@ -36,12 +37,14 @@ final public class GameState {
 	 * Prepare Monitor
 	 * @param mapSize Map Size
 	 */
-	final protected void prepare(final MultigearGame.Player player, final Vector2 mapSize, final float screenDivision, final MultigearGame.Adjust adjust, final ParentAttributes parentAttributes) {
+	final protected void prepare(final MultigearGame.Player player, final Vector2 mapSize, final float screenDivision, final MultigearGame.Adjust adjust, final ParentAttributes parentAttributes, final long p1time, final long p2time) {
 		mPlayer = player;
 		mMapSize = mapSize;
 		mScreenDivision = screenDivision;
 		mAdjust = adjust;
 		mParentAttributes = parentAttributes;
+		mP1Time = p1time;
+		mP2Time = p2time;
 	}
 	
 	/**
@@ -49,6 +52,20 @@ final public class GameState {
 	 */
 	final public Vector2 getMapSize() {
 		return mMapSize;
+	}
+	
+	/**
+	 * Get Parent time in Milli
+	 * @return
+	 */
+	final public long getParentNanoTimes() {
+		switch(mPlayer) {
+		default:
+		case Player1:
+			return (System.nanoTime() - mP1Time) + mP2Time;
+		case Player2:
+			return (System.nanoTime() - mP2Time) + mP1Time;
+		}
 	}
 	
 	/**

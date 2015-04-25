@@ -3,6 +3,7 @@ package multigear.communication.tcp.server;
 import java.net.ServerSocket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import multigear.communication.tcp.base.BaseConnected;
 import multigear.communication.tcp.base.Utils;
 import android.app.Activity;
 import android.util.Log;
@@ -27,6 +28,11 @@ public class Server {
 	private ServerSocket mServerSocket;
 	private multigear.communication.tcp.server.Listener mListener;
 	private multigear.communication.tcp.server.ValidateClientThread mValidateClientThread;
+	
+	
+	private boolean mWaitForClientTestFlag = false;
+	private boolean mWaitForClientFlag = false;
+	private AtomicBoolean mThreadSafeSync = new AtomicBoolean(false);
 	
 	/*
 	 * Construtor
@@ -60,9 +66,12 @@ public class Server {
 			return;
 		}
 		mServerSocket = serverSocket;
+		
 		try {
+			mServerSocket.setSoTimeout(1000);
 			if(Utils.SOCKET_RECV_BUFFER_SIZE > 0)
 				mServerSocket.setReceiveBufferSize(Utils.SOCKET_RECV_BUFFER_SIZE);
+			
 		} catch(Exception e) {
 			Log.d("LogTest", "Error To Set Buffer Size");
 		}
@@ -75,7 +84,7 @@ public class Server {
 	/*
 	 * Espera por uma conexão
 	 */
-	final public void waitForClient() {
+	final public void startWaitForClient() {
 		if(mValidateClientThread != null) {
 			if(!mValidateClientThread.isAlive() || mValidateClientThread.isInterrupted())
 				mWaitForConnection.set(false);
@@ -87,19 +96,38 @@ public class Server {
 	}
 	
 	/*
-	 * Client Conectado
+	 * Espera por uma conexão
 	 */
-	final public void onClientConnected(final multigear.communication.tcp.base.BaseConnected connectedClient) {
-		if(mListener != null)
-			mListener.onClientConnected(connectedClient);
+	final public void stopWaitForClient() {
+		if(mValidateClientThread != null) {
+			mValidateClientThread.close();
+		}
+		mWaitForConnection.set(false);
 	}
 	
-	/*
-	 * Libera a trava de conexão
+	/**
+	 * On Client Connected (100% Thread Safe)
+	 * @param connectedClient
 	 */
-	final protected void releaseLock() {
-		mWaitForConnection.set(false);
+	final protected void onClientConnected(final BaseConnected connectedClient) {
+		// Acquire lock
+		while(mThreadSafeSync.getAndSet(true) != false);
+		
+		// Send connection
+		if(connectedClient != null) {
+			// Set flat to false (Client connected, no need wait after resume())
+			mWaitForClientTestFlag = false;
+			// Send message to listener
+			if(mListener != null)
+				mListener.onClientConnected(connectedClient);
+		}
+		
+		// Release wait Lock
 		mValidateClientThread = null;
+		mWaitForConnection.set(false);
+		
+		// Release safe Lock
+		mThreadSafeSync.set(false);
 	}
 	
 	/*
@@ -135,15 +163,49 @@ public class Server {
 			}
 		});
 	}
+
+	/**
+	 * Resume Server services
+	 */
+	final public void resume() {
+		// If wait for connection
+		if(mWaitForClientFlag) {
+			mWaitForClientFlag = false;
+			startWaitForClient();
+		}
+	}
 	
-	/*
-	 * Finaliza o server e as Threads em operações.
+	/**
+	 * Pause Server Services (100% Thread Safe)
+	 */
+	final public void pause() {
+		// Acquire Lock
+		while(mThreadSafeSync.getAndSet(true) != false);
+		// If waiting for client
+		if(mValidateClientThread != null) {
+			mWaitForClientTestFlag = true;
+			// Release lock
+			mThreadSafeSync.set(false);
+			//
+			stopWaitForClient();
+			// Set final flag
+			mWaitForClientFlag = mWaitForClientTestFlag;
+		}
+		// Release locks (security)
+		mThreadSafeSync.set(false);
+		mWaitForConnection.set(false);
+		mValidateClientThread = null;
+	}
+	
+	/**
+	 * Close Server
 	 */
 	final public void close() {
 		try {
-			mServerSocket.close();
 			if(mValidateClientThread != null)
 				mValidateClientThread.close();
+			mServerSocket.close();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

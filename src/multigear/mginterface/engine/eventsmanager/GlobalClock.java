@@ -13,6 +13,7 @@ final public class GlobalClock {
 	// Static Variables
 	static private long mVirtualCurrentTime = 0;
 	static private long mRealCurrentTime = 0;
+	static private long mElapsedTime = 0;
 	static private boolean mHandled = false;
 	
 	/**
@@ -27,6 +28,7 @@ final public class GlobalClock {
 	 */
 	final static protected void set() {
 		mRealCurrentTime = System.currentTimeMillis();
+		mElapsedTime = 0;
 	}
 	
 	/**
@@ -53,7 +55,8 @@ final public class GlobalClock {
 	 */
 	final static protected void update(final int frameLimit) {
 		if(mHandled) {
-			mVirtualCurrentTime += Math.min(System.currentTimeMillis() - mRealCurrentTime, frameLimit);
+			mElapsedTime = Math.min(System.currentTimeMillis() - mRealCurrentTime, frameLimit);
+			mVirtualCurrentTime +=	mElapsedTime;
 			mRealCurrentTime = System.currentTimeMillis();
 		}
 	}
@@ -64,5 +67,13 @@ final public class GlobalClock {
 	 */
 	final static public long currentTimeMillis() {
 		return mVirtualCurrentTime;
+	}
+	
+	/**
+	 * Get Elapsed Time
+	 * @return
+	 */
+	final static public float elapsedFramedTime() {
+		return mElapsedTime / 17.0f;
 	}
 }

@@ -1,16 +1,23 @@
 package multigear.mginterface.tools.mgmap;
 
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import android.util.Log;
-
 import multigear.communication.tcp.support.objectmessage.ObjectMessage;
 import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilder;
 import multigear.general.utils.Vector2;
+import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.tools.mgmap.MultigearGame.Player;
 import multigear.mginterface.tools.mgmap.MultigearGame.RegisterMode;
+import multigear.services.ServiceControl;
+import multigear.services.ServiceRunnable;
+import android.util.Log;
 
 
 /**
@@ -30,178 +37,7 @@ public class GameObjects {
 	final private class GameMessage {
 		
 		int code;
-		Object object1, object2, object3, object4;
-	}
-	
-	/**
-	 * 
-	 * @author user
-	 *
-	 */
-	final public static class ExtraPackage {
-		
-		// Private Variables
-		final private ObjectMessageBuilder mBuilder = ObjectMessage.create(0);
-		final private List<Object> mObjects = new ArrayList<Object>();
-		
-		
-		/**
-		 * Private COnstructor
-		 */
-		private ExtraPackage() {};
-		
-		/**
-		 * Create Extra Package
-		 * @return
-		 */
-		final static public ExtraPackage create() {
-			return new ExtraPackage();
-		}
-		
-		/**
-		 * Create with ObjectMessage
-		 * 
-		 * @param message
-		 * @return
-		 */
-		final static private ExtraPackage create(final ObjectMessage message) {
-			final ExtraPackage extraPackage = new ExtraPackage();
-			for(int i = 0; i<message.size(); i++) {
-				final Object object = message.getValue(i);
-				if(object.getClass() == Integer.class) {
-					extraPackage.add((Integer) object);
-				} else if(object.getClass() == Short.class) {
-					extraPackage.add((Short) object);
-				} else if(object.getClass() == Long.class) {
-					extraPackage.add((Long) object);
-				} else if(object.getClass() == Float.class) {
-					extraPackage.add((Float) object);
-				} else if(object.getClass() == Double.class) {
-					extraPackage.add((Double) object);
-				} else if(object.getClass() == Boolean.class) {
-					extraPackage.add((Boolean) object);
-				} else if(object.getClass() == String.class) {
-					extraPackage.add((String) object);
-				} else if(object.getClass() == Vector2.class) {
-					extraPackage.add((Vector2) object);
-				}
-			}
-			return extraPackage;
-		}
-		
-		/**
-		 * Get Object in index
-		 * @param index
-		 * @return
-		 */
-		final public Object get(final int index) {
-			return mObjects.get(index);
-		}
-		
-		/**
-		 * Add Integer Value
-		 * @param value Integer Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final short value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Add Integer Value
-		 * @param value Integer Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final int value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Add Integer Value
-		 * @param value Integer Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final long value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Add Float Value
-		 * @param value Float Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final float value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Add Double Value
-		 * @param value Double Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final double value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Add Boolean Value
-		 * @param value Boolean Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final boolean value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Add String Value
-		 * @param value String Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final String value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Add Ref2D Value
-		 * @param value Boolean Value
-		 * @return This ObjectMessage reference
-		 */
-		final public ExtraPackage add(final Vector2 value) {
-			mBuilder.add(value);
-			mObjects.add(value);
-			return this;
-		}
-		
-		/**
-		 * Get Object Message
-		 * 
-		 * @return
-		 */
-		final private ObjectMessage getObjectMessage() {
-			return mBuilder.build();
-		}
-		
-		/**
-		 * Get package size
-		 * @return
-		 */
-		final public int getCount() {
-			return mObjects.size();
-		}
+		Object object1, object2, object3, object4, object5, object6;
 	}
 	
 	/**
@@ -214,15 +50,18 @@ public class GameObjects {
 		
 		// Private Variables
 		private int mId;
+		
+		private RegisterMode mRegisterMode;
 		private MultigearGame.Player mPlayer;
+		
 		private Vector2 mPosition = new Vector2();
 		private Vector2 mSize = new Vector2();
-		private boolean mVisibleControl;
-		private RegisterMode mType = RegisterMode.LOCK;
-		private ExtraPackage mExtraPackage = ExtraPackage.create();
+		private Vector2 mDirection = new Vector2();
+		
 		private boolean mDeleted = false;
 		private int mFlags = 0;
 		private boolean mReleased = false;
+		private int mTransactionControl = 0;
 		
 		/**
 		 * Set object position
@@ -231,151 +70,64 @@ public class GameObjects {
 			//
 			if(mDeleted)
 				throw new RuntimeException("This object was deleted anteriormente");
-			
-			
-			// If player in this side
-			if(mType == RegisterMode.FREE || mType == RegisterMode.SILENT || mPlayer == mMonitor.getPlayer()) {
-				
+			// If not released
+			if(!mReleased) {
 				// Set Position
 				mPosition = position;
-				
-				// Wait for release
-				if(!mReleased)
-					return;
-				
-				// If free and not in side inform to other side control
-				if(mPlayer != mMonitor.getPlayer()) {
-					if(mType == RegisterMode.FREE)
-						informPosition(this);
-					return;
-				}
-				
-				
+			// If player in this side
+			} else if(mPlayer == mMonitor.getPlayer() || mRegisterMode == RegisterMode.FREE) {
+				// Set Position
+				mPosition = position;
 				// Transact Object
-				if(checkTransactObject(this)) {
-					Log.d("LogTest", "Transact");
-					informPosition(this);
-					informSize(this);
-					informExtraPackage(this);
-					informTransaction(this); // sets object visible
-				} else {
-					
-					// Switch visibility
-					if(checkVisibleObject(this)) {
-						if(!mVisibleControl) {
-							mVisibleControl = true;
-							informPosition(this);
-							informSize(this);
-							informExtraPackage(this);
-							informVisible(this);
-						// Constant Sending
-						} else {
-							informPosition(this);
-						}
-					} else if(mVisibleControl) {
-						mVisibleControl = false;
-						informVisible(this);
-					}
-					
-				}
+				if(checkTransactObject(this))
+					informTransaction(this);
 			}
 		}
 		
 		/**
-		 * Set Object size.<br>
-		 * <b>Note:</b> If this object in other side and object type is Dynamic is ignored.
-		 * 
-		 * @param objectId
-		 * @param position
+		 * Set object size
 		 */
 		final public void setSize(final Vector2 size) {
 			//
 			if(mDeleted)
 				throw new RuntimeException("This object was deleted anteriormente");
-			
-			// If player in this side
-			if(mType == RegisterMode.FREE  || mType == RegisterMode.SILENT || mPlayer == mMonitor.getPlayer()) {
-				
+			// If not released
+			if(!mReleased) {
 				// Set Position
 				mSize = size;
-				
-				// Wait for release
-				if(!mReleased)
-					return;
-				
-				// If free and not in side inform to other side control
-				if(mPlayer != mMonitor.getPlayer()) {
-					if(mType == RegisterMode.FREE)
-						informSize(this);
-					return;
-				}
-				
-				// Transact Object
-				if(checkTransactObject(this)) {
-					informPosition(this);
-					informSize(this);
-					informExtraPackage(this);
-					informTransaction(this);
-				} else {
-					
-					// Set visibility control
-					if(checkVisibleObject(this)) {
-						if(!mVisibleControl) {
-							mVisibleControl = true;
-							informPosition(this);
-							informSize(this);
-							informExtraPackage(this);
-							informVisible(this);
-						// Constant sending
-						} else {
-							informSize(this);
-						}
-					} else if(mVisibleControl) {
-						mVisibleControl = false;
-						informVisible(this);
-					}
-					
-				}
+			} else {
+				throw new RuntimeException("Error on set size..");
 			}
 		}
 		
 		/**
-		 * Set Object size.<br>
-		 * <b>Note:</b> If this object in other side and object type is Dynamic is ignored.
-		 * 
-		 * @param objectId
-		 * @param position
+		 * Set object direction
 		 */
-		final public void setExtraPackage(final ExtraPackage extraPackage, boolean forceToInform) {
+		final public void setDirection(final Vector2 direction) {
 			//
 			if(mDeleted)
 				throw new RuntimeException("This object was deleted anteriormente");
-			
+			// If not released
+			if(!mReleased) {
+				// Set Position
+				mDirection = direction;
 			// If player in this side
-			if(mType == RegisterMode.FREE || mType == RegisterMode.SILENT || (mPlayer == mMonitor.getPlayer())) {	
-				
-				// Set extra package
-				mExtraPackage = extraPackage;
-				
-				// Wait for release
-				if(!mReleased)
-					return;
-				
-				// If visible
-				if(mVisibleControl || forceToInform || (mPlayer != mMonitor.getPlayer()))
-					informExtraPackage(this);;
+			} else if(mPlayer == mMonitor.getPlayer() || mRegisterMode == RegisterMode.FREE) {
+				// Set Position
+				mDirection = direction;
 			}
 		}
 		
 		/**
-		 * Set Object Extra PAckage.<br>
-		 * <b>Note:</b> If this object in other side and object type is Dynamic is ignored.
-		 * 
-		 * @param objectId
-		 * @param position
+		 * Update Object
 		 */
-		final public void setExtraPackage(final ExtraPackage extraPackage) {
-			setExtraPackage(extraPackage, false);
+		final public void update() {
+			if(mPlayer != mMonitor.getPlayer()) {
+				if(checkVisibleObject(this)) {
+					mPosition.x += mDirection.x * GlobalClock.elapsedFramedTime();
+					mPosition.y += mDirection.y * GlobalClock.elapsedFramedTime();
+				}
+			}
 		}
 		
 		/**
@@ -385,24 +137,32 @@ public class GameObjects {
 		final public void release() {
 			//
 			if(mDeleted)
-				throw new RuntimeException("This object was deleted anteriormente");
-			// Not relase many times
+				throw new RuntimeException("This object was deleted anteriormente.");
+			
+			// Not release many times
 			if(mReleased)
 				return;
 			
+			// If create and release to other side
+			if(mPlayer != mMonitor.getPlayer() || checkTransactObject(this)) {
+				informCreateAndTransact(this);
+			// If create and release in this side
+			} else {
+				informCreate(this);
+			}
+			
 			// Set Released
 			mReleased = true;
-						
-			// If player in this side
-			informCreate(this);
-			
-			// Reset
-			setPosition(mPosition);
-			setSize(mSize);
-			setExtraPackage(mExtraPackage, true);
-			
-			// Release
-			informReleased(this);
+		}
+		
+		/**
+		 * Info other side this position, size, extra package if this object in this side or is free
+		 */
+		final public void inform() {
+			// If create and release to other side
+			if(mPlayer == mMonitor.getPlayer() && mReleased) {
+				GameObjects.this.inform(this);
+			}
 		}
 		
 		/**
@@ -442,12 +202,20 @@ public class GameObjects {
 		}
 		
 		/**
+		 * Get Direction
+		 * @return
+		 */
+		final public Vector2 getDirection() {
+			return mDirection;
+		}
+		
+		/**
 		 * Is Visible
 		 * 
 		 * @return
 		 */
 		final public boolean isVisible() {
-			return mVisibleControl || (mPlayer == mMonitor.getPlayer());
+			return (mPlayer == mMonitor.getPlayer() || mRegisterMode == RegisterMode.FREE);
 		}
 		
 		/**
@@ -456,23 +224,6 @@ public class GameObjects {
 		 */
 		final public int getFlags() {
 			return mFlags;
-		}
-		
-		/**
-		 * Get Object Type
-		 * @return
-		 */
-		final public RegisterMode getType() {
-			return mType;
-		}
-		
-		/**
-		 * Get Extra Package
-		 * 
-		 * @return
-		 */
-		final public ExtraPackage getExtraPackage() {
-			return mExtraPackage;
 		}
 	}
 	
@@ -499,15 +250,17 @@ public class GameObjects {
 		public void onObjectDeleted(final GameObject object);
 	}
 	
+	
 	// Conts
 	final private static int OBJECT_CREATE = 1;
 	final private static int OBJECT_DELETE = 2;
-	final private static int OBJECT_INFORM_POSITION = 3;
-	final private static int OBJECT_INFORM_SIZE = 4;
-	final private static int OBJECT_INFORM_TRANSACT = 5;
-	final private static int OBJECT_INFORM_VISIBLE = 6;
-	final private static int OBJECT_INFORM_EXTRA_PACKAGE = 7;
-	final private static int OBJECT_INFORM_RELEASED = 8;
+	final private static int OBJECT_TRANSACT= 3;
+	final private static int OBJECT_CREATE_AND_TRANSACT = 4;
+	final private static int OBJECT_INFORM = 5;
+	
+	// Compensation screen percent
+	final private static float COMPENSATION_SCREEN_PERCENT = .6f;
+	
 	
 	// Final Private Variables
 	final private MultigearGame mGame;
@@ -555,10 +308,9 @@ public class GameObjects {
 	final public GameObject createObject(final MultigearGame.Player playerSide, final RegisterMode type, final int flags) {
 		final GameObject gameObject = new GameObject();
 		gameObject.mPlayer = playerSide;
-		gameObject.mType = type;
 		gameObject.mId = mGame.getState().maskUnsignedInt(mIdCounter++);
-		gameObject.mVisibleControl = false;
 		gameObject.mFlags = flags;
+		gameObject.mRegisterMode = type;
 		mGameObjects.add(gameObject);
 		// Feedback
 		if(mFeedback != null)
@@ -574,21 +326,18 @@ public class GameObjects {
 	final public void deleteObjectAtIndex(final int index) {
 		if(index >= getCount())
 			throw new IndexOutOfBoundsException();
-		
 		final GameObject object = getObjectAtIndex(index);
-		
-		
 		// If object in this side or static
-		if(object.mType == RegisterMode.FREE || (object.mPlayer == mMonitor.getPlayer())) {
+		if(object.mPlayer == mMonitor.getPlayer() || object.mRegisterMode == RegisterMode.FREE) {
 			final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_DELETE);
 			builder.add(object.mId);
 			mGame.sendMessage(builder.build());
 			// remove object
 			object.mDeleted = true;
+			mGameObjects.remove(object);
 			// Feedback
 			if(mFeedback != null)
 				mFeedback.onObjectDeleted(object);
-			mGameObjects.remove(object);
 		}
 	}
 	
@@ -598,18 +347,17 @@ public class GameObjects {
 	 */
 	final public void deleteObjectById(final int id) {
 		final GameObject object = getObjectById(id);
-		
 		// If object in this side or static
-		if(object.mType == RegisterMode.FREE || (object.mPlayer == mMonitor.getPlayer())) {
+		if(object.mPlayer == mMonitor.getPlayer() || object.mRegisterMode == RegisterMode.FREE) {
 			final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_DELETE);
 			builder.add(object.mId);
 			mGame.sendMessage(builder.build());
 			// remove object
 			object.mDeleted = true;
+			mGameObjects.remove(object);
 			// Feedback
 			if(mFeedback != null)
 				mFeedback.onObjectDeleted(object);
-			mGameObjects.remove(object);
 		}
 	}
 	
@@ -687,39 +435,38 @@ public class GameObjects {
 		default:
 		case Player1:
 			// Transacted to other side
-			if(object.mPosition.x >= mapDivision)
+			if((object.mPosition.x + object.mSize.x >= (mapDivision * COMPENSATION_SCREEN_PERCENT)) && object.mDirection.x >= 0)
 				return true;
 			break;
 		case Player2:
 			// Transacted to other side
-			if(object.mPosition.x + object.mSize.x < mapDivision)
+			if((object.mPosition.x < (mapDivision * (2 - COMPENSATION_SCREEN_PERCENT))) && object.mDirection.x <= 0)
 				return true;
 		}
 		return false;
 	}
 	
-	
 	/**
-	 * Check Visible Object
+	 * Check visibile
 	 * @param object
 	 */
 	final private boolean checkVisibleObject(final GameObject object) {
 		// If player in this side
 		float mapDivision = mMonitor.getMapDivision();
-			
+		
 		switch(mMonitor.getPlayer()) {
 		default:
 		case Player1:
-			// Visible in other side
-			if(object.mPosition.x + object.mSize.x >= mapDivision)
-				return true;
+			// Transacted to other side
+			if(object.mPosition.x >= mapDivision)
+				return false;
 			break;
 		case Player2:
-			// Visible in other side
-			if(object.mPosition.x < mapDivision)
-				return true;
+			// Transacted to other side
+			if(object.mPosition.x + object.mSize.x < mapDivision)
+				return false;
 		}
-		return false;
+		return true;
 	}
 	
 	/**
@@ -729,9 +476,11 @@ public class GameObjects {
 	final private void informCreate(final GameObject object) {
 		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_CREATE);
 		builder.add(object.mId);
-		builder.add(object.mPlayer.ordinal());
-		builder.add(object.mType.ordinal());
 		builder.add(object.mFlags);
+		builder.add(object.mRegisterMode.ordinal());
+		builder.add(object.mPosition);
+		builder.add(object.mSize);
+		builder.add(object.mDirection);
 		mGame.sendMessage(builder.build());
 	}
 	
@@ -743,78 +492,49 @@ public class GameObjects {
 	final private void informTransaction(final GameObject object) {
 		// Invisible in this side after transact
 		// Switch
-		object.mVisibleControl = false;
 		object.mPlayer = mMonitor.getParentPlayer();
 		// Transact
-		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM_TRANSACT);
-		builder.add(object.mId);
-		mGame.sendMessage(builder.build());
-	}
-	
-	/**
-	 * Inform Position
-	 * 
-	 * @param object
-	 */
-	final private void informPosition(final GameObject object) {
-		// Set position in other side
-		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM_POSITION);
+		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_TRANSACT);
 		builder.add(object.mId);
 		builder.add(object.mPosition);
+		builder.add(object.mDirection);
+		builder.add(System.nanoTime());
+		builder.add(object.mTransactionControl);
 		mGame.sendMessage(builder.build());
 	}
 	
 	/**
-	 * Inform Resized
-	 * 
+	 * Inform Object created and transact
 	 * @param object
 	 */
-	final private void informSize(final GameObject object) {
-		// Set position in other side
-		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM_SIZE);
+	final private void informCreateAndTransact(final GameObject object) {
+		// Invisible in this side
+		object.mPlayer = mMonitor.getParentPlayer();
+		// Create and transact
+		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_CREATE_AND_TRANSACT);
 		builder.add(object.mId);
+		builder.add(object.mFlags);
+		builder.add(object.mRegisterMode.ordinal());
+		builder.add(object.mPosition);
 		builder.add(object.mSize);
+		builder.add(object.mDirection);
 		mGame.sendMessage(builder.build());
 	}
 	
 	/**
-	 * Inform Visible
+	 * Inform 
 	 * 
 	 * @param object
 	 */
-	final private void informVisible(final GameObject object) {
+	final private void inform(final GameObject object) {
 		// Transact
-		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM_VISIBLE);
+		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM);
 		builder.add(object.mId);
-		builder.add(object.mVisibleControl);
+		builder.add(object.mPosition);
+		builder.add(object.mSize);
+		builder.add(object.mDirection);
 		mGame.sendMessage(builder.build());
 	}
-	
-	/**
-	 * Inform Extra Package
-	 * 
-	 * @param object
-	 */
-	final private void informExtraPackage(final GameObject object) {
-		// Transact
-		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM_EXTRA_PACKAGE);
-		builder.add(object.mId);
-		builder.add(object.mExtraPackage.getObjectMessage());
-		mGame.sendMessage(builder.build());
-	}
-	
-	/**
-	 * Inform Object Released
-	 * 
-	 * @param object
-	 */
-	final private void informReleased(final GameObject object) {
-		// Transact
-		final ObjectMessageBuilder builder = mGame.prepareObjectMessage(OBJECT_INFORM_RELEASED);
-		builder.add(object.mId);
-		mGame.sendMessage(builder.build());
-	}
-	
 	
 	/**
 	 * On Message
@@ -825,22 +545,29 @@ public class GameObjects {
 		message.code = code;
 		switch(code) {
 		case OBJECT_CREATE:
+		case OBJECT_CREATE_AND_TRANSACT:
+			message.object1 = values.get(0);
+			message.object2 = values.get(1);
+			message.object3 = values.get(2);
+			message.object4 = values.get(3);
+			message.object5 = values.get(4);
+			message.object6 = values.get(5);
+			break;
+		case OBJECT_INFORM:
 			message.object1 = values.get(0);
 			message.object2 = values.get(1);
 			message.object3 = values.get(2);
 			message.object4 = values.get(3);
 			break;
-		case OBJECT_INFORM_RELEASED:
-		case OBJECT_DELETE:
-		case OBJECT_INFORM_TRANSACT:
-			message.object1 = values.get(0);
-			break;
-		case OBJECT_INFORM_POSITION:
-		case OBJECT_INFORM_SIZE:
-		case OBJECT_INFORM_EXTRA_PACKAGE:
-		case OBJECT_INFORM_VISIBLE:
+		case OBJECT_TRANSACT:
 			message.object1 = values.get(0);
 			message.object2 = values.get(1);
+			message.object3 = values.get(2);
+			message.object4 = values.get(3);
+			message.object5 = values.get(4);
+			break;
+		case OBJECT_DELETE:
+			message.object1 = values.get(0);
 			break;
 		}
 		mGameMessages.add(message);
@@ -854,37 +581,31 @@ public class GameObjects {
 		while(itr.hasNext()) {
 			final GameMessage message = itr.next();
 			// Vars
-			Integer id, flags;
+			Integer id, flags, tcontrol;
 			GameObject object;
-			Player player;
-			RegisterMode type;
+			Vector2 pos, size, dir;
+			long nano;
 			// Message
 			switch(message.code) {
 			case OBJECT_CREATE:
 				
 				id = (Integer)message.object1;
-				player = Player.values()[(Integer)message.object2];
-				type = RegisterMode.values()[(Integer)message.object3];
-				flags = (Integer)message.object4;
+				flags = (Integer)message.object2;
+				pos = (Vector2)message.object4;
+				size = (Vector2)message.object5;
+				dir = (Vector2)message.object6;
 				
 				object = new GameObject();
 				object.mId = id;
-				object.mPlayer = player;
-				object.mType = type;
-				object.mVisibleControl = false;
+				object.mPlayer = mMonitor.getParentPlayer();
 				object.mFlags = flags;
-				object.mReleased = false;
-				mGameObjects.add(object);
-				
-				// Remove message
-				itr.remove();
-				
-				break;
-			case OBJECT_INFORM_RELEASED:
-				
-				id = (Integer)message.object1;
-				object = getObjectByIdSafe(id);
+				object.mRegisterMode = RegisterMode.values()[(Integer)message.object3];
+				object.mPosition = pos;
+				object.mSize = size;
+				object.mDirection = dir;
 				object.mReleased = true;
+				
+				mGameObjects.add(object);
 				
 				// Remove message
 				itr.remove();
@@ -892,6 +613,78 @@ public class GameObjects {
 				// Feedback
 				if(mFeedback != null)
 					mFeedback.onObjectCreated(object);
+
+				break;
+			case OBJECT_CREATE_AND_TRANSACT:
+				
+				id = (Integer)message.object1;
+				flags = (Integer)message.object2;
+				pos = (Vector2)message.object4;
+				size = (Vector2)message.object5;
+				dir = (Vector2)message.object6;
+				
+				object = new GameObject();
+				object.mId = id;
+				object.mFlags = flags;
+				object.mRegisterMode = RegisterMode.values()[(Integer)message.object3];
+				object.mPosition = pos;
+				object.mSize = size;
+				object.mDirection = dir;
+				object.mPlayer = mMonitor.getPlayer();
+				object.mReleased = true;
+				
+				mGameObjects.add(object);
+				
+				// Remove message
+				itr.remove();
+				
+				// Feedback
+				if(mFeedback != null)
+					mFeedback.onObjectCreated(object);
+				
+				break;
+			case OBJECT_TRANSACT:
+				
+				id = (Integer)message.object1;
+				pos = (Vector2)message.object2;
+				dir = (Vector2)message.object3;
+				nano = (Long)message.object4;
+				tcontrol = (Integer)message.object5;
+				
+				object = getObjectByIdSafe(id);
+				
+				if(object != null && tcontrol >= object.mTransactionControl) {
+					long timeDiff = Math.min(Math.abs(mMonitor.getParentNanoTimes() - nano), 150000000);
+					Vector2 newDir = Vector2.scale(dir,  timeDiff / 17000000.0f);
+					object.mPosition = Vector2.sum(pos, newDir);
+					object.mDirection = dir;
+					object.mPlayer = mMonitor.getPlayer();
+					object.mReleased = true;
+					object.mTransactionControl = tcontrol + 1;
+				}
+				
+				// Remove message
+				itr.remove();
+				
+				break;
+				
+			case OBJECT_INFORM:
+				
+				id = (Integer)message.object1;
+				pos = (Vector2)message.object2;
+				size = (Vector2)message.object3;
+				dir = (Vector2)message.object4;
+				
+				object = getObjectByIdSafe(id);
+				
+				if(object != null) {
+					object.mPosition = pos;
+					object.mSize = size;
+					object.mDirection = dir;
+				}
+				
+				// Remove message
+				itr.remove();
 				
 				break;
 			case OBJECT_DELETE:
@@ -913,51 +706,6 @@ public class GameObjects {
 					// Remove message
 					itr.remove();
 				}
-				break;
-			case OBJECT_INFORM_TRANSACT:
-				id = (Integer)message.object1;
-				object = getObjectByIdSafe(id);
-				if(object != null) {
-					object.mPlayer = mMonitor.getPlayer();
-				}
-				// Consume msg
-				itr.remove();
-				break;
-			case OBJECT_INFORM_POSITION:
-				id = (Integer)message.object1;
-				object = getObjectByIdSafe(id);
-				if(object != null) {
-					object.mPosition = (Vector2)message.object2;
-				}
-				// Consume msg
-				itr.remove();
-				break;
-			case OBJECT_INFORM_SIZE:
-				id = (Integer)message.object1;
-				object = getObjectByIdSafe(id);
-				if(object != null) {
-					object.mSize = (Vector2)message.object2;
-				}
-				// Consume msg
-				itr.remove();
-				break;
-			case OBJECT_INFORM_EXTRA_PACKAGE:
-				id = (Integer)message.object1;
-				object = getObjectByIdSafe(id);
-				if(object != null) {
-					object.mExtraPackage = ExtraPackage.create((ObjectMessage)message.object2);
-				}
-				// Consume msg
-				itr.remove();
-				break;
-			case OBJECT_INFORM_VISIBLE:
-				id = (Integer)message.object1;
-				object = getObjectByIdSafe(id);
-				if(object != null) {
-					object.mVisibleControl = (Boolean)message.object2;
-				}
-				// Consume msg
-				itr.remove();
 				break;
 			}
 		}

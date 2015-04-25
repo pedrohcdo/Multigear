@@ -49,6 +49,7 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	final private List<UpdatableListener> mUpdatableListeners = new ArrayList<UpdatableListener>();
 	final private List<DrawableListener> mDrawableListener = new ArrayList<DrawableListener>();
 	final private List<TouchableListener> mTouchableListener = new ArrayList<TouchableListener>();
+	
 	final private InstallManager mInstallManager;
 	final private SceneDrawerState mSceneDrawerState = new SceneDrawerState();
 	
@@ -495,8 +496,8 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	 * @return Measure Value
 	 */
 	final public Vector2 getPhysicalScreenSize() {
-		final float physicalWidth = Measure.Inch.convertTo(mWidthPixels / mDPI, Measure.Inch);
-		final float physicalHeight = Measure.Inch.convertTo(mHeightPixels / mDPI, Measure.Inch);
+		final float physicalWidth = Measure.Inch.convertTo(mWidthPixels / getDPI(), Measure.Inch);
+		final float physicalHeight = Measure.Inch.convertTo(mHeightPixels / getDPI(), Measure.Inch);
 		return new Vector2(physicalWidth, physicalHeight);
 	}
 	
@@ -803,6 +804,15 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	 */
 	final public void runOnUiThread(final Runnable runnable) {
 		mEngine.getActivity().runOnUiThread(runnable);
+	}
+	
+	/**
+	 * Get String
+	 * @param resId
+	 * @return
+	 */
+	final public String getString(final int resId) {
+		return getActivity().getString(resId);
 	}
 	
 	/**

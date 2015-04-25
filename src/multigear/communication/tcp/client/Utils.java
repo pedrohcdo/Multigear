@@ -51,11 +51,11 @@ final public class Utils {
 		if(connectionAttempts % 2 != 0)
 			connectionAttempts++;
 		// Create Host List
-		final String[] list = new String[connectionAttempts + 1];
+		final String[] list = new String[connectionAttempts + 2];
 		// Set List Index
 		int index = 0;
 		// Add DNS
-		
+		list[index++] = "192.168.43.1";
 		list[index++] = dns;
 		
 		// Get Sides

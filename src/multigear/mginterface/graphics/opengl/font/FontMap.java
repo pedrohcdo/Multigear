@@ -558,7 +558,11 @@ final public class FontMap implements CacheComponent {
 			layer.mTextureFont = loader.create(bitmap);
 					
 			// Set FontMap layer
-			fontMap.mLayers[styleLayer.ordinal()] = layer;
+			fontMap.mLayers[0] = layer;
+			fontMap.mLayers[1] = layer;
+			fontMap.mLayers[2] = layer;
+			fontMap.mLayers[3] = layer;
+			break;
 		}
 				
 		// Return FontMap
@@ -714,7 +718,11 @@ final public class FontMap implements CacheComponent {
 			layer.mTextureFont = loader.create(bitmap);
 			
 			// Set FontMap layer
-			fontMap.mLayers[styleLayer.ordinal()] = layer;
+			fontMap.mLayers[0] = layer;
+			fontMap.mLayers[1] = layer;
+			fontMap.mLayers[2] = layer;
+			fontMap.mLayers[3] = layer;
+			break;
 		}
 		
 		// Return FontMap

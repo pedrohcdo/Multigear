@@ -140,7 +140,7 @@ final public class DedicatedServices {
 			restoreDataBase = mDatabase;
 		}
 		// Null Database
-		if(mDatabase == null)
+		if(restoreDataBase == null)
 			return;
 		// Wait for Established
 		establishConnections();
@@ -183,7 +183,9 @@ final public class DedicatedServices {
 			// Remove
 			if(!found) {
 				reassociate = true; // testing ..
-				mWifiManager.disableNetwork(configuredNetwork.networkId);
+				//mWifiManager.disableNetwork(configuredNetwork.networkId);
+				mWifiManager.removeNetwork(configuredNetwork.networkId);
+				
 				refresh = true;
 			}
 			// Prevents interrupt
@@ -192,11 +194,11 @@ final public class DedicatedServices {
 		}
 		
 		// If Refresh
-		//if(refresh)
-		//	mWifiManager.saveConfiguration();
+		if(refresh)
+			mWifiManager.saveConfiguration();
 		if(reassociate || refresh) {
 			//mWifiManager.reconnect();
-			//mWifiManager.reassociate();
+			mWifiManager.reassociate();
 			return;
 		}
 		// Prevents interrupt
@@ -212,7 +214,7 @@ final public class DedicatedServices {
 		if (supportThread.hasInterrupted())
 			return;
 		// Restore Mobile Data State
-		if (mDatabase.MobileDataEnabled)
+		if (restoreDataBase.MobileDataEnabled)
 			enableMobileData(supportThread);
 		else
 			disableMobileData(supportThread);

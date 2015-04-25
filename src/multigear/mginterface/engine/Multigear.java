@@ -19,10 +19,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.MulticastLock;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -85,9 +87,11 @@ final public class Multigear {
 	final private multigear.mginterface.engine.Manager mManager;
 	final private multigear.mginterface.engine.eventsmanager.EventHandler mEventHandler;
 	final private WifiLock mWifiLock;
+	
 	final private List<OnDestroyListener> mOnDestroyListeners = new ArrayList<OnDestroyListener>();
 	final private List<OnPauseListener> mOnPauseListeners = new ArrayList<OnPauseListener>();
 	final private List<OnResumeListener> mOnResumeListeners = new ArrayList<OnResumeListener>();
+	final private List<Runnable> mRunOnEngineThread = new ArrayList<Runnable>();
 	
 	final Intent mServiceIntent;
 	
@@ -147,8 +151,12 @@ final public class Multigear {
 		
 		// Aquire WifiLock in Full High Perf
 		WifiManager wifiManager = (WifiManager)mActivity.getSystemService(Context.WIFI_SERVICE);
-		mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "MultigearSystem.WIFI_LOCK.WMFHP");
-		mWifiLock.setReferenceCounted(false);
+		mWifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "MGLOCKTAG");
+		mWifiLock.setReferenceCounted(true);
+		mWifiLock.acquire();
+		
+		
+		Log.d("LogTest", "Is Held: " + mWifiLock.isHeld());
 	}
 	
 	/**
@@ -200,6 +208,15 @@ final public class Multigear {
 	}
 	
 	/**
+	 * Run on Engine Thread
+	 * 
+	 * @param runnable
+	 */
+	final public void runOnEngineThread(final Runnable runnable) {
+		mRunOnEngineThread.add(runnable);
+	}
+	
+	/**
 	 * Resume Engine
 	 */
 	final public void onResume() {
@@ -244,6 +261,9 @@ final public class Multigear {
 	 * Update Engine
 	 */
 	final protected void update() {
+		for(int i=0; i<mRunOnEngineThread.size(); i++) {
+			mRunOnEngineThread.remove(0).run();
+		}
 		mManager.update();
 	}
 	
@@ -251,6 +271,12 @@ final public class Multigear {
 	 * Destroy Engine
 	 */
 	final public void onDestroy() {
+		final SupportService supportService = getSupportService();
+		if(supportService != null) {
+			Log.d("LogTest", "CLosing by onDestroy().");
+			supportService.engineDestroyed();
+		}
+		mWifiLock.release();
 		mSurface.destroy();
 		mManager.destroy();
 		for(final OnDestroyListener listener : mOnDestroyListeners) 
@@ -269,7 +295,7 @@ final public class Multigear {
 			if (firstOccurrence) {
 				supportService.enginePrepare();
 				mActivity.startService(mServiceIntent);
-				supportService.engineInitialized(mWifiLock);
+				supportService.engineInitialized();
 			}
 			// Send to service this engine resumed
 			supportService.engineResumed();
@@ -346,7 +372,7 @@ final public class Multigear {
 	}
 	
 	/*
-	 * Retorna a configuração da Engine
+	 * Retorna a configuraï¿½ï¿½o da Engine
 	 */
 	final public multigear.mginterface.engine.Configuration getConfiguration() {
 		return mConfiguration;
@@ -430,7 +456,7 @@ final public class Multigear {
 	}
 	
 	/*
-	 * Sincroniza a Engine para chamadas de funções paralelas
+	 * Sincroniza a Engine para chamadas de funï¿½ï¿½es paralelas
 	 */
 	final public MultigearSync sync() {
 		// Wait for sync
@@ -457,7 +483,7 @@ final public class Multigear {
 	}
 	
 	/*
-	 * Remove a sincronização em andamento
+	 * Remove a sincronizaï¿½ï¿½o em andamento
 	 */
 	final protected void unsync() {
 		mSyncStarted.set(false);

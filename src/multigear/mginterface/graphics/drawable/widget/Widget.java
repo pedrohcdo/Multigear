@@ -100,9 +100,11 @@ public class Widget implements Drawable, Touchable, Component {
 		 *         {@link multigear.mginterface.graphics.opengl.texture.Texture}
 		 */
 		final public multigear.mginterface.graphics.opengl.texture.Texture getTexture(final int id) {
-			for (final SkinValue skinValue : mSkinValues)
+			for (int i=0; i<mSkinValues.size(); i++) {
+				final SkinValue skinValue = mSkinValues.get(i);
 				if (skinValue.ID == id)
 					return skinValue.Texture;
+			}
 			return null;
 		}
 	}
@@ -711,7 +713,8 @@ public class Widget implements Drawable, Touchable, Component {
 		onDraw(drawer, DrawingLayer.LAYER_BOTTOM);
 		
 		// Draw
-		for (final Component component : mComponents) {
+		for (int i=0; i<mComponents.size(); i++) {
+			final Component component = mComponents.get(i);
 			if(component instanceof Drawable)
 				((Drawable)component).draw(drawer);
 		}
@@ -998,7 +1001,8 @@ public class Widget implements Drawable, Touchable, Component {
 		Collections.sort(mComponents, mLayersComparatorDraw);
 		
 		// 
-		for(final Component component : mComponents) {
+		for(int i=0; i<mComponents.size(); i++) {
+			final Component component = mComponents.get(i);
 			if(component instanceof Touchable) {
 				if(((Touchable)component).touch(motionEvent))
 					return true;
