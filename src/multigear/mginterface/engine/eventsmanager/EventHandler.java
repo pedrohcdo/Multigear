@@ -92,6 +92,13 @@ final public class EventHandler {
 		mTouchEvents.onTouch(motionEvent);
 	}
 	
+	/**
+	 * Send Back Pressed
+	 */
+	final public void sendBackPress() {
+		mTouchEvents.onBackPressed();
+	}
+	
 	/*
 	 * Envia um evento para liberar manuseamento dos objetos
 	 */

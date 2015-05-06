@@ -278,7 +278,12 @@ public class Surface {
 	 * Finaliza a surface
 	 */
 	final protected void destroy() {
+
+		
 		mGLSurfaceView.destroyDrawingCache();
+		
+		if(true)
+			return;
 		switch (mFillMode) {
 		case 1:
 			mFillLinearLayout.removeView(mGLSurfaceView);

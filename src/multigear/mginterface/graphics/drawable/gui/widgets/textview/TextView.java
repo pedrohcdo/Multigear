@@ -178,6 +178,26 @@ final public class TextView extends Widget {
 	}
 	
 	/**
+	 * Calc text height
+	 * @return
+	 */
+	final public float getTextHeight(final float width) {
+		final String[] words = mText.split("[ ]");
+		final Vector2 position = new Vector2();
+		Vector2 space = mFontMap.getTextSize(" ");
+		float max = width - mAttributes.border * 4;
+		for(final String word : words) {
+			final float textWidth = mFontMap.getTextSize(word).x;
+			if(position.x + textWidth >= max) {
+				position.x = 0;
+				position.y += space.y;
+			}
+			position.x += space.x + textWidth;
+		}
+		return position.y + space.y;
+	}
+	
+	/**
 	 * Set Scroll Position
 	 * @param scrollPosition
 	 */

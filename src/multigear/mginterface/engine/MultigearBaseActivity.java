@@ -83,6 +83,18 @@ public class MultigearBaseActivity extends ActionBarActivity {
 	}
 	
 	/**
+	 * Back pressed
+	 */
+	@Override
+	public void onBackPressed() {
+		if(mMultigear != null) {
+			mMultigear.sync().backPress().unsync();
+			return;
+		}
+		super.onBackPressed();
+	}
+	
+	/**
 	 * Finish Multigear.
 	 */
 	@Override

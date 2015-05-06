@@ -391,7 +391,7 @@ final public class ParticlesGroup implements Drawable, Component {
 			particle.update();
 			
 			// Get Values
-			final Vector2 position = particle.getFinalPosition();
+			final Vector2 position = Vector2.sum(particle.getFinalPosition(), getPosition());
 			final float finalOpacity = particle.getOpacity() * opacityGroup;
 
 			float scale = particle.getScale() * getScale() * mTexture.getSize().x;
@@ -548,7 +548,7 @@ final public class ParticlesGroup implements Drawable, Component {
 				return;
 		particle = particle.prepareToInsert();
 		particle.onCreated(GlobalClock.currentTimeMillis());
-		particle.setPosition(Vector2.sum(particle.getPosition(), getPosition()));
+		particle.setPosition(particle.getPosition());
 		if (top)
 			mParticles.add(particle);
 		else

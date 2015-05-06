@@ -172,7 +172,7 @@ final public class DedicatedServices {
 					if(savedNetwork.status != configuredNetwork.status) {
 						reassociate = true;
 						if (savedNetwork.status == android.net.wifi.WifiConfiguration.Status.CURRENT || savedNetwork.status == android.net.wifi.WifiConfiguration.Status.ENABLED) {
-							mWifiManager.enableNetwork(configuredNetwork.networkId, true);
+							mWifiManager.enableNetwork(configuredNetwork.networkId, false);
 						} else {
 							mWifiManager.disableNetwork(configuredNetwork.networkId);
 						}

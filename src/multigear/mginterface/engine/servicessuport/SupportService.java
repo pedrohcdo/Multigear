@@ -168,13 +168,23 @@ public class SupportService extends Service {
 			return false;
 		String[] activePackages;
 		activePackages = getActivePackages();
-		for (String activePackage : activePackages)
-			if (activePackage.equals("com.createlier.pongduo"))
-				return true;
+			if(activePackages != null) {
+			for (String activePackage : activePackages) {
+				if(activePackage == null)
+					continue;
+				if (activePackage.equals("com.createlier.pongduo"))
+					return true;
+			}
+		}
 		activePackages = getActivePackagesCompat();
-		for (String activePackage : activePackages)
-			if (activePackage.equals("com.createlier.pongduo"))
-				return true;
+		if(activePackages != null) {
+			for (String activePackage : activePackages) {
+				if(activePackage == null)
+					continue;
+				if (activePackage.equals("com.createlier.pongduo"))
+					return true;
+			}
+		}
 		return false;
 	}
 	

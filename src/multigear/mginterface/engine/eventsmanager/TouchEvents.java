@@ -22,4 +22,11 @@ final public class TouchEvents {
 	final protected void onTouch(final MotionEvent motionEvent) {
 		mMainRoom.touchImpl(motionEvent);
 	}
+	
+	/**
+	 * Back pressed
+	 */
+	final protected void onBackPressed() {
+		mMainRoom.backImpl();
+	}
 }

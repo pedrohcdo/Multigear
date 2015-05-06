@@ -497,7 +497,7 @@ final public class ListView extends Widget {
 		mLimitLayerBottom.setTexture(texture);
 		
 		mLimitLayerTop.setPosition(new Vector2(b, b));
-		mLimitLayerBottom.setPosition(new Vector2(b, getSize().y - h - b));
+		mLimitLayerBottom.setPosition(new Vector2(b, getSize().y - b));
 	}
 	
 	/**

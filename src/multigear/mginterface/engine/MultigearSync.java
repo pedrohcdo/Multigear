@@ -135,6 +135,16 @@ final public class MultigearSync {
 		return this;
 	}
 
+	/**
+	 * Back press
+	 * @return
+	 */
+	final public MultigearSync backPress() {
+		if(mMultigear.isFinished())
+			return this;
+		mEventHandler.sendBackPress();
+		return this;
+	}
 	
 	/**
 	 * Destroy Engine. 

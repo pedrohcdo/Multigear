@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Matrix;
 import android.os.Build;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
@@ -71,7 +72,7 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	private float mAngle = 0;
 	private boolean mTouchable = true;
 	private int mID = 0;
-	
+	private volatile boolean mBackPressed = false;
 
 	/**
 	 * Constructor
@@ -556,6 +557,7 @@ public class Scene extends multigear.mginterface.scene.Installation {
 			mUpdatableListeners.get(i).onUpdate(this);
 		// Update Touch
 		updateTouch();
+		updateBackPressed();
 		onUpdate();
 		mInstallManager.updateManager();
 	}
@@ -677,6 +679,25 @@ public class Scene extends multigear.mginterface.scene.Installation {
 		mMotionEventList.add(MotionEvent.obtain(motionEvent));
 	}
 	
+	/**
+	 * Back Pressed
+	 */
+	final public void backImpl() {
+		if (!mTouchable)
+			return;
+		mBackPressed = true;
+	}
+	
+	/**
+	 * Update Back Pressed
+	 */
+	final private void updateBackPressed() {
+		if(mBackPressed) {
+			mBackPressed = false;
+			backPressed();
+		}
+	}
+	
 	/*
 	 * Atualiza o touch
 	 */
@@ -703,6 +724,19 @@ public class Scene extends multigear.mginterface.scene.Installation {
 		if(touchSceneComponent(motionEvent))
 			return true;
 		return onTouch(motionEvent);
+	}
+	
+	/**
+	 * Back Pressed
+	 * @return
+	 */
+	final public boolean backPressed() {
+		if (hasUninstalling() || isUninstalled() || !mTouchable)
+			return false;
+		// Not Touch If Uninstalled
+		if(mInstallManager.backPressed())
+			return true;
+		return onBackPressed();
 	}
 	
 	/*
@@ -963,4 +997,12 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	public boolean onTouch(final MotionEvent motionEvent) {
 		return false;
 	};
+	
+	/**
+	 * Not Consume
+	 * @return
+	 */
+	public boolean onBackPressed() {
+		return false;
+	}
 }

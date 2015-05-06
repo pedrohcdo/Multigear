@@ -256,9 +256,8 @@ public class ClientSupport {
 	 * Resume connection
 	 */
 	final protected void resume() {
-		if(mConnection != null) {
-			mConnection.pause();
-		}
+		if(mConnection != null)
+			mConnection.resume();
 	}
 	
 	/**

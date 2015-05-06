@@ -242,7 +242,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @param inverted
 	 */
-	final public void setMirrorInverted(final boolean mirrorX, final boolean mirrorY) {
+	final public void setMirror(final boolean mirrorX, final boolean mirrorY) {
 		mMirror[0] = mirrorX;
 		mMirror[1] = mirrorY;
 	}
@@ -734,27 +734,53 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @param drawer
 	 */
 	final protected void normalTransform(final WorldMatrix matrixRow, final AnimationSet animationSet ) {
+		
+
+
+
+		
+		
+		// Translate and Rotate Matrix with correction
+		
+		
 		// Animation Level
-		final Vector2 scale = animationSet.getScale();
-		final Vector2 ascale = new Vector2(mScale.x * scale.x, mScale.y  * scale.y);
-		final float aox = mCenter.x * ascale.x;
-		final float aoy = mCenter.y * ascale.y;
-		final float arotation = mAngle + animationSet.getRotation();
-		final Vector2 atranslate = animationSet.getPosition();
+		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
+		final float rotation = mAngle + animationSet.getRotation();
+		final Vector2 translate = Vector2.sum(mPosition, animationSet.getPosition());
+		
+		// Variables
+		float six = mCenter.x * scale.x;
+		float siy = mCenter.y * scale.y;
+		float mx = 1;
+		float my = 1;
+		float mtx = 0;
+		float mty = 0;
+		
+		if (mMirror[0]) {
+			mx = -1;
+			mtx = mSize.x;
+		}
+		
+		if (mMirror[1]) {
+			my = -1;
+			mty = mSize.y;
+		}
 		
 		// Final Transformation
 		// pre = M * other
 		// M Transform "other" and not "other" transform M because "other" 
 		// Calculate without M informations
-		float rad = (float) GeneralUtils.degreeToRad(arotation);
+
+		float rad = (float) GeneralUtils.degreeToRad(rotation);
 		float c = (float) Math.cos(rad);
 		float s = (float) Math.sin(rad);
-		mFinalTransformation[0] = c * ascale.x;
-		mFinalTransformation[1] = -s * ascale.y;
-		mFinalTransformation[2] = c * -aox + -s * -aoy + (mPosition.x + atranslate.x);
-		mFinalTransformation[3] = s * ascale.x;
-		mFinalTransformation[4] = c * ascale.y;
-		mFinalTransformation[5] = s * -aox + c * -aoy + (mPosition.y + atranslate.y);
+		mFinalTransformation[0] = c * scale.x * mx;
+		mFinalTransformation[1] = -s * scale.y * my;
+		mFinalTransformation[2] = c * (scale.x * mtx - six) + -s * (scale.y * mty - siy) + translate.x;
+		mFinalTransformation[3] = s * scale.x * mx;
+		mFinalTransformation[4] = c * scale.y * my;
+		mFinalTransformation[5] = s * (scale.x * mtx - six) + c * (scale.y * mty - siy) + translate.y;
+		
 		matrixRow.preConcatf(mFinalTransformation);
 	}
 	

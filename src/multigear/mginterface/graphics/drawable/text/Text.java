@@ -390,37 +390,40 @@ public class Text implements Drawable, Component {
 		float tY = mPosition.y + translate.y;
 		float six = ox;
 		float siy = oy;
-
+		float mx = 1;
+		float my = 1;
+		float mtx = 0;
+		float mty = 0;
+		
 		if (mMirror[0]) {
-			six *= -1;
-			sx *= -1;
-			tX -= sx - six * 2;
+			mx = -1;
+			mtx = 1;
 		}
 		
 		if (mMirror[1]) {
-			siy *= -1;
-			sy *= -1;
-			tY -= sy - siy * 2;
+			my = -1;
+			mty = 1;
 		}
-
 
 		// Get Matrix Row
 		final WorldMatrix matrixRow = drawer.getWorldMatrix();
 
 		// Push Matrix
 		matrixRow.push();
-				
+
+		
 		// Translate and Rotate Matrix with correction
 		float rad = (float) GeneralUtils.degreeToRad(rotate);
-		float c = (float) Math.cos(-rad);
-		float s = (float) Math.sin(-rad);
-		mFinalTransformation[0] = c * sx;
-		mFinalTransformation[1] = -s * sy;
-		mFinalTransformation[2] = c * -six + -s * -siy + tX;
-		mFinalTransformation[3] = s * sx;
-		mFinalTransformation[4] = c * sy;
-		mFinalTransformation[5] = s * -six + c * -siy + tY;
+		float c = (float) Math.cos(rad);
+		float s = (float) Math.sin(rad);
+		mFinalTransformation[0] = c * sx * mx;
+		mFinalTransformation[1] = -s * sy * my;
+		mFinalTransformation[2] = c * (sx * mtx - six) + -s * (sy * mty - siy) + tX;
+		mFinalTransformation[3] = s * sx * mx;
+		mFinalTransformation[4] = c * sy * my;
+		mFinalTransformation[5] = s * (sx * mtx - six) + c * (sy * mty - siy) + tY;
 		matrixRow.preConcatf(mFinalTransformation);
+		
 		
 		// Draw Text
 		drawer.begin();

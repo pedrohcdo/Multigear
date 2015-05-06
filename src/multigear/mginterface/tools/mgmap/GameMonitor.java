@@ -80,6 +80,14 @@ final public class GameMonitor {
 	}
 	
 	/**
+	 * Load texture of minor player
+	 * @return
+	 */
+	final public Texture loadTexture(final int resId) {
+		return loadTextureOf(mMultigearGame.getState().getMinorPlayer(), resId);
+	}
+	
+	/**
 	 * Load texture in player side.
 	 * @return
 	 */

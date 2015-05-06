@@ -137,7 +137,7 @@ public class GameObjects {
 		final public void release() {
 			//
 			if(mDeleted)
-				throw new RuntimeException("This object was deleted anteriormente.");
+				throw new RuntimeException("This object was deleted.");
 			
 			// Not release many times
 			if(mReleased)
@@ -153,6 +153,10 @@ public class GameObjects {
 			
 			// Set Released
 			mReleased = true;
+			
+			// Feedback
+			if(mFeedback != null)
+				mFeedback.onObjectCreated(this);
 		}
 		
 		/**
@@ -312,9 +316,6 @@ public class GameObjects {
 		gameObject.mFlags = flags;
 		gameObject.mRegisterMode = type;
 		mGameObjects.add(gameObject);
-		// Feedback
-		if(mFeedback != null)
-			mFeedback.onObjectCreated(gameObject);
 		// Return index
 		return gameObject;
 	}

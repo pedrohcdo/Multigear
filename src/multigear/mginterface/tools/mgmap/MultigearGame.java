@@ -226,9 +226,6 @@ public class MultigearGame {
 			final ParentAttributes attributes = (ParentAttributes) message.Object;
 			final float thisScreenY = mScene.getPhysicalScreenSize().y;
 			final float parentScreenY = attributes.getPhysicalScreenSize().y;
-			Log.d("LogTest", "This Screen Size: " + thisScreenY);
-			Log.d("LogTest", "Parent Screen Size: " + parentScreenY);
-			
 			Adjust adjust = Adjust.NOT_SET;
 			if(thisScreenY > parentScreenY) {
 				mScene.setBaseDpi(attributes.Dpi);

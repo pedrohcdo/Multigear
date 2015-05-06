@@ -345,6 +345,19 @@ final public class InstallManager {
 	}
 	
 	/*
+	 * Evento de tecla voutar
+	 */
+	final protected boolean backPressed() {
+		Collections.sort(mInstallationList, mDrawablesComparatorUpdate);
+		for (int index = 0; index < mInstallationList.size(); index++) {
+			if(mInstallationList.get(index).backPressed())
+				return true;
+		}
+		return false;
+	}
+	
+	
+	/*
 	 * Update Root
 	 */
 	final protected void updateManager() {

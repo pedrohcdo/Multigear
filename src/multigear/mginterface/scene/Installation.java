@@ -161,6 +161,10 @@ abstract public class Installation {
 	 */
 	abstract public boolean touch(final MotionEvent motionEvent);
 
+	/*
+	 * Evento de toque
+	 */
+	abstract public boolean backPressed();
 	
 	/* Evento de intalação completa */
 	public void onInstalled() {};
