@@ -7,7 +7,7 @@ import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
-import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
+import multigear.mginterface.graphics.opengl.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;
@@ -79,6 +79,25 @@ final public class Polygon implements Drawable, Component {
 		mAnimationStack = new AnimationStack();
 		mViewport = null;
 		mFixedSpace = false;
+	}
+	
+	/**
+	 * Create polygon with same vertices and optimizations of polygon passed on arguments
+	 * @param polygon
+	 */
+	public Polygon(final Polygon polygon) {
+		mTexture = null;
+		mAnimationStack = new AnimationStack();
+		mViewport = null;
+		mFixedSpace = false;
+		
+		// Copy optimizations
+		mPolygonMode = polygon.mPolygonMode;
+		mPolygonFloatExtra = polygon.mPolygonFloatExtra;
+		mPolygonVectorExtra = polygon.mPolygonVectorExtra.clone();
+		
+		// Copy Data
+		addVertices(polygon);
 	}
 
 	/**
@@ -225,8 +244,7 @@ final public class Polygon implements Drawable, Component {
 	 *            Step of the ellipse of vertices in degree.
 	 * @return Returns the polygon containing the vertices to a circle.
 	 */
-	final public static Polygon createEllipse(final Vector2 radius,
-			final float detail) {
+	final public static Polygon createEllipse(final Vector2 radius, final float detail) {
 		final Polygon circle = new Polygon();
 		final double rad = GeneralUtils.degreeToRad(detail);
 		for (double i = 0; i < Math.PI * 2; i += rad) {
@@ -758,6 +776,25 @@ final public class Polygon implements Drawable, Component {
 		mZ = z;
 	}
 
+
+	/**
+	 * Get framed size
+	 * 
+	 * @return
+	 */
+	final public Vector2 getFramedSize() {
+		switch (mPolygonMode) {
+		case POLYGON_MODE_NORMAL:
+			return mSize;
+		case POLYGON_MODE_OPTIMIZED_CIRCLE:
+			return new Vector2(mPolygonFloatExtra*2, mPolygonFloatExtra*2);
+		case POLYGON_MODE_OPTIMIZED_ELLIPSE:
+			return Vector2.scale(mPolygonVectorExtra, 2);
+		}
+		return new Vector2();
+	}
+	
+	
 	/**
 	 * Get Color
 	 * 

@@ -18,7 +18,19 @@ final public class Color {
 	final static public Color TRANSPARENT = new Color(0, 0, 0, 0);
 	
 	// Private Variables
-	private float mColor[] = {1, 1, 1, 1};
+	final private float mColor[];
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param red Red Component
+	 * @param green Green Component
+	 * @param blue Blue Component
+	 * @param alpha Alpha Component
+	 */
+	public Color(final int rgb) {
+		mColor = new float[] {(rgb >> 16) / 255.0f, ((rgb >> 8) & 0xFF) / 255.0f, (rgb & 0xFF) / 255.0f, 1.0f};
+	}
 	
 	/**
 	 * Constructor
@@ -54,6 +66,15 @@ final public class Color {
 	 */
 	public Color(final Color color) {
 		mColor = new float[] {color.mColor[0], color.mColor[1], color.mColor[2], color.mColor[3]};
+	}
+	
+	/**
+	 * Return instance of color
+	 * 
+	 * @param rgb RGB Components
+	 */
+	final static public Color rgb(final int rgb) {
+		return new Color(rgb);
 	}
 	
 	/**

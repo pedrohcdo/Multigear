@@ -2,8 +2,11 @@ package multigear.mginterface.graphics.opengl.texture;
 
 import multigear.cache.CacheComponent;
 import multigear.general.utils.Vector2;
+import multigear.mginterface.graphics.opengl.BlendFunc;
+import multigear.mginterface.graphics.opengl.WrapMode;
 import multigear.mginterface.graphics.opengl.drawer.TextureContainer;
 import android.graphics.Bitmap;
+import android.opengl.GLES20;
 
 
 /**
@@ -35,6 +38,7 @@ final public class Texture implements CacheComponent {
 	
 	// Private Variables
 	private TextureMap mTextureMap = DefaultTextureMap;
+	private WrapMode[] mWrapMode = new WrapMode[] {WrapMode.CLAMP_TO_EDGE, WrapMode.CLAMP_TO_EDGE};
 	
 	/*
 	 * Construtor
@@ -60,6 +64,16 @@ final public class Texture implements CacheComponent {
 	 */
 	public int getID() {
 		return mID;
+	}
+	
+	/**
+	 * Set Texture Wrap Mode
+	 */
+	final public void setWrapMode(final WrapMode xWrapMode, final WrapMode yWrapMode) {
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mHandle);
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, xWrapMode.getConst());
+		GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, yWrapMode.getConst());
+		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 	}
 	
 	/*

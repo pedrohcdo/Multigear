@@ -1,4 +1,4 @@
-package multigear.mginterface.graphics.opengl.drawer;
+package multigear.mginterface.graphics.opengl;
 
 import android.opengl.GLES20;
 

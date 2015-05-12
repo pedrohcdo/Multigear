@@ -9,6 +9,7 @@ import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.general.utils.buffers.GlobalFloatBuffer;
 import multigear.mginterface.graphics.drawable.polygon.Polygon;
+import multigear.mginterface.graphics.opengl.BlendFunc;
 import multigear.mginterface.graphics.opengl.Renderer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
 import multigear.mginterface.graphics.opengl.font.FontWrapper;
@@ -294,7 +295,9 @@ final public class Drawer {
 		GLES20.glColorMask(false, false, false, false);
 		GLES20.glDepthMask(false);
 		
+		// Never pass in stencil test
 		GLES20.glStencilFunc(GLES20.GL_NEVER, 1, 0xFF);
+		// Increment in stencil test and next others test
 		GLES20.glStencilOp(GLES20.GL_INCR, GLES20.GL_KEEP, GLES20.GL_KEEP);
 		GLES20.glStencilMask(0xFF);
 		
@@ -305,6 +308,33 @@ final public class Drawer {
 		GLES20.glStencilMask(0);
 		GLES20.glStencilFunc(GLES20.GL_EQUAL, mStencilLevel++, 0xFF);
 		
+	}
+	
+	/**
+	 * Set Stencil Level
+	 * 
+	 * @param level
+	 */
+	final public void setStencilLevel(final int level) {
+		GLES20.glStencilFunc(GLES20.GL_EQUAL, level, 0xFF);
+	}
+	
+	/**
+	 * Restore Stencil to max Level
+	 * 
+	 * @param level
+	 */
+	final public void restoreStencilLevel() {
+		GLES20.glStencilFunc(GLES20.GL_EQUAL, getStencilMaxLevel(), 0xFF);
+	}
+	
+	/**
+	 * Return Stencil Level Count
+	 * 
+	 * @return
+	 */
+	final public int getStencilMaxLevel() {
+		return mStencilLevel-1;
 	}
 	
 	/**

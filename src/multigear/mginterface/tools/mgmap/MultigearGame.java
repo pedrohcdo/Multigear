@@ -126,6 +126,7 @@ public class MultigearGame {
 	final private AlignMode mAlignMode;
 	
 	// Private Variables
+	private GameDensityParser mGameDensityParser;
 	private boolean mConnectionEstablished = false;
 	private boolean mConnectionFinish = false;
 	private boolean mConnecting = false;
@@ -291,9 +292,17 @@ public class MultigearGame {
 				// Not possible
 				break;
 			}
+			// Final sets
+			mGameState.prepare(mPlayer, mapSize, screenDivision, adjust, attributes, mTimeStampSyncResultP1, mTimeStampSyncResultP2);
+			
+			if(adjust == Adjust.ADJUST_EQUAL || adjust == Adjust.ADJUST_MINOR) {
+				mGameDensityParser = new GameDensityParser(mScene, mScene.getScreenSize());
+			} else {
+				mGameDensityParser = new GameDensityParser(mScene, attributes.getScreenSize());
+			}
+			
 			// Connected
 			mConnectionFinish = true;
-			mGameState.prepare(mPlayer, mapSize, screenDivision, adjust, attributes, mTimeStampSyncResultP1, mTimeStampSyncResultP2);
 			mDuoMapListener.onConnect(true);
 			break;
 		}
@@ -465,8 +474,8 @@ public class MultigearGame {
 	}
 	
 	/**
-	 * Get DuoMap Manager.<br>
-	 * <b>Note:</b> Monitor available after connection finish
+	 * Get Game Objects.<br>
+	 * <b>Note:</b> Game Objects available after connection finish
 	 * @return
 	 */
 	final public GameObjects getObjects() {
@@ -476,14 +485,25 @@ public class MultigearGame {
 	}
 	
 	/**
-	 * Get DuoMap Manager.<br>
-	 * <b>Note:</b> Monitor available after connection finish
+	 * Get Game Monitor.<br>
+	 * <b>Note:</b> Game Monitor available after connection finish
 	 * @return
 	 */
 	final public GameMonitor getMonitor() {
 		if(!mConnectionFinish)
 			throw new RuntimeException("Not Connected.");
 		return mGameMonitor;
+	}
+	
+	/**
+	 * Get Game Density Parser.<br>
+	 * <b>Note:</b> Game Density Parser available after connection finish
+	 * @return
+	 */
+	final public GameDensityParser getDensityParser() {
+		if(!mConnectionFinish)
+			throw new RuntimeException("Not Connected.");
+		return mGameDensityParser;
 	}
 	
 	/**

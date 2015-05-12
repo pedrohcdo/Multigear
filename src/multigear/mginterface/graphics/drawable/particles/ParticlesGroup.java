@@ -9,7 +9,7 @@ import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
-import multigear.mginterface.graphics.opengl.drawer.BlendFunc;
+import multigear.mginterface.graphics.opengl.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
 import multigear.mginterface.graphics.opengl.texture.Texture;

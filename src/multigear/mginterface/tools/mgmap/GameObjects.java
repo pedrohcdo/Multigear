@@ -1,23 +1,12 @@
 package multigear.mginterface.tools.mgmap;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import multigear.communication.tcp.support.objectmessage.ObjectMessage;
 import multigear.communication.tcp.support.objectmessage.ObjectMessageBuilder;
 import multigear.general.utils.Vector2;
-import multigear.mginterface.engine.eventsmanager.GlobalClock;
 import multigear.mginterface.tools.mgmap.MultigearGame.Player;
 import multigear.mginterface.tools.mgmap.MultigearGame.RegisterMode;
-import multigear.services.ServiceControl;
-import multigear.services.ServiceRunnable;
-import android.util.Log;
 
 
 /**
@@ -61,7 +50,6 @@ public class GameObjects {
 		private boolean mDeleted = false;
 		private int mFlags = 0;
 		private boolean mReleased = false;
-		private int mTransactionControl = 0;
 		
 		/**
 		 * Set object position
@@ -79,7 +67,7 @@ public class GameObjects {
 				// Set Position
 				mPosition = position;
 				// Transact Object
-				if(checkTransactObject(this))
+				if(mPlayer == mMonitor.getPlayer() && checkTransactObject(this))
 					informTransaction(this);
 			}
 		}
@@ -115,18 +103,6 @@ public class GameObjects {
 			} else if(mPlayer == mMonitor.getPlayer() || mRegisterMode == RegisterMode.FREE) {
 				// Set Position
 				mDirection = direction;
-			}
-		}
-		
-		/**
-		 * Update Object
-		 */
-		final public void update() {
-			if(mPlayer != mMonitor.getPlayer()) {
-				if(checkVisibleObject(this)) {
-					mPosition.x += mDirection.x * GlobalClock.elapsedFramedTime();
-					mPosition.y += mDirection.y * GlobalClock.elapsedFramedTime();
-				}
 			}
 		}
 		
@@ -448,29 +424,6 @@ public class GameObjects {
 	}
 	
 	/**
-	 * Check visibile
-	 * @param object
-	 */
-	final private boolean checkVisibleObject(final GameObject object) {
-		// If player in this side
-		float mapDivision = mMonitor.getMapDivision();
-		
-		switch(mMonitor.getPlayer()) {
-		default:
-		case Player1:
-			// Transacted to other side
-			if(object.mPosition.x >= mapDivision)
-				return false;
-			break;
-		case Player2:
-			// Transacted to other side
-			if(object.mPosition.x + object.mSize.x < mapDivision)
-				return false;
-		}
-		return true;
-	}
-	
-	/**
 	 * Inform Object created
 	 * @param object
 	 */
@@ -500,7 +453,6 @@ public class GameObjects {
 		builder.add(object.mPosition);
 		builder.add(object.mDirection);
 		builder.add(System.nanoTime());
-		builder.add(object.mTransactionControl);
 		mGame.sendMessage(builder.build());
 	}
 	
@@ -555,17 +507,11 @@ public class GameObjects {
 			message.object6 = values.get(5);
 			break;
 		case OBJECT_INFORM:
-			message.object1 = values.get(0);
-			message.object2 = values.get(1);
-			message.object3 = values.get(2);
-			message.object4 = values.get(3);
-			break;
 		case OBJECT_TRANSACT:
 			message.object1 = values.get(0);
 			message.object2 = values.get(1);
 			message.object3 = values.get(2);
 			message.object4 = values.get(3);
-			message.object5 = values.get(4);
 			break;
 		case OBJECT_DELETE:
 			message.object1 = values.get(0);
@@ -578,14 +524,20 @@ public class GameObjects {
 	 * On Update
 	 */
 	final protected void update() {
-		final Iterator<GameMessage> itr = mGameMessages.iterator();
-		while(itr.hasNext()) {
-			final GameMessage message = itr.next();
+		
+		// 
+		while(mGameMessages.size() > 0) {
+			
+			// Remove message
+			final GameMessage message = mGameMessages.remove(0);
+			
 			// Vars
-			Integer id, flags, tcontrol;
+			Integer id, flags;
 			GameObject object;
 			Vector2 pos, size, dir;
 			long nano;
+			
+			
 			// Message
 			switch(message.code) {
 			case OBJECT_CREATE:
@@ -607,9 +559,6 @@ public class GameObjects {
 				object.mReleased = true;
 				
 				mGameObjects.add(object);
-				
-				// Remove message
-				itr.remove();
 				
 				// Feedback
 				if(mFeedback != null)
@@ -636,9 +585,6 @@ public class GameObjects {
 				
 				mGameObjects.add(object);
 				
-				// Remove message
-				itr.remove();
-				
 				// Feedback
 				if(mFeedback != null)
 					mFeedback.onObjectCreated(object);
@@ -650,25 +596,19 @@ public class GameObjects {
 				pos = (Vector2)message.object2;
 				dir = (Vector2)message.object3;
 				nano = (Long)message.object4;
-				tcontrol = (Integer)message.object5;
 				
 				object = getObjectByIdSafe(id);
 				
-				if(object != null && tcontrol >= object.mTransactionControl) {
+				if(object != null) {
 					long timeDiff = Math.min(Math.abs(mMonitor.getParentNanoTimes() - nano), 150000000);
 					Vector2 newDir = Vector2.scale(dir,  timeDiff / 17000000.0f);
 					object.mPosition = Vector2.sum(pos, newDir);
 					object.mDirection = dir;
 					object.mPlayer = mMonitor.getPlayer();
 					object.mReleased = true;
-					object.mTransactionControl = tcontrol + 1;
 				}
 				
-				// Remove message
-				itr.remove();
-				
 				break;
-				
 			case OBJECT_INFORM:
 				
 				id = (Integer)message.object1;
@@ -684,28 +624,20 @@ public class GameObjects {
 					object.mDirection = dir;
 				}
 				
-				// Remove message
-				itr.remove();
-				
 				break;
 			case OBJECT_DELETE:
 				// Remove object
 				id = (Integer)message.object1;
 				object = getObjectByIdSafe(id);
+				
 				// If has object
 				if(object != null) {
 					object.mDeleted = true;
 					mGameObjects.remove(object);
 					
-					// Remove message
-					itr.remove();
-					
 					// Feedback
 					if(mFeedback != null)
 						mFeedback.onObjectDeleted(object);
-				} else {
-					// Remove message
-					itr.remove();
 				}
 				break;
 			}

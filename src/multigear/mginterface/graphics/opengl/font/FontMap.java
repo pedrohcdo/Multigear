@@ -421,7 +421,7 @@ final public class FontMap implements CacheComponent {
 	 * @param map
 	 * @return
 	 */
-	final static protected FontMap create(final Scene scene, final Loader loader, final Typeface typeface, final int fontSize, final CharMap map) {
+	final static protected FontMap create(final Scene scene, final Loader loader, final Typeface typeface, final int fontSize, final CharMap map, boolean optimized) {
 		// Not support size smaller than 1
 		if(fontSize < 0)
 			throw new IllegalArgumentException("Font Size can not be less than 1");
@@ -556,13 +556,18 @@ final public class FontMap implements CacheComponent {
 					
 			// Load texture
 			layer.mTextureFont = loader.create(bitmap);
-					
-			// Set FontMap layer
-			fontMap.mLayers[0] = layer;
-			fontMap.mLayers[1] = layer;
-			fontMap.mLayers[2] = layer;
-			fontMap.mLayers[3] = layer;
-			break;
+			
+			// If optimized
+			if(optimized) {
+				// Set FontMap layer
+				fontMap.mLayers[0] = layer;
+				fontMap.mLayers[1] = layer;
+				fontMap.mLayers[2] = layer;
+				fontMap.mLayers[3] = layer;
+				break;
+			} else {
+				fontMap.mLayers[layer.mId] = layer;
+			}
 		}
 				
 		// Return FontMap
@@ -580,7 +585,7 @@ final public class FontMap implements CacheComponent {
 	 * @param map
 	 * @return
 	 */
-	final static protected FontMap create(final Scene scene, final Loader loader, final String fontPath, final int fontSize, final CharMap map) {
+	final static protected FontMap create(final Scene scene, final Loader loader, final String fontPath, final int fontSize, final CharMap map, boolean optimized) {
 		// Not support size smaller than 1
 		if(fontSize < 0)
 			throw new IllegalArgumentException("Font Size can not be less than 1");
@@ -717,12 +722,17 @@ final public class FontMap implements CacheComponent {
 			// Load texture
 			layer.mTextureFont = loader.create(bitmap);
 			
-			// Set FontMap layer
-			fontMap.mLayers[0] = layer;
-			fontMap.mLayers[1] = layer;
-			fontMap.mLayers[2] = layer;
-			fontMap.mLayers[3] = layer;
-			break;
+			// If optimized
+			if(optimized) {
+				// Set FontMap layer
+				fontMap.mLayers[0] = layer;
+				fontMap.mLayers[1] = layer;
+				fontMap.mLayers[2] = layer;
+				fontMap.mLayers[3] = layer;
+				break;
+			} else {
+				fontMap.mLayers[layer.mId] = layer;
+			}
 		}
 		
 		// Return FontMap
