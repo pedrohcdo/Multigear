@@ -10,7 +10,7 @@ import multigear.mginterface.graphics.animations.AnimationSet;
  *
  * Property Createlier.
  */
-public class AnimationSwingTop extends Animation {
+public class AnimationSwingTop implements Animation {
 	
 	// Constants
 	final static private double PI2 = Math.PI * 2;
@@ -21,8 +21,7 @@ public class AnimationSwingTop extends Animation {
 	/*
 	 * Construtor
 	 */
-	public AnimationSwingTop(int duration, final float force) {
-		super(duration);
+	public AnimationSwingTop(final float force) {
 		mForce = force;
 	}
 	

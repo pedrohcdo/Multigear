@@ -219,7 +219,7 @@ public class FrameHolder implements Drawable, Component {
 	 * @return {@link Vector2} Position
 	 */
 	final public Vector2 getRealPosition() {
-		final AnimationSet animationSet = getAnimationStack().prepareAnimation().animate();
+		final AnimationSet animationSet = getAnimationStack().animateFrame();
 		Vector2 position = mPosition.clone();
 		position.sum(animationSet.getPosition());
 		return position;
@@ -288,7 +288,7 @@ public class FrameHolder implements Drawable, Component {
 	public void draw(final Drawer drawer) {
 
 		// Prepare Animation
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		
 		// Get final Opacity
 		final float opacity = animationSet.getOpacity() * getOpacity();

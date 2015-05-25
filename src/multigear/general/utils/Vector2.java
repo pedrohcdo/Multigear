@@ -346,7 +346,7 @@ final public class Vector2 implements Cloneable
 	/** 
 	 * Rotate Vector.
 	 * @param vec Vector to rotate
-	 * @param angle Angle to rotate
+	 * @param angle Angle to rotate in degree
 	 * @param Direction to rotate vector
 	 * @return
 	 */
@@ -365,6 +365,18 @@ final public class Vector2 implements Cloneable
 	 */
 	final public float aspectRatio() {
 		return x / y;
+	}
+	
+	/**
+	 * Get new instance of Vector2 to direction
+	 * @param angle Angle in degree
+	 * @return
+	 */
+	final public static Vector2 direction(int angle, float length) {
+		double rad = GeneralUtils.degreeToRad(angle);
+		final float newX = (float)(Math.cos(rad) * length);
+		final float newY = (float)(Math.sin(rad) * length);
+		return new Vector2(newX, newY);
 	}
 	
 	/**

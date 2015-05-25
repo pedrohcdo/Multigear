@@ -141,12 +141,10 @@ public class AudioManager implements SoundPool.OnLoadCompleteListener {
 	 * Stop Se Streams.
 	 */
 	final public void stopEffx() {
-		Iterator<Integer> itr = mStreamsSeId.iterator();
-		while(itr.hasNext()) {
-			final Integer streamId = itr.next();
-			mSoundPool.stop(streamId);
-			itr.remove();
+		for(int i=0; i<mStreamsSeId.size(); i++) {
+			mSoundPool.stop(mStreamsSeId.get(i));
 		}
+		mStreamsSeId.clear();
 	}
 	
 	/**

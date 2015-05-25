@@ -9,7 +9,7 @@ package multigear.mginterface.graphics.animations;
  * 
  *         Property SpringBall.
  */
-public class AnimationRotate extends Animation {
+public class AnimationRotate implements Animation {
 	
 	// Final Private Variables
 	final private float mStart, mEnd;
@@ -19,8 +19,7 @@ public class AnimationRotate extends Animation {
 	 * 
 	 * @param duration
 	 */
-	public AnimationRotate(final int duration, final float start, final float end) {
-		super(duration);
+	public AnimationRotate(final float start, final float end) {
 		mStart = start;
 		mEnd = end;
 	}

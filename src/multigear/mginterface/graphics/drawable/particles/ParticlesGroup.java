@@ -52,7 +52,7 @@ final public class ParticlesGroup implements Drawable, Component {
 	private int mZ = 0;
 	private float mOpacity = 1.0f;
 	private boolean mAutoHelper = true;
-	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private BlendFunc mBlendFuncs[] = new BlendFunc[] {BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO};
 	private float mScale = 1.0f;
 	private Color mColor = Color.WHITE;
 	
@@ -76,8 +76,17 @@ final public class ParticlesGroup implements Drawable, Component {
 	 * 
 	 * @param blendFunc
 	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
+	final public void setBlendFunc(final BlendFunc sFactor, final BlendFunc dFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, BlendFunc.ONE, BlendFunc.ZERO};
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFuncSeparate(final BlendFunc sFactor, final BlendFunc dFactor, final BlendFunc sAlphaFactor, final BlendFunc dAlphaFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, sAlphaFactor, dAlphaFactor};
 	}
 	
 	/**
@@ -271,10 +280,10 @@ final public class ParticlesGroup implements Drawable, Component {
 	/**
 	 * Get Blend Func
 	 * 
-	 * @return Get Blend Func
+	 * @return Get Blend Func [sFactor, dFactor]
 	 */
-	final public BlendFunc getBlendFunc() {
-		return mBlendFunc;
+	final public BlendFunc[] getBlendFunc() {
+		return mBlendFuncs.clone();
 	}
 	
 	/**
@@ -480,7 +489,7 @@ final public class ParticlesGroup implements Drawable, Component {
 		drawer.begin();
 		drawer.setTexture(mTexture);
 		drawer.setOpacity(1);
-		drawer.setBlendFunc(mBlendFunc);
+		drawer.setBlendFunc(mBlendFuncs[0], mBlendFuncs[1], mBlendFuncs[2], mBlendFuncs[3]);
 		drawer.setElementVertex(mParticlesBuffer);
 		drawer.setColor(mColor);
 		drawer.snip(mViewport);

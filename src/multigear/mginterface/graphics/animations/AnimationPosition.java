@@ -10,7 +10,7 @@ import multigear.general.utils.Vector2;
  * 
  *         Property SpringBall.
  */
-public class AnimationPosition extends Animation {
+public class AnimationPosition implements Animation {
 	
 	// Final Private Variables
 	final private Vector2 mStart, mEnd;
@@ -20,8 +20,7 @@ public class AnimationPosition extends Animation {
 	 * 
 	 * @param duration
 	 */
-	public AnimationPosition(final int duration, final Vector2 start, final Vector2 end) {
-		super(duration);
+	public AnimationPosition(final Vector2 start, final Vector2 end) {
 		mStart = start.clone();
 		mEnd = end.clone();
 	}

@@ -9,7 +9,7 @@ package multigear.mginterface.graphics.animations;
  * 
  *         Property SpringBall.
  */
-public class AnimationOpacity extends Animation {
+public class AnimationOpacity implements Animation {
 	
 	// Final Private Variables
 	final private float mStart, mEnd;
@@ -19,8 +19,7 @@ public class AnimationOpacity extends Animation {
 	 * 
 	 * @param duration
 	 */
-	public AnimationOpacity(final int duration, final float start, final float end) {
-		super(duration);
+	public AnimationOpacity(final float start, final float end) {
 		mStart = start;
 		mEnd = end;
 	}

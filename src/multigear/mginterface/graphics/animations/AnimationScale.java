@@ -10,7 +10,7 @@ import multigear.general.utils.Vector2;
  * 
  *         Property SpringBall.
  */
-public class AnimationScale extends Animation {
+public class AnimationScale implements Animation {
 	
 	// Final Private Variables
 	final private Vector2 mStart, mEnd;
@@ -20,8 +20,7 @@ public class AnimationScale extends Animation {
 	 * 
 	 * @param duration
 	 */
-	public AnimationScale(final int duration, final Vector2 start, final Vector2 end) {
-		super(duration);
+	public AnimationScale(final Vector2 start, final Vector2 end) {
 		mStart = start.clone();
 		mEnd = end.clone();
 	}
@@ -31,8 +30,7 @@ public class AnimationScale extends Animation {
 	 * 
 	 * @param duration
 	 */
-	public AnimationScale(final int duration, final float start, final float end) {
-		super(duration);
+	public AnimationScale(final float start, final float end) {
 		mStart = new Vector2(start, start);
 		mEnd = new Vector2(end, end);
 	}

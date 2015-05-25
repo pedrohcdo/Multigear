@@ -75,42 +75,48 @@ public class AnimationStack {
 	}
 	
 	/**
-	 * Null Animation
+	 * Animation Control
 	 * 
-	 * @author PedroH, RaphaelB
-	 * 
-	 *         Property Createlier.
+	 * @author user
+	 *
 	 */
-	final private class NullAnimation extends Animation {
+	final private class AnimationControl {
 		
-		/**
-		 * Constructor
-		 * 
-		 * @param duration
-		 */
-		public NullAnimation() {
-			super(-1);
-		}
-		
-		/** Unused */
-		@Override
-		final public void onAnimation(AnimationSet animationSet, float delta) {
-		}
+		int duration;
+		Animation animation;
 	}
 	
+	/**
+	 * Animation State
+	 * 
+	 * @author user
+	 *
+	 */
+	final private class AnimationState {
+		
+		int state;
+		float delta;
+		int index;
+		Animation animation;
+	}
+	
+	// Conts
+	final private static int ANIMATION_STATE_RUNNING = 0;
+	final private static int ANIMATION_STATE_EMPTY = 1;
+	final private static int ANIMATION_STATE_END = 2;
+	
 	// Final Private Variables
-	final private List<multigear.mginterface.graphics.animations.Animation> mAnimationStack;
+	final private List<AnimationControl> mAnimationStack;
 	final private List<AnimationStack.Handler> mStateProcedures;
-	final private multigear.mginterface.graphics.animations.Animation mNullAnimation;
 	final private Object mLock;
 	
 	// Private VAriables
-	private int mAnimationIndex;
-	private boolean mRepeat;
-	private boolean mStarted;
-	private boolean mRunning;
-	// private int mEndAnimationsIndex;
 	private AnimationListener mListener;
+	private int mIndex;
+	private int mLoops;
+	private long mStartedTime, mTotalTime;
+	private boolean mStarted = false;
+	private boolean mRunning = false;
 	
 	/*
 	 * Construtor
@@ -118,95 +124,22 @@ public class AnimationStack {
 	public AnimationStack() {
 		
 		mLock = new Object();
-		mNullAnimation = new NullAnimation();
-		mAnimationStack = new ArrayList<Animation>();
+		
+		mAnimationStack = new ArrayList<AnimationControl>();
 		mStateProcedures = new ArrayList<AnimationStack.Handler>();
-		mAnimationIndex = 0;
-		mStarted = false;
-		mRunning = false;
-		// mEndAnimationsIndex = -1;
+		
 		
 		mListener = null;
 	}
 	
-	/*
-	 * Altera o gerenciador de eventos
+	/**
+	 * Set Listener
+	 * @param listener
 	 */
 	final public void setListener(final AnimationListener listener) {
 		synchronized (mLock) {
 			mListener = listener;
 		}
-	}
-	
-	/*
-	 * Inicia as animações
-	 */
-	public void start() {
-		
-		// Set default Index
-		mAnimationIndex = -1;
-		
-		// Clear States
-		mStateProcedures.clear();
-		// mEndAnimationsIndex = -1;
-		
-		// Start Animations
-		mStarted = true;
-		mRunning = true;
-		
-		// No Need to add in Proc
-		if (mListener != null)
-			mListener.onAnimationsStart();
-		
-		// Set First Animation
-		startAnimation(0);
-	}
-	
-	/*
-	 * Para as animações
-	 */
-	public void stop() {
-		mStarted = false;
-		mRunning = false;
-	}
-	
-	/**
-	 * Return true if Started Animations.
-	 */
-	public boolean isStarted() {
-		return mStarted;
-	}
-	
-	/**
-	 * Return true if Animations Running.
-	 */
-	public boolean isRunning() {
-		return mRunning && mStarted;
-	}
-	
-	/*
-	 * Repetição da animação
-	 */
-	public void setRepeat(final boolean repeat) {
-		mRepeat = repeat;
-	}
-	
-	/*
-	 * Retorna true caso a animação seja repetida
-	 */
-	public boolean getRepeat() {
-		return mRepeat;
-	}
-	
-	/*
-	 * Adicinona uma animação
-	 */
-	public void addAnimation(Animation base) {
-		mAnimationStack.add(base);
-		// Se já estiver iniciada e estiver no fim da pilha sera executado esta
-		if (mStarted && !mRunning)
-			startAnimation(mAnimationStack.size() - 1);
-		mRunning = true;
 	}
 	
 	/**
@@ -215,7 +148,7 @@ public class AnimationStack {
 	 * @param code
 	 * @param animation
 	 */
-	final private void addProc(final int code, final multigear.mginterface.graphics.animations.Animation animation) {
+	final private void addProc(final int code, final Animation animation) {
 		mStateProcedures.add(new AnimationStack.Handler(code, animation));
 	}
 	
@@ -229,19 +162,6 @@ public class AnimationStack {
 		mStateProcedures.add(new AnimationStack.Handler(code));
 	}
 	
-	/*
-	 * Inicia a animação
-	 */
-	final private void startAnimation(final int id) {
-		if (id < mAnimationStack.size()) {
-			mAnimationIndex = id;
-			final multigear.mginterface.graphics.animations.Animation animation = mAnimationStack.get(mAnimationIndex);
-			animation.set(GlobalClock.currentTimeMillis());
-			if (mListener != null)
-				addProc(AnimationStack.Handler.ANIMATION_START, animation);
-		}
-	}
-	
 	/**
 	 * Prepare Procedures
 	 */
@@ -252,92 +172,220 @@ public class AnimationStack {
 	}
 	
 	/**
+	 * Start Animations
+	 * @param loop
+	 */
+	public void start() {
+		start(1);
+	}
+	
+	/**
+	 * Start Animations with loop<br>
+	 * <b>Note:</b> Use -1 to infinity loops
+	 * @param loop
+	 */
+	public void start(int loop) {
+		// If illegal
+		if(loop <= 0 && loop != -1)
+			throw new IllegalArgumentException("The number of loops can not be less than 0.");
+		
+		// Normalize
+		if(loop == -1)
+			loop = 0;
+		
+		// If empty return and force to stop
+		// In same cases have animation request to retry
+		if(mAnimationStack.size() == 0) {
+			mStarted = false;
+			mRunning = false;
+			return;
+		}
+		
+		// Uses
+		mStateProcedures.clear();
+		mIndex = -1;
+		mLoops = loop;
+		mStarted = true;
+		mRunning = true;
+		mStartedTime = GlobalClock.currentTimeMillis();
+		mTotalTime = 0;
+		for(int i=0; i<mAnimationStack.size(); i++) {
+			final AnimationControl control = mAnimationStack.get(i);
+			mTotalTime += control.duration;
+		}
+		
+		// No Need to add in Proc
+		if (mListener != null)
+			mListener.onAnimationsStart();
+	}
+	
+	/*
+	 * Para as animações
+	 */
+	public void stop() {
+		mStarted = false;
+	}
+	
+	/**
+	 * Return true if Started Animations.
+	 */
+	public boolean isStarted() {
+		return mStarted;
+	}
+	
+	/**
+	 * Return true if Animations Running.
+	 */
+	public boolean isRunning() {
+		return mStarted && mRunning;
+	}
+	
+	/**
+	 * Adds an animation, if the stack of animations is operating the same is restarted from the beginning .
+	 * @param duration
+	 * @param animation
+	 */
+	public void addAnimation(final int duration, final Animation animation) {
+		// Control
+		final AnimationControl control = new AnimationControl();
+		control.duration = duration;
+		control.animation = animation;
+		//
+		mAnimationStack.add(control);
+		// Se já estiver iniciada e estiver no fim da pilha sera executado esta
+		if(isStarted())
+			start(mLoops);
+	}
+	
+	/**
+	 * Remove the instance of animation, if the stack of animations is operating the same is restarted from the beginning .
+	 * @param animation
+	 */
+	public void removeAnimation(final Animation animation) {
+		AnimationControl control = null;
+		for(int i=0; i<mAnimationStack.size(); i++) {
+			control = mAnimationStack.get(i);
+			if(control.animation == animation)
+				break;
+		}
+		if(control != null)
+			mAnimationStack.remove(control);
+		// Se já estiver iniciada e estiver no fim da pilha sera executado esta
+		if(isStarted())
+			start(mLoops);
+	}
+	
+	/**
+	 * Get Animation in Frame
+	 * @return
+	 */
+	final private AnimationState getAnimationFrameState() {
+		//
+		final AnimationState state = new AnimationState();
+		// If empty, return empty state
+		if(mAnimationStack.size() == 0) {
+			state.animation = new Animation() {
+				
+				@Override
+				public void onAnimation(AnimationSet animationSet, float delta) {
+				}
+			};
+			state.state = ANIMATION_STATE_EMPTY;
+			state.delta = 1.0f;
+			state.index = -1;
+			return state;
+		}
+		//
+		final long time = GlobalClock.currentTimeMillis() - mStartedTime;
+		final int loops = (int)(time / mTotalTime);
+		// if exceed and not infinity loops
+		if(mLoops > 0 && loops >= mLoops) {
+			state.animation = mAnimationStack.get(mAnimationStack.size()-1).animation;
+			state.state = ANIMATION_STATE_END;
+			state.delta = 1.0f;
+			state.index = mAnimationStack.size() - 1;
+		// If counted
+		} else {
+			final long normalized = time % mTotalTime;
+			AnimationControl current = null;
+			int timeline = 0;
+			int currentTimeline = 0;
+			int currentIndex = 0;
+			for(int i=0; i<mAnimationStack.size(); i++) {
+				final AnimationControl control = mAnimationStack.get(i);
+				if(normalized >= timeline) {
+					current = control;
+					currentTimeline = timeline;
+					currentIndex = i;
+				} else 
+					break;
+				timeline += control.duration;
+			}
+			float delta = ((normalized - currentTimeline) * 1.0f) / (current.duration * 1.0f);
+			state.animation = current.animation;
+			state.state = ANIMATION_STATE_RUNNING;
+			state.delta = delta;
+			state.index = currentIndex;
+		}
+		return state;
+	}
+	
+	/**
 	 * Prepare animation.
 	 * 
 	 * @return
 	 */
-	final public multigear.mginterface.graphics.animations.Animation prepareAnimation() {
-		// Return Null Animation if not Started
-		if (!mStarted)
-			return mNullAnimation;
+	final public AnimationSet animateFrame() {
+		// New Set
+		AnimationSet set = new AnimationSet();
 		
 		// Prepare Procedures
 		prepareProcedures();
 		
 		// Return Null Animation if not Started
-		if (!mStarted)
-			return mNullAnimation;
+		if (!isStarted())
+			return set;
 		
-		// Update Animation
-		Animation animation;
-		if (mAnimationIndex >= 0) {
-			animation = mAnimationStack.get(mAnimationIndex);
-			animation.update(GlobalClock.currentTimeMillis());
-		} else {
-			animation = mNullAnimation;
-			if (mAnimationStack.size() == 0)
-				return animation;
-		}
+		// Get Animation Frame State
+		final AnimationState state = getAnimationFrameState();
 		
-		// If Animation End
-		// Caso não estiver mais em funcionamento, não sera revisto a ultima
-		// animação
-		if (animation.isFinish() && mRunning) {
-			
-			// Add to Stack States
-			addProc(AnimationStack.Handler.ANIMATION_END, animation);
-			
-			// Calculate next animation
-			int nextAnimationIndex = mAnimationIndex + 1;
-			boolean running = true;
-			
-			// If end animations
-			if (nextAnimationIndex >= mAnimationStack.size()) {
-				if (mRepeat)
-					nextAnimationIndex = 0;
-				else {
-					mRunning = false;
-					running = false;
-				}
+		// Update handlers
+		if (mStarted && mRunning) {
+			// Control Passed and Started animations
+			int currentIndex = state.index;
+			// If retry (fast align)
+			if(currentIndex < mIndex)
+				currentIndex += mAnimationStack.size();
+			for(int i=mIndex; i<currentIndex; i++) {
+				if(i > -1)
+					addProc(AnimationStack.Handler.ANIMATION_END, mAnimationStack.get(i % mAnimationStack.size()).animation);
+				addProc(AnimationStack.Handler.ANIMATION_START, mAnimationStack.get((i+1) % mAnimationStack.size()).animation);
 			}
-			
-			// If Running
-			if (running)
-				startAnimation(nextAnimationIndex);
-			else
+			mIndex = state.index;
+			// If End Animations
+			if(state.state == ANIMATION_STATE_END) {
+				addProc(AnimationStack.Handler.ANIMATION_END, state.animation);
 				addProc(AnimationStack.Handler.ANIMATIONS_END);
-			
+				mRunning = false;
+			}
 		}
 		
-		// Return Prepared Animation
-		return animation;
+		// Animate Set
+		state.animation.onAnimation(set, state.delta);
+		
+		// Return current set
+		return set;
 	}
 	
 	/**
-	 * Return AnimationSet of this Frame
-	 * @return
+	 * Clear Animations and stop animation process
 	 */
-	final public AnimationSet animateFrame() {
-		return prepareAnimation().animate();
-	}
-	
-	/*
-	 * final public void waitForNextUpdate() { if(isRunning() &&
-	 * !animationsEnd()) { AnimationBase animation =
-	 * mAnimationStack.get(mAnimationIndex); animation.waitForNextUpdate(); } }
-	 */
-	
-	/*
-	 * Limpa todas animações
-	 */
-	final public void clear() {
+	final public void clearAnimations() {
 		// Clear Animations and States
 		mAnimationStack.clear();
 		mStateProcedures.clear();
 		// Reset
-		mAnimationIndex = 0;
 		mStarted = false;
 		mRunning = false;
-		mRepeat = false;
 	}
 }

@@ -27,6 +27,7 @@ final public class ProgramsManager {
 	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = 6;
 	final public static int LETTER_RENDERER = 7;
 	final public static int SPRITE_PARTICLES_RENDERER_PROGRAM = 8;
+	final public static int DISCARD_TEXTURE_RENDERER_PROGRAM = 9;
 	
 	// Final Private Variables
 	final private List<BaseProgram> mInstalledPrograms = new ArrayList<BaseProgram>();
@@ -85,6 +86,7 @@ final public class ProgramsManager {
 		installProgram(OptimizedEllipseTexturedRenderer.class, screenSize);
 		installProgram(LetterRenderer.class, screenSize);
 		installProgram(SpriteParticlesRenderer.class, screenSize);
+		installProgram(DiscardTextureRenderer.class, screenSize);
 	}
 	
 	/**

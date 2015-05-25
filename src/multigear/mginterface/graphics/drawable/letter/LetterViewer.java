@@ -31,7 +31,7 @@ public class LetterViewer implements Component, Drawable {
 	private boolean mFixedSpace = false;
 	private boolean mMirror[] = { false, false };
 	private Rect mViewport;
-	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private BlendFunc mBlendFuncs[] = new BlendFunc[] {BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO};
 	private Letter mLetter = new Letter();
 	private LetterWriter mLetterWriter;
 	private int mZ = 0;
@@ -113,8 +113,17 @@ public class LetterViewer implements Component, Drawable {
 	 * 
 	 * @param blendFunc
 	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
+	final public void setBlendFunc(final BlendFunc sFactor, final BlendFunc dFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, BlendFunc.ONE, BlendFunc.ZERO};
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFuncSeparate(final BlendFunc sFactor, final BlendFunc dFactor, final BlendFunc sAlphaFactor, final BlendFunc dAlphaFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, sAlphaFactor, dAlphaFactor};
 	}
 	
 	/**
@@ -255,10 +264,10 @@ public class LetterViewer implements Component, Drawable {
 	/**
 	 * Get Blend Func
 	 * 
-	 * @return Get Blend Func
+	 * @return Get Blend Func [sFactor, dFactor]
 	 */
-	final public BlendFunc getBlendFunc() {
-		return mBlendFunc;
+	final public BlendFunc[] getBlendFunc() {
+		return mBlendFuncs.clone();
 	}
 	
 	/**
@@ -301,7 +310,7 @@ public class LetterViewer implements Component, Drawable {
 	 * @return {@link Vector2} Position
 	 */
 	final public Vector2 getRealPosition() {
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		Vector2 position = mPosition.clone();
 		position.sum(animationSet.getPosition());
 		return position;
@@ -408,7 +417,7 @@ public class LetterViewer implements Component, Drawable {
 	 */
 	final public void draw(final Drawer drawer) {
 		// Prepare Animation
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		
 		// Get final Opacity
 		mPreparedOpacity = animationSet.getOpacity() * mOpacity;
@@ -450,7 +459,7 @@ public class LetterViewer implements Component, Drawable {
 		// Draw
 		drawer.setOpacity(mPreparedOpacity);
 		drawer.snip(mViewport);
-		drawer.setBlendFunc(mBlendFunc);
+		drawer.setBlendFunc(mBlendFuncs[0], mBlendFuncs[1], mBlendFuncs[2], mBlendFuncs[3]);
 		drawer.drawLetter(mLetter);
 		
 		// End Drawer

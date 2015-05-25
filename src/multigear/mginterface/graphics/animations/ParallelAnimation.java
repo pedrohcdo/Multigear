@@ -8,7 +8,7 @@ package multigear.mginterface.graphics.animations;
  * 
  *         Property SpringBall.
  */
-final public class ParallelAnimation extends Animation {
+final public class ParallelAnimation implements Animation {
 	
 	// Final Private Variables
 	final private Animation[] mAnimations;
@@ -17,8 +17,7 @@ final public class ParallelAnimation extends Animation {
 	 * Constructor
 	 * @param duration
 	 */
-	public ParallelAnimation(int duration, final Animation... args) {
-		super(duration);
+	public ParallelAnimation(final Animation... args) {
 		mAnimations = args;
 	}
 
@@ -28,6 +27,6 @@ final public class ParallelAnimation extends Animation {
 	@Override
 	public void onAnimation(AnimationSet animationSet, float delta) {
 		for(final Animation animation : mAnimations)
-			animation.animate(animationSet, delta);
+			animation.onAnimation(animationSet, delta);
 	}
 }

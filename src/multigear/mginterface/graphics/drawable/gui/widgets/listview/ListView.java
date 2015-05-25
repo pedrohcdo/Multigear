@@ -357,8 +357,8 @@ final public class ListView extends Widget {
 		mCursorLayer.setOpacity(0);
 		reshapeScroll();
 		setScrollAnim(VERTICAL_SCROLL_ANIM_DISAPPEAR);
-		mScrollLayer.getAnimationStack().clear();
-		mScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(1, 0, 0));
+		mScrollLayer.getAnimationStack().clearAnimations();
+		mScrollLayer.getAnimationStack().addAnimation(1, new AnimationOpacity(0, 0));
 		mScrollLayer.getAnimationStack().start();
 		mPointers.clear();
 	}
@@ -954,8 +954,8 @@ final public class ListView extends Widget {
 					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
 					mCursorLayer.setOpacity(0.7f);
 					//mCursorLayer.setPosition(mCursorPosition);
-					mCursorLayer.getAnimationStack().clear();
-					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().clearAnimations();
+					mCursorLayer.getAnimationStack().addAnimation(50, new AnimationOpacity(0, 1));
 					mCursorLayer.getAnimationStack().start();
 					
 					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
@@ -993,8 +993,8 @@ final public class ListView extends Widget {
 					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
 					mCursorLayer.setOpacity(0.7f);
 					//mCursorLayer.setPosition(mCursorPosition);
-					mCursorLayer.getAnimationStack().clear();
-					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().clearAnimations();
+					mCursorLayer.getAnimationStack().addAnimation(50, new AnimationOpacity(0, 1));
 					mCursorLayer.getAnimationStack().start();
 					
 					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
@@ -1053,8 +1053,8 @@ final public class ListView extends Widget {
 					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
 					mCursorLayer.setOpacity(0.7f);
 					//mCursorLayer.setPosition(mCursorPosition);
-					mCursorLayer.getAnimationStack().clear();
-					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().clearAnimations();
+					mCursorLayer.getAnimationStack().addAnimation(50, new AnimationOpacity(0, 1));
 					mCursorLayer.getAnimationStack().start();
 					
 					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
@@ -1094,8 +1094,8 @@ final public class ListView extends Widget {
 					refreshCursor(mItemsHolder[index].getHeight() + mAttributes.padding * 2);
 					mCursorLayer.setOpacity(0.7f);
 					//mCursorLayer.setPosition(mCursorPosition);
-					mCursorLayer.getAnimationStack().clear();
-					mCursorLayer.getAnimationStack().addAnimation(new AnimationOpacity(50, 0, 1));
+					mCursorLayer.getAnimationStack().clearAnimations();
+					mCursorLayer.getAnimationStack().addAnimation(50, new AnimationOpacity(0, 1));
 					mCursorLayer.getAnimationStack().start();
 					
 					final float cellSize = mAttributes.padding * 2 + mItemsHolder[index].getHeight();
@@ -1409,13 +1409,13 @@ final public class ListView extends Widget {
 		switch(mScrollAnimation) {
 		case VERTICAL_SCROLL_ANIM_APPEAR:
 			mScrollLayer.setOpacity(1);
-			mScrollLayer.getAnimationStack().clear();
-			mScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(200, 0, 1));
+			mScrollLayer.getAnimationStack().clearAnimations();
+			mScrollLayer.getAnimationStack().addAnimation(200, new AnimationOpacity(0, 1));
 			mScrollLayer.getAnimationStack().start();
 			break;
 		case VERTICAL_SCROLL_ANIM_DISAPPEAR:
-			mScrollLayer.getAnimationStack().clear();
-			mScrollLayer.getAnimationStack().addAnimation(new AnimationOpacity(200, 1, 0));
+			mScrollLayer.getAnimationStack().clearAnimations();
+			mScrollLayer.getAnimationStack().addAnimation(200, new AnimationOpacity(1, 0));
 			mScrollLayer.getAnimationStack().start();
 			break;
 		}

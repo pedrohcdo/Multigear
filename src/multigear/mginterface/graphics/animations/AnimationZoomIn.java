@@ -8,7 +8,7 @@ package multigear.mginterface.graphics.animations;
  * 
  *         Property SpringBall.
  */
-public class AnimationZoomIn extends Animation {
+public class AnimationZoomIn implements Animation {
 	
 	// Final Private Variables
 	final private float mFactor;
@@ -18,8 +18,7 @@ public class AnimationZoomIn extends Animation {
 	 * 
 	 * @param duration
 	 */
-	public AnimationZoomIn(final int duration, final float factor) {
-		super(duration);
+	public AnimationZoomIn(final float factor) {
 		mFactor = factor;
 	}
 	
@@ -28,8 +27,7 @@ public class AnimationZoomIn extends Animation {
 	 * 
 	 * @param duration
 	 */
-	public AnimationZoomIn(final int duration) {
-		super(duration);
+	public AnimationZoomIn() {
 		mFactor = 0.12f;
 	}
 	

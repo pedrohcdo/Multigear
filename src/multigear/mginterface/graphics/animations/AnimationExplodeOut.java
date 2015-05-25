@@ -12,15 +12,7 @@ package multigear.mginterface.graphics.animations;
  *
  * Property SpringBall.
  */
-public class AnimationExplodeOut extends Animation {
-	
-	
-	/*
-	 * Construtor
-	 */
-	public AnimationExplodeOut(int duration) {
-		super(duration);
-	}
+public class AnimationExplodeOut implements Animation {
 	
 	/**
 	 * Animate

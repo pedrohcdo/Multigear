@@ -57,7 +57,7 @@ final public class Polygon implements Drawable, Component {
 	protected boolean mTouchable = true;
 	protected boolean mFixedSpace = false;
 	protected boolean mMirror[] = { false, false };
-	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private BlendFunc mBlendFuncs[] = new BlendFunc[] {BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO};
 	protected FloatBuffer mVertices = GeneralUtils.createFloatBuffer(0);
 	protected FloatBuffer mTextureVertex = GeneralUtils.createFloatBuffer(0);
 	protected int mVerticesCount = 0;
@@ -218,6 +218,26 @@ final public class Polygon implements Drawable, Component {
 		return circle;
 	}
 
+	/**
+	 * Create Sector of Circle
+	 * 
+	 * @param radius
+	 *            Radius
+	 * @return
+	 */
+	final public static Polygon createSector(final float radius, final float detail, final float ang) {
+		final Polygon circle = new Polygon();
+		final double radIncr = GeneralUtils.degreeToRad(detail);
+		final double radAng = GeneralUtils.degreeToRad(ang);
+		circle.addVertice(new Vector2(radius, radius));
+		for (double i = 0; i < radAng; i += radIncr) {
+			float x = (float) (Math.cos(i) * radius) + radius;
+			float y = (float) (Math.sin(i) * radius) + radius;
+			circle.addVertice(new Vector2(x, y));
+		}
+		return circle;
+	}
+	
 	/**
 	 * Creates an optimized circular polygon that does not require vertices, The
 	 * vertices not affect the final result.<br>
@@ -702,8 +722,17 @@ final public class Polygon implements Drawable, Component {
 	 * 
 	 * @param blendFunc
 	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
+	final public void setBlendFunc(final BlendFunc sFactor, final BlendFunc dFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, BlendFunc.ONE, BlendFunc.ZERO};
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFuncSeparate(final BlendFunc sFactor, final BlendFunc dFactor, final BlendFunc sAlphaFactor, final BlendFunc dAlphaFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, sAlphaFactor, dAlphaFactor};
 	}
 
 	/**
@@ -844,8 +873,7 @@ final public class Polygon implements Drawable, Component {
 	 * @return {@link Vector2} Position
 	 */
 	final public Vector2 getRealPosition() {
-		final AnimationSet animationSet = getAnimationStack()
-				.prepareAnimation().animate();
+		final AnimationSet animationSet = getAnimationStack().animateFrame();
 		Vector2 position = mPosition.clone();
 		position.sum(animationSet.getPosition());
 		return position;
@@ -854,12 +882,12 @@ final public class Polygon implements Drawable, Component {
 	/**
 	 * Get Blend Func
 	 * 
-	 * @return Get Blend Func
+	 * @return Get Blend Func [sFactor, dFactor]
 	 */
-	final public BlendFunc getBlendFunc() {
-		return mBlendFunc;
+	final public BlendFunc[] getBlendFunc() {
+		return mBlendFuncs.clone();
 	}
-
+	
 	/**
 	 * Get drawable opacity
 	 * 
@@ -946,8 +974,7 @@ final public class Polygon implements Drawable, Component {
 	final public void draw(final Drawer drawer) {
 
 		// Prepare Animation
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation()
-				.animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 
 		// Get final Opacity
 		mPreparedOpacity = animationSet.getOpacity() * mOpacity;
@@ -1008,7 +1035,7 @@ final public class Polygon implements Drawable, Component {
 		// Set Texture
 		drawer.begin();
 		drawer.setOpacity(mPreparedOpacity);
-		drawer.setBlendFunc(mBlendFunc);
+		drawer.setBlendFunc(mBlendFuncs[0], mBlendFuncs[1], mBlendFuncs[2], mBlendFuncs[3]);
 		drawer.setColor(mColor);
 		drawer.setTexture(mTexture);
 		drawer.snip(mViewport);

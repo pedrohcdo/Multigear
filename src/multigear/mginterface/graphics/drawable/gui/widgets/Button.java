@@ -93,8 +93,8 @@ public class Button extends Widget {
 	 */
 	final protected void pressAnimation() {
 		if (Animation.Press != null) {
-			getAnimationStack().clear();
-			getAnimationStack().addAnimation(Animation.Press);
+			getAnimationStack().clearAnimations();
+			getAnimationStack().addAnimation(200, Animation.Press);
 			getAnimationStack().start();
 		}
 	}
@@ -104,8 +104,8 @@ public class Button extends Widget {
 	 */
 	final protected void releaseAnimation() {
 		if (Animation.Press != null) {
-			getAnimationStack().clear();
-			getAnimationStack().addAnimation(Animation.Release);
+			getAnimationStack().clearAnimations();
+			getAnimationStack().addAnimation(200, Animation.Release);
 			getAnimationStack().start();
 		}
 	}

@@ -575,7 +575,7 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	final public void draw(final multigear.mginterface.graphics.opengl.drawer.Drawer drawer) {
 		
 		// Prepare Animation
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		final Vector2 scale = Vector2.scale(mScale, animationSet.getScale());
 		
 		// Begin draw room

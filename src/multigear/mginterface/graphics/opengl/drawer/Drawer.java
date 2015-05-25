@@ -9,6 +9,7 @@ import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.general.utils.buffers.GlobalFloatBuffer;
 import multigear.mginterface.graphics.drawable.polygon.Polygon;
+import multigear.mginterface.graphics.opengl.BlendEquation;
 import multigear.mginterface.graphics.opengl.BlendFunc;
 import multigear.mginterface.graphics.opengl.Renderer;
 import multigear.mginterface.graphics.opengl.font.FontMap;
@@ -115,12 +116,21 @@ final public class Drawer {
 	}
 	
 	/**
-	 * Set Blend Func
+	 * Set Blend Function
 	 * 
 	 * @param blendFunc
 	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		GLES20.glBlendFunc(GLES20.GL_ONE, blendFunc.getConst());
+	final public void setBlendFunc(final BlendFunc sFactor, final BlendFunc dFactor, final BlendFunc sAFactor, final BlendFunc dAFactor) {
+		GLES20.glBlendFunc(sFactor.getConst(), dFactor.getConst());
+	}
+	
+	/**
+	 * Set Blend Equation
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendEquation(final BlendEquation equation) {
+		GLES20.glBlendEquation(equation.getConst());
 	}
 	
 	/**
@@ -372,7 +382,8 @@ final public class Drawer {
 		mColor = Color.WHITE;
 		mElementVertex = null;
 		mTextureVertex = null;
-		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
+		setBlendFunc(BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO);
+		setBlendEquation(BlendEquation.ADD);
 		
 		// Set Drawing State
 		DrawingState last = mDrawingStates[mDrawingIndex++];
@@ -394,7 +405,8 @@ final public class Drawer {
 		mElementVertex = null;
 		mTextureVertex = null;
 		mDrawingIndex--;
-		setBlendFunc(BlendFunc.ONE_MINUS_SRC_ALPHA);
+		setBlendFunc(BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO);
+		setBlendEquation(BlendEquation.ADD);
 		refreshSnip();
 	}
 	

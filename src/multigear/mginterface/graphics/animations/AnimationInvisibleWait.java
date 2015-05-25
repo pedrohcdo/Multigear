@@ -8,16 +8,7 @@ package multigear.mginterface.graphics.animations;
  * 
  *         Property SpringBall.
  */
-public class AnimationInvisibleWait extends Animation {
-	
-	/**
-	 * Constructor
-	 * 
-	 * @param duration
-	 */
-	public AnimationInvisibleWait(final int duration) {
-		super(duration);
-	}
+public class AnimationInvisibleWait implements Animation {
 	
 	/**
 	 * Animate

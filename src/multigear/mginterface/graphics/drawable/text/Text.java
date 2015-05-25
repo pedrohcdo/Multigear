@@ -39,7 +39,7 @@ public class Text implements Drawable, Component {
 	private Rect mViewport;
 	private int mId, mZ;
 	private float mOpacity = 1;
-	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private BlendFunc mBlendFuncs[] = new BlendFunc[] {BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO};
 	private FontWriter mFontWriter = new FontWriter() {
 		
 		// Final private Variable
@@ -163,8 +163,17 @@ public class Text implements Drawable, Component {
 	 * 
 	 * @param blendFunc
 	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
+	final public void setBlendFunc(final BlendFunc sFactor, final BlendFunc dFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, BlendFunc.ONE, BlendFunc.ZERO};
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFuncSeparate(final BlendFunc sFactor, final BlendFunc dFactor, final BlendFunc sAlphaFactor, final BlendFunc dAlphaFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, sAlphaFactor, dAlphaFactor};
 	}
 	
 	/**
@@ -277,10 +286,10 @@ public class Text implements Drawable, Component {
 	/**
 	 * Get Blend Func
 	 * 
-	 * @param blendFunc
+	 * @return Get Blend Func [sFactor, dFactor]
 	 */
-	final public BlendFunc getBlendFunc() {
-		return mBlendFunc;
+	final public BlendFunc[] getBlendFunc() {
+		return mBlendFuncs.clone();
 	}
 	
 	/**
@@ -307,7 +316,7 @@ public class Text implements Drawable, Component {
 	 * @return {@link Vector2} Position
 	 */
 	final public Vector2 getRealPosition() {
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		Vector2 position = mPosition.clone();
 		position.sum(animationSet.getPosition());
 		return position;
@@ -367,7 +376,7 @@ public class Text implements Drawable, Component {
 	final public void draw(final Drawer drawer) {
 		
 		// Prepare Animation
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		
 		// Get final Opacity
 		final float opacity = animationSet.getOpacity() * mOpacity;
@@ -427,7 +436,7 @@ public class Text implements Drawable, Component {
 		
 		// Draw Text
 		drawer.begin();
-		drawer.setBlendFunc(mBlendFunc);
+		drawer.setBlendFunc(mBlendFuncs[0], mBlendFuncs[1], mBlendFuncs[2], mBlendFuncs[3]);
 		drawer.setOpacity(opacity);
 		drawer.snip(mViewport);
 		drawer.drawText(mFontMap, mText, mFontWriter);

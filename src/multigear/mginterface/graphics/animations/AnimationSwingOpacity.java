@@ -8,17 +8,10 @@ package multigear.mginterface.graphics.animations;
  *
  * Property Createlier.
  */
-public class AnimationSwingOpacity extends Animation {
+public class AnimationSwingOpacity implements Animation {
 	
 	// Constants
 	final static private double PI2 = Math.PI * 2;
-	
-	/*
-	 * Construtor
-	 */
-	public AnimationSwingOpacity(int duration) {
-		super(duration);
-	}
 	
 	/**
 	 * Animate

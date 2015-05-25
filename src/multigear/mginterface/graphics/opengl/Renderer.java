@@ -27,6 +27,7 @@ public class Renderer extends BaseRenderer {
 	final public static int OPTIMIZED_ELLIPSE_TEXTURED_RENDERER = ProgramsManager.OPTIMIZED_ELLIPSE_TEXTURED_RENDERER;
 	final public static int LETTER_RENDERER = ProgramsManager.LETTER_RENDERER;
 	final public static int SPRITE_PARTICLES_RENDERER = ProgramsManager.SPRITE_PARTICLES_RENDERER_PROGRAM;
+	final public static int DISCARD_TEXTURE_RENDERER = ProgramsManager.DISCARD_TEXTURE_RENDERER_PROGRAM;
 	
 	// Final private Variables
 	final private multigear.mginterface.engine.Configuration.OptimizedKey mOptimizedKey;

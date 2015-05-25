@@ -178,7 +178,7 @@ public class Widget implements Drawable, Touchable, Component {
 	protected boolean mFixedSpace = false;
 	protected boolean mMirror[] = { false, false };
 	protected int mZ, mId;
-	protected BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	private BlendFunc mBlendFuncs[] = new BlendFunc[] {BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO};
 	private boolean mStaticTouch = false;
 	
 	// Final Public Variables
@@ -252,8 +252,17 @@ public class Widget implements Drawable, Touchable, Component {
 	 * 
 	 * @param blendFunc
 	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
+	final public void setBlendFunc(final BlendFunc sFactor, final BlendFunc dFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, BlendFunc.ONE, BlendFunc.ZERO};
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFuncSeparate(final BlendFunc sFactor, final BlendFunc dFactor, final BlendFunc sAlphaFactor, final BlendFunc dAlphaFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, sAlphaFactor, dAlphaFactor};
 	}
 	
 	/**
@@ -411,10 +420,10 @@ public class Widget implements Drawable, Touchable, Component {
 	/**
 	 * Get Blend Func
 	 * 
-	 * @return Get Blend Func
+	 * @return Get Blend Func [sFactor, dFactor]
 	 */
-	public BlendFunc getBlendFunc() {
-		return mBlendFunc;
+	final public BlendFunc[] getBlendFunc() {
+		return mBlendFuncs.clone();
 	}
 	
 	/**
@@ -441,7 +450,7 @@ public class Widget implements Drawable, Touchable, Component {
 	 * @return {@link Vector2} Position
 	 */
 	final public Vector2 getRealPosition() {
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		Vector2 position = mPosition.clone();
 		position.sum(animationSet.getPosition());
 		return position;
@@ -660,7 +669,7 @@ public class Widget implements Drawable, Touchable, Component {
 	final public void draw(final Drawer drawer) {
 		
 		// Prepare Animations
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		
 		// Opacity
 		final float opacity = animationSet.getOpacity() * getOpacity();
@@ -706,7 +715,7 @@ public class Widget implements Drawable, Touchable, Component {
 		// Enable Viewport
 		drawer.begin();
 		drawer.snip(mViewport);
-		drawer.setBlendFunc(mBlendFunc);
+		drawer.setBlendFunc(mBlendFuncs[0], mBlendFuncs[1], mBlendFuncs[2], mBlendFuncs[3]);
 		drawer.setOpacity(opacity);
 		
 		// Draw bottom component

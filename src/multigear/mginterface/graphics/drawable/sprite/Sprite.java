@@ -5,6 +5,7 @@ import multigear.general.utils.GeneralUtils;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.animations.AnimationSet;
 import multigear.mginterface.graphics.animations.AnimationStack;
+import multigear.mginterface.graphics.opengl.BlendEquation;
 import multigear.mginterface.graphics.opengl.BlendFunc;
 import multigear.mginterface.graphics.opengl.drawer.Drawer;
 import multigear.mginterface.graphics.opengl.drawer.WorldMatrix;
@@ -43,7 +44,9 @@ public class Sprite implements Drawable, Component {
 	private int mZ = 0;
 	private int mId = 0;
 	private Color mColor = Color.WHITE;
-	private BlendFunc mBlendFunc = BlendFunc.ONE_MINUS_SRC_ALPHA;
+	
+	private BlendFunc mBlendFuncs[] = new BlendFunc[] {BlendFunc.ONE, BlendFunc.ONE_MINUS_SRC_ALPHA, BlendFunc.ONE, BlendFunc.ZERO};
+	private BlendEquation mBlendEquation = BlendEquation.ADD;
 	
 	/**
 	 * Constructor
@@ -164,10 +167,28 @@ public class Sprite implements Drawable, Component {
 	 * 
 	 * @param blendFunc
 	 */
-	final public void setBlendFunc(final BlendFunc blendFunc) {
-		mBlendFunc = blendFunc;
+	final public void setBlendFunc(final BlendFunc sFactor, final BlendFunc dFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, BlendFunc.ONE, BlendFunc.ZERO};
+	}
+	
+	/**
+	 * Set Blend Func
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendFuncSeparate(final BlendFunc sFactor, final BlendFunc dFactor, final BlendFunc sAlphaFactor, final BlendFunc dAlphaFactor) {
+		mBlendFuncs = new BlendFunc[] {sFactor, dFactor, sAlphaFactor, dAlphaFactor};
 	}
 
+	/**
+	 * Set Blend Equation
+	 * 
+	 * @param blendFunc
+	 */
+	final public void setBlendEquation(final BlendEquation equation) {
+		mBlendEquation = equation;
+	}
+	
 	/**
 	 * Set identifier
 	 * 
@@ -263,7 +284,7 @@ public class Sprite implements Drawable, Component {
 	 * @return {@link Vector2} Position
 	 */
 	final public Vector2 getRealPosition() {
-		final AnimationSet animationSet = getAnimationStack().prepareAnimation().animate();
+		final AnimationSet animationSet = getAnimationStack().animateFrame();
 		Vector2 position = mPosition.clone();
 		position.sum(animationSet.getPosition());
 		return position;
@@ -290,10 +311,19 @@ public class Sprite implements Drawable, Component {
 	/**
 	 * Get Blend Func
 	 * 
-	 * @return Get Blend Func
+	 * @return Get Blend Func [sFactor, dFactor]
 	 */
-	final public BlendFunc getBlendFunc() {
-		return mBlendFunc;
+	final public BlendFunc[] getBlendFunc() {
+		return mBlendFuncs.clone();
+	}
+	
+	/**
+	 * Get Blend Equation
+	 * 
+	 * @return Get Blend Equation
+	 */
+	final public BlendEquation getBlendEquation() {
+		return mBlendEquation;
 	}
 	
 	/**
@@ -348,7 +378,7 @@ public class Sprite implements Drawable, Component {
 	public void draw(final Drawer drawer) {
 
 		// Prepare Animation
-		final AnimationSet animationSet = mAnimationStack.prepareAnimation().animate();
+		final AnimationSet animationSet = mAnimationStack.animateFrame();
 		
 		// Get final Opacity
 		final float opacity = animationSet.getOpacity() * getOpacity();
@@ -418,7 +448,8 @@ public class Sprite implements Drawable, Component {
 		drawer.setTexture(usedTexture);
 		drawer.setColor(mColor);
 		drawer.setOpacity(opacity);
-		drawer.setBlendFunc(mBlendFunc);
+		drawer.setBlendFunc(mBlendFuncs[0], mBlendFuncs[1], mBlendFuncs[2], mBlendFuncs[3]);
+		drawer.setBlendEquation(mBlendEquation);
 		drawer.snip(mViewport);
 		drawer.drawTexture(mSize);
 		drawer.end();
