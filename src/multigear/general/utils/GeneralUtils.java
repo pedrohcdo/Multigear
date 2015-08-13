@@ -734,4 +734,12 @@ final public class GeneralUtils {
 		}
 		return size;
 	}
+	
+	final public static Color mix(final Color colorA, final Color colorB, float control) {
+		final float iControl = (1.0f - control);
+		return Color.rgba(colorB.getRed() * control + colorA.getRed() * iControl,
+						  colorB.getGreen() * control + colorA.getGreen() * iControl,
+						  colorB.getBlue() * control + colorA.getBlue() * iControl,
+						  colorB.getAlpha() * control + colorA.getAlpha() * iControl);
+	}
 }

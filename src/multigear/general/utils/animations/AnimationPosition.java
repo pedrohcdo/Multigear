@@ -1,6 +1,8 @@
-package multigear.mginterface.graphics.animations;
+package multigear.general.utils.animations;
 
 import multigear.general.utils.Vector2;
+import multigear.mginterface.graphics.animations.Animation;
+import multigear.mginterface.graphics.animations.AnimationSet;
 
 /**
  * 

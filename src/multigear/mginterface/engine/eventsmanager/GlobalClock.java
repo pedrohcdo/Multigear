@@ -70,10 +70,19 @@ final public class GlobalClock {
 	}
 	
 	/**
-	 * Get Elapsed Time
+	 * Get Elapsed Framed Time<br>
+	 * It's the same thing the elapsedTime() / 17.0f
 	 * @return
 	 */
 	final static public float elapsedFramedTime() {
 		return mElapsedTime / 17.0f;
+	}
+	
+	/**
+	 * Get Elapsed Time
+	 * @return
+	 */
+	final static public float elapsedTime() {
+		return mElapsedTime;
 	}
 }

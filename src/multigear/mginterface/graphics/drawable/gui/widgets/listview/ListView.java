@@ -6,8 +6,8 @@ import java.util.List;
 
 import multigear.general.utils.Color;
 import multigear.general.utils.Vector2;
+import multigear.general.utils.animations.AnimationOpacity;
 import multigear.mginterface.engine.eventsmanager.GlobalClock;
-import multigear.mginterface.graphics.animations.AnimationOpacity;
 import multigear.mginterface.graphics.drawable.gui.Canvas;
 import multigear.mginterface.graphics.drawable.gui.widgets.listview.ListViewAdapter.ItemHolder;
 import multigear.mginterface.graphics.drawable.polygon.Polygon;

@@ -56,7 +56,7 @@ final public class ProgramsManager {
 	 * Install Program
 	 * @param programClass
 	 */
-	final private void installProgram(final Class<? extends BaseProgram> programClass, final Vector2 screenSize) {
+	final public void installProgram(final Class<? extends BaseProgram> programClass, final Vector2 screenSize) {
 		try {
 			final BaseProgram program = programClass.newInstance();
 			final int vertexShaderHandle = loadShader(GLES20.GL_VERTEX_SHADER, program.onLoadVertexShader());
@@ -68,6 +68,7 @@ final public class ProgramsManager {
 			program.onSetup(screenSize);
 			mInstalledPrograms.add(program);
 		} catch (Exception e) {
+			Log.d("LogTest", "ERRR: " + e.getMessage());
 		}
 	}
 	

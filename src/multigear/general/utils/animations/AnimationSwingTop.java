@@ -1,4 +1,4 @@
-package multigear.mginterface.graphics.animations;
+package multigear.general.utils.animations;
 
 import multigear.mginterface.graphics.animations.Animation;
 import multigear.mginterface.graphics.animations.AnimationSet;

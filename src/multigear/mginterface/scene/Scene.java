@@ -941,6 +941,21 @@ public class Scene extends multigear.mginterface.scene.Installation {
 	}
 	
 	/**
+	 * Close Engine
+	 */
+	final public void closeEngine() {
+		runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				getEngine().onPause();
+				getEngine().onDestroy();
+				getActivity().finish();
+			}
+		});
+	}
+	
+	/**
 	 * Return Device Name
 	 * 
 	 * @return Device Name

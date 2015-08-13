@@ -96,7 +96,7 @@ final public class Multigear {
 	final Intent mServiceIntent;
 	
 	// Private Variables
-	private boolean mFinished;
+	private AtomicBoolean mFinished = new AtomicBoolean(false);
 	private long mCurrsentTime;
 	private boolean mFirstBind;
 	private SupportService mSupportService;
@@ -137,17 +137,21 @@ final public class Multigear {
 		mSurface = new multigear.mginterface.engine.Surface(this);
 		mManager = new multigear.mginterface.engine.Manager(this);
 		mEventHandler = new multigear.mginterface.engine.eventsmanager.EventHandler(mManager);
-		mFinished = false;
 		mFirstBind = true;
 		
-		mSupportServiceResumed = false;
-		mServiceIntent = new Intent(activity, SupportService.class);
+
 		
 		// The startService () starts the service and ensures that 
 		// the service keeps running even if all clients are disconnected. 
 		// The bindService () used without startService () may result in the 
 		// closure of the service after all unbindService ().
-		activity.startService(mServiceIntent);
+		if(getConfiguration().hasFunc(Configuration.FUNC_RESTORER_SERVICE)) {
+			mSupportServiceResumed = false;
+			mServiceIntent = new Intent(activity, SupportService.class);
+			activity.startService(mServiceIntent);
+		} else {
+			mServiceIntent = null;
+		}
 		
 		// Aquire WifiLock in Full High Perf
 		WifiManager wifiManager = (WifiManager)mActivity.getSystemService(Context.WIFI_SERVICE);
@@ -220,9 +224,17 @@ final public class Multigear {
 	 * Resume Engine
 	 */
 	final public void onResume() {
-		mSupportServiceResumed = true;
-		// Binding with Service
-		getActivity().bindService(mServiceIntent, mServiceConnection, Service.BIND_AUTO_CREATE);
+		// Destroyed
+		if(mFinished.get() == true)
+			return;
+		
+		
+		// If use Restorer
+		if(getConfiguration().hasFunc(Configuration.FUNC_RESTORER_SERVICE)) {
+			mSupportServiceResumed = true;
+			// Binding with Service
+			getActivity().bindService(mServiceIntent, mServiceConnection, Service.BIND_AUTO_CREATE);
+		}
 		mManager.resume();
 		mEventHandler.sendHandle();
 		// Call listeners
@@ -234,22 +246,28 @@ final public class Multigear {
 	 * Pause Engine
 	 */
 	final public void onPause() {
-		// Submit a notice to pause() before
-		final SupportService supportService = getSupportService();
-		// If the service is bound
-		if (supportService != null) {
-			final Object notification = (Object)getConfiguration().getObjectAttr(Configuration.ATTR_RESTORER_NOTIFICATION);
-			if(notification instanceof Notification)
-				supportService.enginePaused((Notification)notification);
-			else
-				supportService.enginePaused(null);
-		}
-		// Pause Service
-		mSupportServiceResumed = false;
-		// Unbind Service Connection
-		if (mSupportService != null)
-			getActivity().unbindService(mServiceConnection);
+		// Destroyed
+		if(mFinished.get() == true)
+			return;
 		
+		// If use Support Service
+		if(getConfiguration().hasFunc(Configuration.FUNC_RESTORER_SERVICE)) {
+			// Submit a notice to pause() before
+			final SupportService supportService = getSupportService();
+			// If the service is bound
+			if (supportService != null) {
+				final Object notification = (Object)getConfiguration().getObjectAttr(Configuration.ATTR_RESTORER_NOTIFICATION);
+				if(notification instanceof Notification)
+					supportService.enginePaused((Notification)notification);
+				else
+					supportService.enginePaused(null);
+			}
+			// Pause Service
+			mSupportServiceResumed = false;
+			// Unbind Service Connection
+			if (mSupportService != null)
+				getActivity().unbindService(mServiceConnection);
+		}
 		mManager.pause();
 		mEventHandler.sendUnhandle();
 		// Call listeners
@@ -271,17 +289,23 @@ final public class Multigear {
 	 * Destroy Engine
 	 */
 	final public void onDestroy() {
-		final SupportService supportService = getSupportService();
-		if(supportService != null) {
-			Log.d("LogTest", "CLosing by onDestroy().");
-			supportService.engineDestroyed();
+		// Destroy one time
+		if(mFinished.getAndSet(true) == false) {
+			// If use Support Service
+			if(getConfiguration().hasFunc(Configuration.FUNC_RESTORER_SERVICE)) {
+				final SupportService supportService = getSupportService();
+				if(supportService != null) {
+					Log.d("LogTest", "CLosing by onDestroy().");
+					supportService.engineDestroyed();
+				}
+			}
+			if(mWifiLock.isHeld())
+				mWifiLock.release();
+			mSurface.destroy();
+			mManager.destroy();
+			for(final OnDestroyListener listener : mOnDestroyListeners) 
+				listener.onDestroy();
 		}
-		mWifiLock.release();
-		mSurface.destroy();
-		mManager.destroy();
-		for(final OnDestroyListener listener : mOnDestroyListeners) 
-			listener.onDestroy();
-		mFinished = true;
 	}
 	
 	/**
@@ -495,6 +519,6 @@ final public class Multigear {
 	 * @return True if this Engine is Finished
 	 */
 	final public boolean isFinished() {
-		return mFinished;
+		return mFinished.get() == true;
 	}
 }

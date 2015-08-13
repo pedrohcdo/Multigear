@@ -7,6 +7,7 @@ import java.util.List;
 
 import multigear.general.utils.Color;
 import multigear.general.utils.GeneralUtils;
+import multigear.general.utils.GradientColor;
 import multigear.general.utils.Vector2;
 import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.graphics.opengl.vbo.VertexBufferObject;
@@ -19,6 +20,10 @@ import multigear.mginterface.graphics.opengl.vbo.VertexBufferObject;
  */
 final public class LetterDrawer {
 
+	// Conts
+	final private static int MODE_SOLID = 0;
+	final private static int MODE_GRADIENT = 1;
+	
 	/**
 	 * Script
 	 * 
@@ -29,13 +34,17 @@ final public class LetterDrawer {
 
 		public FontMap.Layer layer;
 		public Color color;
+		public GradientColor gradientColor;
 		public String text;
 		public Vector2 position;
+		int mode;
 	}
 	
 	// Private Variables
 	private boolean mBegin = false;
 	private Color mColor = Color.WHITE;
+	private GradientColor mGradientColor = null;
+	private int mMode = MODE_SOLID;
 	private List<Script> mScripts = new ArrayList<Script>();
 	protected FloatBuffer mElements, mColors, mTextures;
 	protected int mElementsCount = 0;
@@ -84,6 +93,17 @@ final public class LetterDrawer {
 		if (!mBegin)
 			throw new RuntimeException("The LetterDrawer can only be used when informed by the listener.");
 		mColor = color;
+		mMode = MODE_SOLID;
+	}
+	
+	/**
+	 * Set Color
+	 */
+	final public void setColor(final GradientColor gradientColor) {
+		if (!mBegin)
+			throw new RuntimeException("The LetterDrawer can only be used when informed by the listener.");
+		mGradientColor = gradientColor;
+		mMode = MODE_GRADIENT;
 	}
 
 	/**
@@ -96,9 +116,11 @@ final public class LetterDrawer {
 			throw new RuntimeException("The LetterDrawer can only be used when informed by the listener.");
 		Script script = new Script();
 		script.color = mColor;
+		script.gradientColor = mGradientColor;
 		script.text = text;
 		script.position = new Vector2(position.x, position.y);
 		script.layer = mFontMap.getActiveLayer();
+		script.mode = mMode;
 		mScripts.add(script);
 	}
 
@@ -165,6 +187,17 @@ final public class LetterDrawer {
 			int maxTextX = (int)textureSize.x / (int)layer.mMaxBoundedWidth;
 			float maxBoundedWidth2 = (layer.mMaxBoundedWidth / 2.0f);
 			
+			// If use Gradient
+			GradientColor.InterpolatedBlock[] interpolatedBlock = null;
+			if(script.mode == MODE_GRADIENT) {
+				// Optimized
+				if(script.gradientColor.getGuide() == GradientColor.GUIDE_VERTICAL)
+					interpolatedBlock = script.gradientColor.interpolate(1);
+				else
+					interpolatedBlock = script.gradientColor.interpolate(chars.length);
+			}
+			
+			int characterIndex = 0;
 			for(char c : chars) {
 				if(mFontMap.mCharMap.mCharacters[c]) {
 					int index = mFontMap.mCharMap.mCharactersIndexes[c];
@@ -247,11 +280,57 @@ final public class LetterDrawer {
 				
 					
 					// Colors
-					for(int i=0; i<6; i++) {
-						mColors.put(color.getRed());
-						mColors.put(color.getGreen());
-						mColors.put(color.getBlue());
-						mColors.put(color.getAlpha());
+					if(script.mode == MODE_SOLID) {
+						for(int i=0; i<6; i++) {
+							mColors.put(color.getRed());
+							mColors.put(color.getGreen());
+							mColors.put(color.getBlue());
+							mColors.put(color.getAlpha());
+						}
+					} else {
+						
+						GradientColor.InterpolatedBlock useBloc;
+						
+						// Optimized
+						if(script.gradientColor.getGuide() == GradientColor.GUIDE_VERTICAL)
+							useBloc = interpolatedBlock[0];
+						else
+							useBloc = interpolatedBlock[characterIndex];
+						
+						Color lt = useBloc.getColor(0);
+						Color rt = useBloc.getColor(1);
+						Color rb = useBloc.getColor(2);
+						Color lb = useBloc.getColor(3);
+							
+						mColors.put(lt.getRed());
+						mColors.put(lt.getGreen());
+						mColors.put(lt.getBlue());
+						mColors.put(lt.getAlpha());
+							
+						mColors.put(rt.getRed());
+						mColors.put(rt.getGreen());
+						mColors.put(rt.getBlue());
+						mColors.put(rt.getAlpha());
+							
+						mColors.put(rb.getRed());
+						mColors.put(rb.getGreen());
+						mColors.put(rb.getBlue());
+						mColors.put(rb.getAlpha());
+							
+						mColors.put(lt.getRed());
+						mColors.put(lt.getGreen());
+						mColors.put(lt.getBlue());
+						mColors.put(lt.getAlpha());
+							
+						mColors.put(lb.getRed());
+						mColors.put(lb.getGreen());
+						mColors.put(lb.getBlue());
+						mColors.put(lb.getAlpha());
+							
+						mColors.put(rb.getRed());
+						mColors.put(rb.getGreen());
+						mColors.put(rb.getBlue());
+						mColors.put(rb.getAlpha());
 					}
 					
 					// Texture Handle
@@ -283,6 +362,8 @@ final public class LetterDrawer {
 						mTextures.put(0);
 					}
 				}
+				
+				characterIndex++;
 			}
 		}
 		

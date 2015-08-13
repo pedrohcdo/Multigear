@@ -1,33 +1,36 @@
-package multigear.mginterface.graphics.animations;
+package multigear.general.utils.animations;
+
+import multigear.mginterface.graphics.animations.Animation;
+import multigear.mginterface.graphics.animations.AnimationSet;
+
+
 
 /**
  * 
  * Esta animação cria um efeito de se espremendo.
  * 
  * @author PedroH, RaphaelB
- * 
- *         Property SpringBall.
+ *
+ * Property SpringBall.
  */
-public class AnimationZoomIn implements Animation {
+public class AnimationZoomOut implements Animation {
 	
 	// Final Private Variables
 	final private float mFactor;
 	
 	/**
 	 * Constructor
-	 * 
 	 * @param duration
 	 */
-	public AnimationZoomIn(final float factor) {
+	public AnimationZoomOut(final float factor) {
 		mFactor = factor;
 	}
 	
 	/**
 	 * Constructor
-	 * 
 	 * @param duration
 	 */
-	public AnimationZoomIn() {
+	public AnimationZoomOut() {
 		mFactor = 0.12f;
 	}
 	
@@ -36,7 +39,7 @@ public class AnimationZoomIn implements Animation {
 	 */
 	@Override
 	final public void onAnimation(AnimationSet animationSet, float delta) {
-		final float f = 1 - (mFactor * delta);
+		final float f = 1 - (mFactor * (1-delta));
 		animationSet.setScale(f, f);
 	}
 }

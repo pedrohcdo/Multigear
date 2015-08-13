@@ -32,6 +32,24 @@ public class MultigearBaseActivity extends ActionBarActivity {
 	}
 	
 	/**
+	 * Close Multigear Engine
+	 */
+	final public void closeMultigearEngine() {
+		runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				if (mMultigear != null) {
+					mMultigear.onPause();
+					mMultigear.onDestroy();
+				}
+				mMultigear = null;
+				finish();
+			}
+		});
+	}
+	
+	/**
 	 * Get Multigear Engine.
 	 */
 	final protected multigear.mginterface.engine.Multigear getMultigearEngine() {

@@ -324,7 +324,7 @@ final public class Vector2 implements Cloneable
 	 * @return Angle in degree (-180...180)
 	 */
 	final static public float angle(final Vector2 vec1, final Vector2 vec2) {
-		return (float)GeneralUtils.radToDegree(Math.atan2(vec1.x-vec2.y, vec1.y-vec2.x));
+		return (float)GeneralUtils.radToDegree(Math.atan2(vec1.y-vec2.y, vec1.x-vec2.x));
 	}
 	
 	/** 
@@ -372,7 +372,7 @@ final public class Vector2 implements Cloneable
 	 * @param angle Angle in degree
 	 * @return
 	 */
-	final public static Vector2 direction(int angle, float length) {
+	final public static Vector2 direction(float angle, float length) {
 		double rad = GeneralUtils.degreeToRad(angle);
 		final float newX = (float)(Math.cos(rad) * length);
 		final float newY = (float)(Math.sin(rad) * length);

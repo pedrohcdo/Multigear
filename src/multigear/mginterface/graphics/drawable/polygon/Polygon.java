@@ -14,6 +14,7 @@ import multigear.mginterface.graphics.opengl.texture.Texture;
 import multigear.mginterface.scene.Component;
 import multigear.mginterface.scene.components.receivers.Drawable;
 import android.graphics.Rect;
+import android.util.Log;
 
 /**
  * Polygon<br>
@@ -100,6 +101,24 @@ final public class Polygon implements Drawable, Component {
 		addVertices(polygon);
 	}
 
+	/**
+	 * Create Line
+	 * @param start
+	 * @param end
+	 * @param size
+	 * @return
+	 */
+	final public static Polygon createLine(final Vector2 start, final Vector2 end, final float size)  {
+		final float ang = Vector2.angle(start, end);
+		final Vector2 move = Vector2.direction(ang + 90, size/2.0f);
+		final Polygon line = new Polygon();
+		line.addVertice(Vector2.sum(start, move));
+		line.addVertice(Vector2.sum(end, move));
+		line.addVertice(Vector2.sub(end, move));
+		line.addVertice(Vector2.sub(start, move));
+		return line;
+	}
+	
 	/**
 	 * Create Bounded square
 	 * 
